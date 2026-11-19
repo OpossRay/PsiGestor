@@ -2,12 +2,14 @@
 from flask import Blueprint, jsonify, request
 
 from app.repositories.student_repository import search_students
+from app.services.auth_service import require_role
 
 
 students_bp = Blueprint("students", __name__)
 
 
 @students_bp.route("/students", methods=["GET"])
+@require_role("psicologo")
 def list_students():
     search_text = request.args.get("search", "").strip()
 

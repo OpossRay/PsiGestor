@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from datetime import date as date_type
+from app.config import is_production_like
 from app.services.appointment_service import (
     register_appointment,
     book_student_appointment,
@@ -18,6 +19,12 @@ from app.services.auth_service import (
 from app.repositories.appointment_repository import get_appointments
 
 
+def _safe_error_message(prefix: str, error: Exception) -> str:
+    if is_production_like():
+        return prefix
+    return f"{prefix}: {error}"
+
+
 appointments_bp = Blueprint(
     "appointments",
     __name__,
@@ -26,6 +33,7 @@ appointments_bp = Blueprint(
 
 
 @appointments_bp.route("", methods=["POST"])
+@require_auth
 def create_appointment_route():
     data = request.get_json(silent=True)
 
@@ -156,7 +164,7 @@ def book_student_appointment_route():
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
-        return jsonify({"error": f"Error al procesar la reserva: {error}"}), 500
+        return jsonify({"error": _safe_error_message("Error al procesar la reserva", error)}), 500
 
 
 @appointments_bp.route("/my", methods=["GET"])
@@ -191,7 +199,7 @@ def get_my_appointments_route():
 
         return jsonify({"appointments": appointments}), 200
     except Exception as error:
-        return jsonify({"error": f"No fue posible consultar tus citas: {error}"}), 500
+        return jsonify({"error": _safe_error_message("No fue posible consultar tus citas", error)}), 500
 
 
 @appointments_bp.route("/<int:appointment_id>/cancel", methods=["POST"])
@@ -208,7 +216,7 @@ def cancel_student_appointment_route(appointment_id):
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
-        return jsonify({"error": f"No fue posible cancelar la cita: {error}"}), 500
+        return jsonify({"error": _safe_error_message("No fue posible cancelar la cita", error)}), 500
 
 
 @appointments_bp.route("/<int:appointment_id>/reschedule-request", methods=["POST"])
@@ -225,10 +233,11 @@ def reschedule_request_student_route(appointment_id):
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
-        return jsonify({"error": f"No fue posible solicitar la reprogramación: {error}"}), 500
+        return jsonify({"error": _safe_error_message("No fue posible solicitar la reprogramación", error)}), 500
 
 
 @appointments_bp.route("/<int:appointment_id>/approve-reschedule", methods=["POST"])
+@require_auth
 def approve_reschedule_route(appointment_id):
     try:
         approve_student_reschedule(appointment_id)
@@ -236,10 +245,11 @@ def approve_reschedule_route(appointment_id):
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
-        return jsonify({"error": f"No fue posible aprobar la reprogramación: {error}"}), 500
+        return jsonify({"error": _safe_error_message("No fue posible aprobar la reprogramación", error)}), 500
 
 
 @appointments_bp.route("/<int:appointment_id>/reject-reschedule", methods=["POST"])
+@require_auth
 def reject_reschedule_route(appointment_id):
     try:
         result = reject_student_reschedule(appointment_id)
@@ -247,4 +257,4 @@ def reject_reschedule_route(appointment_id):
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
-        return jsonify({"error": f"No fue posible rechazar la reprogramación: {error}"}), 500
+        return jsonify({"error": _safe_error_message("No fue posible rechazar la reprogramación", error)}), 500

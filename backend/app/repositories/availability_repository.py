@@ -1,12 +1,7 @@
 from datetime import datetime, date, timedelta
-import os
 from zoneinfo import ZoneInfo
 
-import psycopg
-from dotenv import load_dotenv
-
-
-load_dotenv()
+from app.database import get_db_connection
 
 LOCAL_TIMEZONE = ZoneInfo('America/Merida')
 
@@ -22,13 +17,7 @@ def create_availability(
     duration,
     break_time
 ):
-    connection = psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    connection = get_db_connection()
 
     try:
         cursor = connection.cursor()
@@ -74,13 +63,7 @@ def create_availability(
 
 
 def get_availabilities():
-    connection = psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    connection = get_db_connection()
 
     try:
         cursor = connection.cursor()
@@ -130,13 +113,7 @@ def has_overlapping_availability(
     start_time,
     end_time
 ):
-    connection = psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    connection = get_db_connection()
 
     try:
         cursor = connection.cursor()
@@ -177,13 +154,7 @@ def cancel_availability_repo(
     reason,
     observation
 ):
-    connection = psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    connection = get_db_connection()
 
     try:
         cursor = connection.cursor()
@@ -339,15 +310,6 @@ def propose_reschedule_repo(
 # =========================================================
 # FUNCIONES PARA HORARIOS INHABILITADOS
 # =========================================================
-
-def get_db_connection():
-    return psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
 
 
 def create_disabled_schedule_db(
@@ -698,13 +660,7 @@ def delete_disabled_schedule_db(
         conn.close()
 
 def approve_availability_reschedule_repo(availability_id):
-    connection = psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             # Find matching appointment
@@ -746,13 +702,7 @@ def approve_availability_reschedule_repo(availability_id):
 
 
 def reject_availability_reschedule_repo(availability_id):
-    connection = psycopg.connect(
-        host=os.getenv("DB_HOST"),
-        port=os.getenv("DB_PORT"),
-        dbname=os.getenv("DB_NAME"),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD")
-    )
+    connection = get_db_connection()
     try:
         with connection.cursor() as cursor:
             cursor.execute(

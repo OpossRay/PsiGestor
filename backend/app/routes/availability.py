@@ -1,9 +1,13 @@
 from flask import Blueprint, jsonify, request
 import traceback
+from app.config import is_production_like, is_strict_auth_enabled
 from app.repositories.availability_repository import RehabilitationConflictError
 from app.services.auth_service import (
+    require_auth,
     require_role,
     get_current_user,
+    is_request_using_bearer_auth,
+    validate_csrf_for_cookie_session,
     viewer_has_full_access,
     redact_private_fields
 )
@@ -350,6 +354,7 @@ def rehabilitate_availability_route(id):
     '/availabilities/<int(signed=True):id>/reschedule',
     methods=['POST']
 )
+@require_auth
 def reschedule_availability_route(id):
     data = request.get_json() or {}
 
@@ -389,10 +394,15 @@ def reschedule_availability_route(id):
 def handle_disabled_schedules():
 
     if request.method == 'POST':
-        # Solo el psicólogo puede registrar inhabilitaciones
-        from app.services.auth_service import get_current_user
+        csrf_error = validate_csrf_for_cookie_session()
+        if csrf_error is not None:
+            return csrf_error
+
         current_user = get_current_user()
-        if not current_user or current_user.get('role') != 'psicologo':
+        if not current_user:
+            if is_request_using_bearer_auth() or is_strict_auth_enabled():
+                return jsonify({'error': 'No autorizado. Inicia sesión para continuar.'}), 401
+        elif current_user.get('role') != 'psicologo':
             return jsonify({'error': 'Acceso denegado. Solo el psicólogo puede inhabilitar horarios.'}), 403
 
         data = request.get_json() or {}
@@ -505,9 +515,9 @@ def handle_disabled_schedules():
 
             return jsonify({
                 'error': (
-                    'Error interno al guardar '
-                    'en base de datos: '
-                    f'{str(error)}'
+                    'Error interno al guardar en base de datos.'
+                    if is_production_like()
+                    else f'Error interno al guardar en base de datos: {str(error)}'
                 )
             }), 500
 
@@ -547,6 +557,7 @@ def handle_disabled_schedules():
     '/disabled-schedules/check-conflicts',
     methods=['POST']
 )
+@require_role('psicologo')
 def check_disabled_conflicts():
     data = request.get_json() or {}
 
@@ -691,7 +702,11 @@ def handle_disabled_schedule_by_id(
             )
 
             return jsonify({
-                'error': str(error)
+                'error': (
+                    'Error interno al actualizar la inhabilitación.'
+                    if is_production_like()
+                    else str(error)
+                )
             }), 500
 
 
@@ -714,10 +729,15 @@ def handle_disabled_schedule_by_id(
             )
 
             return jsonify({
-                'error': str(error)
+                'error': (
+                    'Error interno al rehabilitar el horario.'
+                    if is_production_like()
+                    else str(error)
+                )
             }), 500
 
 @availability_bp.route('/availabilities/<int(signed=True):id>/approve-reschedule', methods=['POST'])
+@require_auth
 def approve_availability_reschedule_route(id):
     try:
         from app.services.availability_service import approve_availability_reschedule
@@ -726,10 +746,17 @@ def approve_availability_reschedule_route(id):
     except ValueError as error:
         return jsonify({'error': str(error)}), 400
     except Exception as error:
-        return jsonify({'error': f'No fue posible aprobar la reprogramación: {error}'}), 500
+        return jsonify({
+            'error': (
+                'No fue posible aprobar la reprogramación.'
+                if is_production_like()
+                else f'No fue posible aprobar la reprogramación: {error}'
+            )
+        }), 500
 
 
 @availability_bp.route('/availabilities/<int(signed=True):id>/reject-reschedule', methods=['POST'])
+@require_auth
 def reject_availability_reschedule_route(id):
     try:
         from app.services.availability_service import reject_availability_reschedule
@@ -738,4 +765,10 @@ def reject_availability_reschedule_route(id):
     except ValueError as error:
         return jsonify({'error': str(error)}), 400
     except Exception as error:
-        return jsonify({'error': f'No fue posible rechazar la reprogramación: {error}'}), 500
+        return jsonify({
+            'error': (
+                'No fue posible rechazar la reprogramación.'
+                if is_production_like()
+                else f'No fue posible rechazar la reprogramación: {error}'
+            )
+        }), 500
