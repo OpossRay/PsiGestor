@@ -5,7 +5,7 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'calendar' // TEMPORAL: Redirigir directo al calendario mientras se desarrolla
+    redirectTo: 'psychologist/agenda' // TEMPORAL: Redirigir directo al calendario mientras se desarrolla
   },
   {
     path: 'login',
@@ -20,11 +20,26 @@ export const routes: Routes = [
         .then((m) => m.Register)
   },
   {
+    path: 'psychologist/agenda',
+    loadComponent: () =>
+      import('./features/psychologist/pages/agenda/agenda')
+        .then((m) => m.Agenda)
+  },
+  {
+    path: 'psychologist',
+    pathMatch: 'full',
+    redirectTo: 'psychologist/agenda'
+  },
+  {
+    path: 'psychologist/calendar',
+    pathMatch: 'full',
+    redirectTo: 'psychologist/agenda'
+  },
+  {
     path: 'calendar',
     // canActivate: [roleGuard(['psicologo'])], // TEMPORAL: Desactivado para entrar directo
-    loadComponent: () =>
-      import('./features/calendar/components/calendar/calendar')
-        .then((m) => m.Calendar)
+    pathMatch: 'full',
+    redirectTo: 'psychologist/agenda'
   },
   {
     path: 'portal-alumno',
@@ -49,8 +64,9 @@ export const routes: Routes = [
       import('./features/patient/pages/appointments/appointments')
         .then((m) => m.Appointments)
   },
+   /*
   {
-    path: 'psychologist',
+   path: 'psychologist',
     loadComponent: () =>
       import('./features/psychologist/psychologist-layout.component')
         .then(m => m.PsychologistLayoutComponent),
@@ -69,8 +85,9 @@ export const routes: Routes = [
 
     ]
   },
+  */
   {
     path: '**',
-    redirectTo: 'calendar'
+    redirectTo: 'pychologist/agenda'
   }
 ];
