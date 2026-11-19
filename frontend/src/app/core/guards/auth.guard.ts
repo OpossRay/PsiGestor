@@ -37,7 +37,7 @@ export const roleGuard = (allowedRoles: Array<'psicologo' | 'alumno'>): CanActiv
       }
       // Redirigir a la vista que le corresponde si no tiene permiso para esta ruta
       if (user.role === 'psicologo') {
-        return router.createUrlTree(['/calendar']);
+        return router.createUrlTree(['/psychologist/agenda']);
       }
       return router.createUrlTree(['/portal-alumno']);
     };
@@ -62,7 +62,7 @@ export const guestGuard: CanActivateFn = () => {
     }
     // Si ya está autenticado, redirigir según su rol
     if (user.role === 'psicologo') {
-      return router.createUrlTree(['/calendar']);
+      return router.createUrlTree(['/psychologist/agenda']);
     }
     return router.createUrlTree(['/portal-alumno']);
   };

@@ -44,7 +44,7 @@ export class Login {
         this.isLoading.set(false);
         const role = response.user.role;
         if (role === 'psicologo') {
-          this.router.navigate(['/calendar']);
+          this.router.navigate(['/psychologist/agenda']);
         } else {
           this.router.navigate(['/portal-alumno']);
         }

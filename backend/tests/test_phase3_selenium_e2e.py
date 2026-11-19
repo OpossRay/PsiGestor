@@ -234,8 +234,8 @@ class TestPhase3SeleniumFunctionalBrowserE2E(unittest.TestCase):
         password_input.send_keys("SecurePsychPass2026!")
         submit_btn.click()
 
-        wait.until(EC.url_contains("/calendar"))
-        self.assertIn("/calendar", self.driver.current_url)
+        wait.until(lambda d: "/psychologist/agenda" in d.current_url or "/calendar" in d.current_url)
+        self.assertTrue("/psychologist/agenda" in self.driver.current_url or "/calendar" in self.driver.current_url)
 
         # Verify zero tokens stored in localStorage or sessionStorage
         local_len = self.driver.execute_script("return window.localStorage.length;")
