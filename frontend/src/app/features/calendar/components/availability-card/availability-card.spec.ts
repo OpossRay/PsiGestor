@@ -12,6 +12,17 @@ describe('AvailabilityCard', () => {
 
     fixture = TestBed.createComponent(AvailabilityCard);
     component = fixture.componentInstance;
+    component.availability = {
+      id: 1,
+      date: '2026-11-20',
+      startTime: '09:00',
+      endTime: '10:00',
+      duration: 60,
+      breakTime: 0,
+      status: 'Disponible',
+      createdAt: '2026-11-19T00:00:00Z',
+    };
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

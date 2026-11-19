@@ -1,0 +1,266 @@
+<!-- SUB-HEADER BLANCO: NAVEGACIÓN DE FECHA Y PÍLDORAS DE FILTRO (P-02 VISTA DÍA) -->
+<section class="p02-controls-bar">
+  <div class="p02-controls-inner">
+    <!-- Navegador de fecha + Botón Hoy -->
+    <div class="p02-date-nav-row">
+      <div class="p02-date-stepper">
+        <button
+          type="button"
+          class="p02-step-btn"
+          (click)="dayChange.emit(-1)"
+          aria-label="Día anterior"
+        >
+          <ion-icon name="chevron-back-outline"></ion-icon>
+        </button>
+
+        <span class="p02-current-date" (click)="todayClick.emit()">
+          {{ formattedDate }}
+        </span>
+
+        <button
+          type="button"
+          class="p02-step-btn"
+          (click)="dayChange.emit(1)"
+          aria-label="Día siguiente"
+        >
+          <ion-icon name="chevron-forward-outline"></ion-icon>
+        </button>
+      </div>
+
+      <button type="button" class="p02-today-btn" (click)="todayClick.emit()">
+        Hoy
+      </button>
+    </div>
+
+    <!-- Píldoras de Filtro con Contadores -->
+    <div class="p02-filter-pills-row">
+      <button
+        type="button"
+        class="p02-filter-pill pill-all"
+        [class.selected]="statusFilter === 'all'"
+        (click)="filterChange.emit('all')"
+      >
+        Todos ({{ totalDayItemsCount }})
+      </button>
+
+      <button
+        type="button"
+        class="p02-filter-pill pill-disp"
+        [class.selected]="statusFilter === 'Disponible'"
+        (click)="filterChange.emit('Disponible')"
+      >
+        Disponibles ({{ availableCount }})
+      </button>
+
+      <button
+        type="button"
+        class="p02-filter-pill pill-res"
+        [class.selected]="statusFilter === 'Reservado'"
+        (click)="filterChange.emit('Reservado')"
+      >
+        Reservadas ({{ reservedCount }})
+      </button>
+
+      <button
+        type="button"
+        class="p02-filter-pill pill-reprog"
+        [class.selected]="statusFilter === 'Reprogramacion pendiente'"
+        (click)="filterChange.emit('Reprogramacion pendiente')"
+      >
+        Reprog. ({{ rescheduleCount }})
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- LISTA DE BLOQUES HORARIOS DEL DÍA (P-02) -->
+<main class="p02-timeline-container">
+  @if (isLoading && timelineItems.length === 0) {
+    <div class="loading-state">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Cargando agenda desde el backend...</p>
+    </div>
+  }
+
+  <div class="p02-cards-stack">
+    @for (item of timelineItems; track item.key) {
+
+      <!-- 1. BLOQUE DE DESCANSO -->
+      @if (item.type === 'break') {
+        <div class="p02-break-bar">
+          <span class="p02-break-time">
+            {{ formatTime12h(item.startTime) }} – {{ formatTime12h(item.endTime) }}
+          </span>
+          <div class="p02-break-label">
+            <ion-icon name="cafe-outline"></ion-icon>
+            <span>Descanso</span>
+          </div>
+        </div>
+      }
+
+      <!-- 2. BLOQUE INHABILITADO (DESDE DISABLED SCHEDULES) -->
+      @if (item.type === 'disabled' && item.disabled) {
+        <article class="p02-card p02-card-disabled">
+          <div class="p02-card-header">
+            <span class="p02-slot-time">
+              {{ formatTime12h(item.disabled.startTime) }} – {{ formatTime12h(item.disabled.endTime) }}
+            </span>
+            <span class="p02-status-badge badge-disabled">Inhabilitado</span>
+          </div>
+          <p class="p02-disabled-reason">
+            Motivo: {{ item.disabled.reason }}{{ item.disabled.observation ? ' (' + item.disabled.observation + ')' : '' }}
+          </p>
+        </article>
+      }
+
+      <!-- 3. BLOQUES DE ATENCIÓN (SLOTS) -->
+      @if (item.type === 'slot' && item.slot) {
+
+        <!-- 3A: DISPONIBLE -->
+        @if (item.slot.status === 'Disponible') {
+          <article class="p02-card p02-card-available" (click)="onSlotSelect(item.slot)">
+            <div class="p02-card-header">
+              <span class="p02-slot-time">
+                {{ formatTime12h(item.slot.startTime) }} – {{ formatTime12h(item.slot.endTime) }}
+              </span>
+              <span class="p02-status-badge badge-available">
+                <span class="status-dot"></span>
+                Disponible
+              </span>
+            </div>
+
+            <div class="p02-available-footer">
+              <span class="p02-free-text">Espacio libre para agendar</span>
+              <button
+                type="button"
+                class="p02-btn-agendar-alumno"
+                (click)="onBookClick(item.slot, $event)"
+              >
+                + Agendar Alumno
+              </button>
+            </div>
+          </article>
+        }
+
+        <!-- 3B: RESERVADA -->
+        @if (item.slot.status === 'Reservado') {
+          <article class="p02-card p02-card-reserved" (click)="onSlotSelect(item.slot)">
+            <div class="p02-card-header">
+              <span class="p02-slot-time">
+                {{ formatTime12h(item.slot.startTime) }} – {{ formatTime12h(item.slot.endTime) }}
+              </span>
+              <span class="p02-status-badge badge-reserved">
+                <span class="status-dot"></span>
+                Reservada
+              </span>
+            </div>
+
+            <div class="p02-student-block">
+              <h3 class="p02-student-name">{{ item.slot.studentName || 'Alumno registrado' }}</h3>
+              <p class="p02-student-meta">
+                Matrícula: {{ item.slot.folio || ('6542-ISC') }} ·
+                @if (item.slot.modality === 'Online' || item.slot.modality === 'En línea') {
+                  En línea
+                } @else {
+                  Presencial ({{ item.slot.location || 'Cubículo 2B' }})
+                }
+              </p>
+            </div>
+
+            <div class="p02-reserved-footer">
+              <div class="p02-duration-info">
+                <ion-icon name="time-outline"></ion-icon>
+                <span>{{ item.slot.duration || 45 }} min</span>
+              </div>
+
+              <button
+                type="button"
+                class="p02-link-details"
+                (click)="onSlotSelect(item.slot); $event.stopPropagation()"
+              >
+                <span>Ver Detalles</span>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+              </button>
+            </div>
+          </article>
+        }
+
+        <!-- 3C: SOLICITUD DE REPROGRAMACIÓN -->
+        @if (item.slot.status === 'Reprogramacion pendiente') {
+          <article class="p02-card p02-card-reschedule" (click)="onSlotSelect(item.slot)">
+            <div class="p02-card-header">
+              <span class="p02-slot-time">
+                {{ formatTime12h(item.slot.startTime) }} – {{ formatTime12h(item.slot.endTime) }}
+              </span>
+              <span class="p02-status-badge badge-reschedule">
+                <ion-icon name="sync-outline"></ion-icon>
+                <span>Solicitud Reprog.</span>
+              </span>
+            </div>
+
+            <div class="p02-student-block">
+              <h3 class="p02-student-name">{{ item.slot.studentName || 'Alumno registrado' }}</h3>
+              <p class="p02-student-meta">
+                Propone: {{ formatCardDate(item.slot.proposedDate || item.slot.date) }}, {{ formatTime12h(item.slot.proposedStartTime || item.slot.startTime) }}
+              </p>
+            </div>
+
+            <div class="p02-reschedule-tag-row">
+              <span class="p02-review-tag">
+                @if (item.slot.rescheduleRequestedBy === 'alumno') {
+                  Requiere tu revisión
+                } @else {
+                  Esperando confirmación del alumno
+                }
+              </span>
+            </div>
+          </article>
+        }
+
+        <!-- 3D: CANCELADA -->
+        @if (item.slot.status === 'Cancelado') {
+          <article class="p02-card p02-card-cancelled" (click)="onSlotSelect(item.slot)">
+            <div class="p02-card-header">
+              <span class="p02-slot-time">
+                {{ formatTime12h(item.slot.startTime) }} – {{ formatTime12h(item.slot.endTime) }}
+              </span>
+              <span class="p02-status-badge badge-cancelled">Cancelada</span>
+            </div>
+            <div class="p02-student-block">
+              <h3 class="p02-student-name">{{ item.slot.studentName || 'Alumno registrado' }}</h3>
+              <p class="p02-disabled-reason">
+                Motivo: {{ item.slot.cancellationReason || 'No especificado' }}
+              </p>
+            </div>
+          </article>
+        }
+
+        <!-- 3E: INHABILITADO INDIVIDUAL -->
+        @if (item.slot.status === 'Inhabilitado') {
+          <article class="p02-card p02-card-disabled">
+            <div class="p02-card-header">
+              <span class="p02-slot-time">
+                {{ formatTime12h(item.slot.startTime) }} – {{ formatTime12h(item.slot.endTime) }}
+              </span>
+              <span class="p02-status-badge badge-disabled">Inhabilitado</span>
+            </div>
+            <p class="p02-disabled-reason">
+              Motivo: {{ item.slot.cancellationReason || 'Horario bloqueado para atención' }}
+            </p>
+          </article>
+        }
+
+      }
+
+    }
+  </div>
+
+  <!-- Estado vacío -->
+  @if (!isLoading && timelineItems.length === 0) {
+    <div class="empty-state">
+      <ion-icon name="calendar-outline" class="empty-icon"></ion-icon>
+      <h3>Sin horarios en este filtro</h3>
+      <p>No se encontraron registros ni bloques para este día con el filtro seleccionado.</p>
+    </div>
+  }
+</main>

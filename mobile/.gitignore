@@ -68,3 +68,18 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Android native build artifacts, local properties & signing secrets
+android/.gradle/
+android/**/build/
+android/local.properties
+android/captures/
+android/.idea/
+android/*.iml
+android/**/*.apk
+android/**/*.aab
+android/**/*.jks
+android/**/*.keystore
+android/**/keystore.properties
+android/**/*.p12
+android/app/src/main/assets/public/

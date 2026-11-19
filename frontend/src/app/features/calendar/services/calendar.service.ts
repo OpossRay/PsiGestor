@@ -3,6 +3,7 @@ import { isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, tap } from 'rxjs';
 import { Availability, DisabledSchedule } from '../models/availability.model';
+import { environment } from '../../../../environments/environment';
 
 export interface Student {
   id: number;
@@ -65,12 +66,12 @@ export class CalendarService {
     this.scheduleChangedSubject.next();
   }
 
-  // Propiedad centralizada para SSR (Docker) y Navegador
+  // Propiedad centralizada para SSR y Navegador por entorno
   private get baseUrl(): string {
     if (isPlatformServer(this.platformId)) {
-      return 'http://backend:5000';
+      return environment.ssrApiUrl;
     }
-    return 'http://localhost:5000';
+    return environment.apiUrl;
   }
 
   testConnection(): Observable<string> {

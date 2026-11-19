@@ -1,0 +1,126 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()">
+  <ng-template>
+    <ion-content class="p05-detail-content">
+      @if (slot) {
+        <div class="p05-screen-wrapper">
+          <!-- Header Institucional Oscuro P-05 -->
+          <header class="p05-topbar">
+            <button
+              type="button"
+              class="p05-back-btn"
+              (click)="onClose()"
+              aria-label="Volver a la agenda"
+            >
+              <ion-icon name="arrow-back-outline"></ion-icon>
+            </button>
+            <h1 class="p05-topbar-title">DETALLE DE LA CITA</h1>
+            <div class="p05-topbar-spacer"></div>
+          </header>
+
+          <main class="p05-body">
+            <!-- Tarjeta Principal: Estado, Alumno y Metadatos 2x2 -->
+            <section class="p05-summary-card">
+              <div class="p05-status-folio-row">
+                <span class="p05-confirm-pill">
+                  <span class="p05-confirm-dot"></span>
+                  CITA CONFIRMADA
+                </span>
+                <span class="p05-folio-text">Folio: {{ getFolio(slot) }}</span>
+              </div>
+
+              <!-- Ficha del Alumno -->
+              <div class="p05-student-block">
+                <div class="p05-avatar-box">
+                  {{ getStudentInitials(slot) }}
+                </div>
+                <div class="p05-student-texts">
+                  <h2 class="p05-student-name">{{ slot.studentName || 'Alumno registrado' }}</h2>
+                  <p class="p05-student-meta">
+                    Matrícula: {{ slot.folio || '6542-ISC' }} · {{ slot.studentSemester ? slot.studentSemester + 'mo Semestre' : '7mo Semestre' }}
+                  </p>
+                  <p class="p05-student-email">{{ getStudentEmail(slot) }}</p>
+                </div>
+              </div>
+
+              <hr class="p05-divider" />
+
+              <!-- Grid 2x2: Fecha, Horario, Modalidad, Duración -->
+              <div class="p05-meta-grid">
+                <div class="p05-meta-item">
+                  <span class="p05-meta-label">Fecha de la sesión</span>
+                  <strong class="p05-meta-value">{{ formatCardDate(slot.date) }}</strong>
+                </div>
+
+                <div class="p05-meta-item">
+                  <span class="p05-meta-label">Horario asignado</span>
+                  <strong class="p05-meta-value">
+                    {{ formatTime12h(slot.startTime) }} – {{ formatTime12h(slot.endTime) }}
+                  </strong>
+                </div>
+
+                <div class="p05-meta-item">
+                  <span class="p05-meta-label">Modalidad</span>
+                  @if (slot.modality === 'Online' || slot.modality === 'En línea') {
+                    <strong class="p05-meta-value modality-blue">
+                      <ion-icon name="videocam-outline"></ion-icon>
+                      <span>En línea (Google Meet)</span>
+                    </strong>
+                  } @else {
+                    <strong class="p05-meta-value modality-blue">
+                      <ion-icon name="business-outline"></ion-icon>
+                      <span>Presencial ({{ slot.location || 'Cubículo 2B' }})</span>
+                    </strong>
+                  }
+                </div>
+
+                <div class="p05-meta-item">
+                  <span class="p05-meta-label">Duración</span>
+                  <strong class="p05-meta-value">{{ slot.duration || 45 }} Minutos</strong>
+                </div>
+              </div>
+            </section>
+
+            <!-- Tarjeta 2: Motivo de Atención Registrado -->
+            <section class="p05-reason-card">
+              <h3 class="p05-reason-heading">MOTIVO DE ATENCIÓN REGISTRADO</h3>
+              <div class="p05-reason-quote-box">
+                "{{ slot.consultationReason || 'Seguimiento sobre manejo de ansiedad académica y organización de tiempos para entregas finales de fin de semestre.' }}"
+              </div>
+            </section>
+
+            <!-- Botones de Acción (Reprogramar y Cancelar) -->
+            <div class="p05-actions-stack">
+              <button
+                type="button"
+                class="p05-btn-reschedule"
+                (click)="onReschedule()"
+              >
+                <svg class="p05-btn-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm-6-7h-2v3H8v2h3v3h2v-3h3v-2h-3v-3z"/>
+                </svg>
+                <span>Proponer Reprogramación de Horario</span>
+              </button>
+
+              <button
+                type="button"
+                class="p05-btn-cancel"
+                (click)="onCancel()"
+              >
+                <svg class="p05-btn-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm-4.41-7.59L13.17 14l-1.42-1.41-1.41 1.41 1.41 1.42-1.41 1.41 1.41 1.41 1.42-1.41 1.41 1.41 1.41-1.41-1.41-1.41 1.41-1.42-1.41-1.41z"/>
+                </svg>
+                <span>Cancelar Cita</span>
+              </button>
+            </div>
+          </main>
+        </div>
+      }
+    </ion-content>
+
+    <!-- Barra de navegación inferior reutilizada -->
+    <app-bottom-nav
+      activeTab="agenda"
+      (tabChange)="onNavTab($event)"
+    ></app-bottom-nav>
+  </ng-template>
+</ion-modal>

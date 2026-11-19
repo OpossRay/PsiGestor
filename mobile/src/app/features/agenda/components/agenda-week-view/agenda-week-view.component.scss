@@ -1,0 +1,360 @@
+/* P-03 AGENDA · VISTA SEMANA (PROTOTIPO ALTA FIDELIDAD FIGMA) */
+.p03-week-surface {
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.p03-week-nav-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.p03-week-stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.p03-week-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  cursor: pointer;
+}
+
+.p02-step-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  border: none;
+  color: #475569;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: #e2e8f0;
+  }
+}
+
+.p02-today-btn {
+  padding: 5px 13px;
+  border-radius: 8px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  color: #0284c7;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:active {
+    background: #e0f2fe;
+  }
+}
+
+/* Cabecera de columnas de días: GMT-6 + DOM a SÁB */
+.p03-days-header-grid {
+  display: grid;
+  grid-template-columns: 46px repeat(7, minmax(0, 1fr));
+  align-items: center;
+  padding: 8px 4px 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+}
+
+.p03-gmt-cell {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.p03-day-col-head {
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  font-family: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+
+  .p03-day-abbr {
+    font-size: 10px;
+    font-weight: 700;
+    color: #64748b;
+    letter-spacing: 0.02em;
+  }
+
+  .p03-day-num-badge {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    transition: all 0.15s ease;
+  }
+
+  &.is-weekend {
+    .p03-day-abbr,
+    .p03-day-num-badge {
+      color: #94a3b8;
+    }
+  }
+
+  &.is-today:not(.is-selected) {
+    .p03-day-abbr {
+      color: #0284c7;
+      font-weight: 800;
+    }
+  }
+
+  &.is-selected {
+    .p03-day-abbr {
+      color: #0369a1;
+      font-weight: 800;
+    }
+
+    .p03-day-num-badge {
+      background: #0369a1;
+      color: #ffffff;
+      font-weight: 800;
+      box-shadow: 0 2px 6px rgba(3, 105, 161, 0.3);
+    }
+  }
+}
+
+/* Cuerpo del Grid Horario Semanal (08:00 a 14:00) */
+.p03-schedule-body {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  position: relative;
+  min-height: 430px;
+  background: #ffffff;
+}
+
+.p03-hours-gutter {
+  border-right: 1px solid #f1f5f9;
+  padding-top: 8px;
+
+  .p03-hour-label {
+    height: 56px;
+    font-size: 10.5px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-align: center;
+    line-height: 1;
+  }
+}
+
+.p03-columns-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-height: 430px;
+  padding-right: 4px;
+}
+
+.p03-horizontal-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding-top: 12px;
+
+  .p03-guide-line {
+    height: 56px;
+    border-top: 1px solid #f8fafc;
+  }
+}
+
+.p03-day-column {
+  position: relative;
+  border-right: 1px solid #f1f5f9;
+  min-height: 430px;
+  cursor: pointer;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  &.selected-column {
+    background: rgba(240, 249, 255, 0.32);
+  }
+}
+
+/* Bloques / Chips dentro de cada columna de día */
+.p03-event-chip {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  min-height: 42px;
+  border-radius: 6px;
+  padding: 4px 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.12s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
+
+  .chip-line1 {
+    font-size: 9.5px;
+    font-weight: 800;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chip-line2 {
+    font-size: 8.5px;
+    font-weight: 600;
+    line-height: 1.15;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .chip-line3 {
+    font-size: 8px;
+    font-weight: 500;
+    line-height: 1.1;
+    margin-top: 1px;
+    opacity: 0.9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 1. Libre / Disponible */
+  &.chip-free {
+    background: #e8faf0;
+    border: 1.5px solid #22c55e;
+    color: #15803d;
+  }
+
+  /* 2. Cita Reservada en día seleccionado */
+  &.chip-reserved-solid {
+    background: #0369a1;
+    border: 1px solid #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(3, 105, 161, 0.25);
+
+    .chip-line2 {
+      color: #bae6fd;
+    }
+  }
+
+  /* 3. Cita Reservada en otro día de la semana */
+  &.chip-reserved-soft {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #0369a1;
+  }
+
+  /* 4. Reprogramación */
+  &.chip-reschedule {
+    background: #d97706;
+    border: 1px solid #b45309;
+    color: #ffffff;
+    box-shadow: 0 2px 5px rgba(217, 119, 6, 0.22);
+
+    .chip-line2 {
+      color: #fef3c7;
+    }
+  }
+
+  /* 5. Bloqueo / Inhabilitado */
+  &.chip-disabled {
+    background: #64748b;
+    border: 1px solid #475569;
+    color: #ffffff;
+    min-height: 46px;
+
+    .chip-line2 {
+      font-weight: 700;
+    }
+  }
+
+  /* 6. Descanso */
+  &.chip-break {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #64748b;
+    min-height: 34px;
+    justify-content: center;
+    align-items: center;
+
+    .chip-line1 {
+      font-size: 8.5px;
+      font-weight: 700;
+    }
+  }
+}
+
+/* Barra de Leyenda Inferior (Cita, Libre, Reprog., Inhab.) */
+.p03-legend-bar {
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+
+  .p03-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+
+      &.dot-cita {
+        background: #0369a1;
+      }
+
+      &.dot-libre {
+        background: #16a34a;
+      }
+
+      &.dot-reprog {
+        background: #d97706;
+      }
+
+      &.dot-inhab {
+        background: #64748b;
+      }
+    }
+  }
+}

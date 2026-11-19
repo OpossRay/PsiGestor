@@ -1,0 +1,147 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()">
+  <ng-template>
+    <ion-content class="p05-detail-content">
+      <div class="p07-screen-wrapper">
+        <!-- Header Institucional Oscuro P-07 -->
+        <header class="p05-topbar">
+          <button
+            type="button"
+            class="p05-back-btn"
+            (click)="onClose()"
+            aria-label="Cerrar modal de inhabilitación"
+          >
+            <ion-icon name="arrow-back-outline"></ion-icon>
+          </button>
+          <h1 class="p05-topbar-title">INHABILITAR HORARIO</h1>
+          <div class="p05-topbar-spacer"></div>
+        </header>
+
+        <form class="p07-body" (ngSubmit)="onSubmit()">
+          <!-- Banner Ámbar de Advertencia -->
+          <section class="p07-warning-banner">
+            <svg class="p07-warn-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+            </svg>
+            <p class="p07-warn-text">
+              El horario inhabilitado bloqueará la reserva para los alumnos durante ese rango.
+            </p>
+          </section>
+
+          <!-- Tarjeta Principal del Formulario P-07 -->
+          <section class="p07-form-card">
+            <!-- 1. Fecha a Inhabilitar con Picker Nativo -->
+            <div class="p07-field-group">
+              <label class="p07-field-label">Fecha a Inhabilitar</label>
+              <div class="p07-date-box">
+                <span class="p07-date-display">{{ formatFullDate(form.date) }}</span>
+                <ion-icon name="calendar-outline" class="p07-date-icon"></ion-icon>
+                <input
+                  type="date"
+                  class="p07-native-picker-overlay"
+                  [(ngModel)]="form.date"
+                  name="disableDate"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- 2. Grid de 2 Columnas para Horas -->
+            <div class="p07-time-grid">
+              <!-- Hora Inicio -->
+              <div class="p07-time-col">
+                <label class="p07-field-label">Hora Inicio</label>
+                <div class="p07-time-box">
+                  <span class="p07-time-display">{{ formatTime12h(form.startTime) }}</span>
+                  <input
+                    type="time"
+                    class="p07-native-picker-overlay"
+                    [(ngModel)]="form.startTime"
+                    name="disableStartTime"
+                    required
+                  />
+                </div>
+              </div>
+
+              <!-- Hora Término -->
+              <div class="p07-time-col">
+                <label class="p07-field-label">Hora Término</label>
+                <div class="p07-time-box">
+                  <span class="p07-time-display">{{ formatTime12h(form.endTime) }}</span>
+                  <input
+                    type="time"
+                    class="p07-native-picker-overlay"
+                    [(ngModel)]="form.endTime"
+                    name="disableEndTime"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Motivo Institucional del Bloqueo -->
+            <div class="p07-field-group">
+              <label class="p07-field-label">Motivo Institucional del Bloqueo</label>
+              <div class="p07-select-box">
+                <select
+                  class="p07-native-select"
+                  [(ngModel)]="form.reason"
+                  name="disableReason"
+                  required
+                >
+                  @for (reason of institutionalReasons; track reason.value) {
+                    <option [value]="reason.value">{{ reason.label }}</option>
+                  }
+                </select>
+              </div>
+
+              <textarea
+                class="p07-textarea"
+                rows="3"
+                placeholder="Participación en taller de acreditación académica CACEI en aula magna."
+                [(ngModel)]="form.observation"
+                name="disableObservation"
+              ></textarea>
+            </div>
+          </section>
+
+          <!-- Tarjeta de Validación de Disponibilidad -->
+          <section class="p07-validation-card" [class.has-conflict]="conflictingSlots.length > 0">
+            <span class="p07-val-heading">Validación de Disponibilidad:</span>
+
+            @if (conflictingSlots.length === 0) {
+              <div class="p07-val-status status-ok">
+                <svg class="p07-check-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <span>No existen citas de alumnos agendadas en este lapso.</span>
+              </div>
+            } @else {
+              <div class="p07-val-status status-conflict">
+                <ion-icon name="alert-circle-outline"></ion-icon>
+                <span>Atención: Existe {{ conflictingSlots.length }} cita confirmada en este rango.</span>
+              </div>
+            }
+          </section>
+
+          <!-- Botón de Acción -->
+          <button
+            type="submit"
+            class="p07-confirm-btn"
+            [class.btn-conflict]="conflictingSlots.length > 0"
+          >
+            @if (conflictingSlots.length > 0) {
+              Ver Conflicto con Cita Existente
+            } @else {
+              Confirmar Inhabilitación
+            }
+          </button>
+        </form>
+      </div>
+    </ion-content>
+
+    <app-bottom-nav
+      activeTab="disponibilidad"
+      (tabChange)="onNavTab($event)"
+    ></app-bottom-nav>
+  </ng-template>
+</ion-modal>

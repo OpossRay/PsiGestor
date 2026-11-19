@@ -1,0 +1,65 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()">
+  <ng-template>
+    <ion-content class="p10-modal-content">
+      <div class="p10-screen-wrapper">
+        <!-- Spacer superior -->
+        <div class="p10-top-spacer"></div>
+
+        <!-- Contenedor Central de Éxito -->
+        <div class="p10-center-content">
+          <!-- Icono / Badge Circular Verde con Calendario -->
+          <div class="p10-success-badge">
+            <svg viewBox="0 0 48 48" class="p10-calendar-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="8" y="12" width="32" height="28" rx="6" stroke="#16A34A" stroke-width="3" fill="#DCFCE7"/>
+              <path d="M8 20H40" stroke="#16A34A" stroke-width="3"/>
+              <path d="M16 8V14" stroke="#16A34A" stroke-width="3" stroke-linecap="round"/>
+              <path d="M32 8V14" stroke="#16A34A" stroke-width="3" stroke-linecap="round"/>
+              <path d="M18 30L22 34L30 26" stroke="#16A34A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+
+          <!-- Título y Subtítulo de Confirmación -->
+          <h1 class="p10-title">¡Reprogramación Aprobada!</h1>
+          <p class="p10-subtitle">
+            La cita ha sido actualizada exitosamente en la agenda y se ha notificado {{ isFemale(slot?.studentName) ? 'a la alumna' : 'al alumno' }} por correo institucional.
+          </p>
+
+          <!-- Tarjeta de Resumen con Detalles de la Cita -->
+          <section class="p10-card">
+            <div class="p10-row">
+              <span class="p10-label">{{ isFemale(slot?.studentName) ? 'Alumna:' : 'Alumno:' }}</span>
+              <strong class="p10-value">{{ slot?.studentName || 'Sofía Morales Pech' }}</strong>
+            </div>
+
+            <div class="p10-row">
+              <span class="p10-label">Nuevo Horario:</span>
+              <strong class="p10-value p10-value-blue">{{ formatNewSchedule(slot) }}</strong>
+            </div>
+
+            <div class="p10-row">
+              <span class="p10-label">Modalidad:</span>
+              <span class="p10-value">{{ formatModality(slot) }}</span>
+            </div>
+
+            <div class="p10-row">
+              <span class="p10-label">Horario Anterior:</span>
+              <strong class="p10-value p10-value-green">Liberado a "Disponible"</strong>
+            </div>
+          </section>
+        </div>
+
+        <!-- Botón de Acción en la Parte Inferior -->
+        <footer class="p10-footer">
+          <button
+            type="button"
+            class="p10-btn-agenda"
+            (click)="onGoToAgenda()"
+            aria-label="Volver a Mi Agenda"
+          >
+            Volver a Mi Agenda
+          </button>
+        </footer>
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

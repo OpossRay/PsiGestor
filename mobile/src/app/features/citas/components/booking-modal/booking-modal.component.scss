@@ -1,0 +1,554 @@
+.p08-modal-content {
+  --background: #f8fafc;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.p08-screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #f8fafc;
+  padding-bottom: 24px;
+}
+
+/* ============================================================
+   TOPBAR OSCURO INSTITUCIONAL P-08
+   ============================================================ */
+.p08-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #0f2942;
+  padding: 16px 20px;
+  color: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.p08-back-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s;
+
+  ion-icon {
+    font-size: 20px;
+  }
+
+  &:hover,
+  &:active {
+    background: rgba(255, 255, 255, 0.2);
+  }
+}
+
+.p08-topbar-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  color: #38bdf8;
+  text-transform: uppercase;
+  text-align: center;
+  flex: 1;
+}
+
+.p08-topbar-spacer {
+  width: 36px;
+}
+
+/* ============================================================
+   BODY & CARDS P-08
+   ============================================================ */
+.p08-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.p08-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(15, 41, 66, 0.05);
+}
+
+/* 1. ESPACIO EN AGENDA */
+.p08-slot-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.p08-slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+}
+
+.p08-slot-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.p08-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.p08-badge-disponible {
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.p08-badge-nodisponible {
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.3px;
+}
+
+.p08-slot-toggle-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  cursor: pointer;
+  padding: 0;
+
+  ion-icon {
+    font-size: 16px;
+  }
+}
+
+.p08-slot-current {
+  cursor: pointer;
+  padding: 4px 0 2px 0;
+}
+
+.p08-slot-text {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+/* SELECTOR DE ESPACIOS DISPONIBLES */
+.p08-slot-picker-list {
+  margin-top: 10px;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.p08-picker-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284c7;
+  text-transform: uppercase;
+}
+
+.p08-picker-empty {
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 10px;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.p08-picker-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.p08-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &.selected {
+    background: #f0f9ff;
+    border-color: #0284c7;
+  }
+
+  &:hover {
+    background: #f0f9ff;
+  }
+}
+
+.p08-picker-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  span {
+    font-size: 11px;
+    color: #64748b;
+  }
+}
+
+.p08-picker-check {
+  color: #0284c7;
+  font-size: 18px;
+}
+
+/* 2. FORMULARIO BUSCADOR ALUMNO, MODALIDAD Y MOTIVO */
+.p08-form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.p08-card-heading {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.p08-search-box {
+  display: flex;
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  height: 44px;
+  padding: 0 12px;
+  gap: 10px;
+  transition: border-color 0.2s;
+
+  &:focus-within {
+    border-color: #0284c7;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+  }
+}
+
+.p08-search-icon {
+  font-size: 18px;
+  color: #64748b;
+}
+
+.p08-search-input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  font-size: 13px;
+  color: #0f172a;
+  font-weight: 500;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+}
+
+.p08-search-spinner {
+  width: 18px;
+  height: 18px;
+  color: #0284c7;
+}
+
+.p08-clear-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #94a3b8;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 18px;
+  }
+}
+
+/* RESULTADOS DESPLEGABLES */
+.p08-search-dropdown {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+  max-height: 190px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 15;
+}
+
+.p08-search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover,
+  &:active {
+    background: #f0f9ff;
+  }
+}
+
+.p08-result-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: #0284c7;
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.p08-result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+
+  strong {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  span {
+    font-size: 11px;
+    color: #64748b;
+  }
+}
+
+/* ALUMNO SELECCIONADO (FIGMA P-08) */
+.p08-selected-student-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f0f9ff;
+  border: 1.5px solid #93c5fd;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 2px;
+}
+
+.p08-student-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #0284c7;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.25);
+}
+
+.p08-student-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.p08-student-name {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.p08-student-matricula {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.p08-student-check {
+  font-size: 24px;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+/* LABELS & MODALIDAD */
+.p08-field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+  margin-top: 4px;
+}
+
+.p08-modality-group {
+  display: flex;
+  gap: 10px;
+}
+
+.p08-modality-btn {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  ion-icon {
+    font-size: 16px;
+  }
+
+  &.active {
+    background: #0284c7;
+    color: #ffffff;
+    border-color: #0284c7;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.2);
+  }
+}
+
+/* MOTIVO TEXTAREA */
+.p08-textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  color: #0f172a;
+  line-height: 1.45;
+  resize: none;
+  font-family: inherit;
+  box-sizing: border-box;
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+  }
+}
+
+/* BOTÓN DE ACCIÓN P-08 */
+.p08-submit-btn {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  height: 48px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  transition: background 0.2s, opacity 0.2s;
+
+  &:hover:not(:disabled) {
+    background: #0369a1;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+
+  .btn-spinner {
+    width: 20px;
+    height: 20px;
+    color: #ffffff;
+  }
+}

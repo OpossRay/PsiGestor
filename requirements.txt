@@ -12,3 +12,4 @@ tzdata==2026.3
 Werkzeug==3.1.8
 Flask-CORS==5.0.1
 Flasgger==0.9.7.1
+gunicorn==23.0.0

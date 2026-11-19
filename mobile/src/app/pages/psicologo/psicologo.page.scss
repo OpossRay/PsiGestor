@@ -609,3 +609,1875 @@
     color: #7f1d1d;
   }
 }
+
+/* ============================================================
+   VISTA INICIO (HOME DASHBOARD DEL PSICÓLOGO)
+   ============================================================ */
+.home-wrapper {
+  max-width: 460px;
+  margin: 0 auto;
+  padding: 18px 20px 32px;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.home-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+  padding-top: 6px;
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #0f172a;
+    border-radius: 10px;
+    transition: background 0.15s ease;
+
+    &:active {
+      background: rgba(15, 23, 42, 0.06);
+    }
+  }
+
+  .menu-btn {
+    font-size: 28px;
+    margin-left: -4px;
+  }
+
+  .greeting-box {
+    .greeting-title {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 800;
+      color: #0f172a;
+      line-height: 1.18;
+      letter-spacing: -0.02em;
+    }
+
+    .greeting-subtitle {
+      margin: 2px 0 0;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #6b7280;
+      line-height: 1.3;
+    }
+  }
+
+  .notif-btn {
+    position: relative;
+    font-size: 24px;
+    color: #1e293b;
+    padding: 6px;
+
+    .notif-dot {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ef4444;
+      border: 1.5px solid #f8fafc;
+    }
+  }
+}
+
+/* Tarjeta Hero Azul: Gestión de citas */
+.hero-appointments-card {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  border-radius: 18px;
+  padding: 18px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.985);
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+  }
+
+  .hero-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #ffffff;
+    font-size: 26px;
+  }
+
+  .hero-text-box {
+    flex: 1;
+
+    h2 {
+      margin: 0 0 4px;
+      font-size: 17px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    p {
+      margin: 0;
+      font-size: 12.5px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.92);
+      line-height: 1.38;
+    }
+  }
+
+  .hero-chevron {
+    color: #ffffff;
+    font-size: 20px;
+    flex-shrink: 0;
+    opacity: 0.95;
+  }
+}
+
+/* Grid 3x2 de Módulos */
+.modules-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 26px;
+
+  .module-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.6);
+    border-radius: 16px;
+    padding: 16px 8px 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      border-color: rgba(37, 99, 235, 0.25);
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    .module-icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: #eff6ff;
+      color: #2563eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+      font-size: 22px;
+
+      .custom-module-svg {
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .module-label {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #1e293b;
+      text-align: center;
+      line-height: 1.2;
+    }
+  }
+}
+
+/* Sección Citas de hoy */
+.today-appointments-section {
+  .section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .section-title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.015em;
+    }
+
+    .ver-agenda-link {
+      background: transparent;
+      border: none;
+      padding: 4px 0;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #2563eb;
+      cursor: pointer;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+
+  .today-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .today-appointment-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.65);
+    border-radius: 16px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:active {
+      transform: scale(0.985);
+    }
+
+    .today-avatar-circle {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #ecfdf5;
+      color: #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .today-appointment-info {
+      flex: 1;
+
+      .today-time {
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 3px;
+      }
+
+      .today-student {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.01em;
+      }
+    }
+
+    .today-chevron {
+      color: #94a3b8;
+      font-size: 19px;
+      flex-shrink: 0;
+    }
+  }
+
+  .today-empty-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.65);
+    border-radius: 16px;
+    padding: 20px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+
+    .today-empty-icon {
+      font-size: 20px;
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .today-empty-text {
+      margin: 0;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #6b7280;
+    }
+  }
+}
+
+/* ============================================================
+   SUBPÁGINAS (ESTUDIANTES / MÁS)
+   ============================================================ */
+.subpage-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-top: 4px;
+
+  .icon-btn {
+    background: transparent;
+    border: none;
+    padding: 6px;
+    font-size: 22px;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .subpage-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  .topbar-spacer {
+    width: 34px;
+  }
+}
+
+.more-profile-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+
+  .more-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #2563eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+
+  .more-info {
+    h3 {
+      margin: 0 0 2px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      color: #6b7280;
+    }
+  }
+}
+
+.more-menu-list {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+
+  .more-menu-item {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 15px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: inherit;
+    cursor: pointer;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .more-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #1e293b;
+      font-size: 14px;
+      font-weight: 600;
+
+      ion-icon {
+        font-size: 20px;
+        color: #475569;
+      }
+    }
+
+    .more-chevron {
+      color: #94a3b8;
+      font-size: 18px;
+    }
+  }
+}
+
+.logout-card-btn {
+  width: 100%;
+  background: #fef2f2;
+  border: 1px solid #fee2e2;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #dc2626;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 20px;
+  }
+}
+
+/* ============================================================
+   BARRA DE NAVEGACIÓN INFERIOR (INICIO, AGENDA, ESTUDIANTES, MÁS)
+   ============================================================ */
+.psi-bottom-footer {
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.psi-bottom-nav {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+  padding: 4px 8px;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  .psi-nav-item {
+    flex: 1;
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #94a3b8;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color 0.15s ease;
+
+    ion-icon,
+    .nav-svg-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    span {
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+
+    &.active {
+      color: #0284c7;
+
+      span {
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+/* ============================================================
+   VISTA AGENDA REDISEÑADA (CALENDARIO SEMANAL Y TARJETAS)
+   ============================================================ */
+.agenda-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-top: 4px;
+
+  .agenda-back-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #0f172a;
+    cursor: pointer;
+    margin-left: -6px;
+
+    &:active {
+      background: rgba(15, 23, 42, 0.06);
+    }
+  }
+
+  .agenda-screen-title {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.015em;
+  }
+
+  .agenda-add-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #2563eb;
+    border: none;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.28);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+}
+
+.week-calendar-section {
+  padding-bottom: 18px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #f1f5f9;
+
+  .month-nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    margin-bottom: 18px;
+
+    .month-arrow-btn {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      font-size: 18px;
+      padding: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+
+      &:active {
+        background: #f1f5f9;
+      }
+    }
+
+    .month-year-label {
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      cursor: pointer;
+    }
+  }
+
+  .week-days-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    text-align: center;
+
+    .week-day-col {
+      background: transparent;
+      border: none;
+      padding: 4px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-family: inherit;
+
+      .week-day-name {
+        font-size: 12.5px;
+        font-weight: 500;
+        color: #94a3b8;
+      }
+
+      .week-day-num {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14.5px;
+        font-weight: 600;
+        color: #1e293b;
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+
+      &.selected {
+        .week-day-name {
+          color: #2563eb;
+          font-weight: 700;
+        }
+
+        .week-day-num {
+          background: #2563eb;
+          color: #ffffff;
+          font-weight: 700;
+          box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        }
+      }
+    }
+  }
+}
+
+.selected-day-heading {
+  margin: 0 0 14px;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.015em;
+}
+
+.agenda-slots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.agenda-item-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.035);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &.clickable {
+    cursor: pointer;
+
+    &:active {
+      transform: scale(0.985);
+    }
+  }
+
+  .agenda-time-col {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 44px;
+    flex-shrink: 0;
+
+    .time-start {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.25;
+    }
+
+    .time-end {
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      line-height: 1.25;
+      margin-top: 2px;
+    }
+  }
+
+  .agenda-divider {
+    width: 1px;
+    height: 36px;
+    background: #f1f5f9;
+    margin: 0 14px;
+    flex-shrink: 0;
+  }
+
+  .agenda-info-col {
+    flex: 1;
+    min-width: 0;
+    margin-right: 10px;
+
+    .agenda-item-title {
+      margin: 0 0 3px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0f172a;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .agenda-item-sub {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 500;
+      color: #6b7280;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .status-pill {
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+    line-height: 1.2;
+
+    &.pill-available {
+      background: #dcfce7;
+      color: #16a34a;
+    }
+
+    &.pill-reserved {
+      background: #dbeafe;
+      color: #2563eb;
+    }
+
+    &.pill-reschedule {
+      background: #fef3c7;
+      color: #b45309;
+    }
+
+    &.pill-cancelled {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    &.pill-disabled {
+      background: #f1f5f9;
+      color: #64748b;
+    }
+  }
+}
+
+/* ============================================================
+   VISTA GESTIÓN DE CITAS (ENFOQUE OPERATIVO Y CICLO DE VIDA)
+   ============================================================ */
+.gestion-greeting-bar {
+  margin-bottom: 14px;
+}
+
+.gestion-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+
+  .gestion-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+
+    .gestion-back-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #e7eefe;
+      border: none;
+      color: #151c27;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 19px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s ease, transform 0.15s ease;
+
+      &:active {
+        transform: scale(0.95);
+        background: #dce2f3;
+      }
+    }
+
+    .gestion-title-texts {
+      min-width: 0;
+
+      h2 {
+        margin: 0;
+        font-size: 18.5px;
+        font-weight: 700;
+        color: #151c27;
+        line-height: 1.2;
+        letter-spacing: -0.015em;
+      }
+
+      p {
+        margin: 2px 0 0;
+        font-size: 12px;
+        font-weight: 500;
+        color: #737686;
+      }
+    }
+  }
+
+  .btn-nueva-cita {
+    background: #2563eb;
+    border: none;
+    border-radius: 12px;
+    padding: 9px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ffffff;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+    transition: background 0.15s ease, transform 0.15s ease;
+
+    ion-icon {
+      font-size: 17px;
+    }
+
+    &:active {
+      background: #1d4ed8;
+      transform: scale(0.96);
+    }
+  }
+}
+
+/* Banner de 3 Métricas */
+.gestion-metrics-banner {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 12px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f1f5f9;
+  margin-bottom: 14px;
+
+  .metric-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px;
+    border-radius: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    .metric-value-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 2px;
+
+      ion-icon {
+        font-size: 15px;
+      }
+
+      strong {
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+    }
+
+    .metric-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #434655;
+      line-height: 1.2;
+    }
+
+    &.tile-amber {
+      background: #f0f3ff;
+
+      .metric-value-row {
+        color: #d97706;
+      }
+    }
+
+    &.tile-blue {
+      background: rgba(219, 225, 255, 0.55);
+
+      .metric-value-row {
+        color: #004ac6;
+      }
+    }
+
+    &.tile-teal {
+      background: rgba(109, 245, 225, 0.28);
+
+      .metric-value-row {
+        color: #006b5f;
+      }
+    }
+  }
+}
+
+/* Buscador */
+.gestion-search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 0 12px;
+  height: 44px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+
+  &:focus-within {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  }
+
+  .search-lead-icon {
+    font-size: 18px;
+    color: #737686;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .gestion-search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: #151c27;
+
+    &::placeholder {
+      color: #737686;
+    }
+  }
+
+  .search-tune-btn {
+    background: transparent;
+    border: none;
+    color: #737686;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    cursor: pointer;
+  }
+}
+
+/* Pestañas Segmentadas Horizontales */
+.gestion-segmented-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 8px;
+  margin-bottom: 8px;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .seg-tab-btn {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #434655;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+    transition: all 0.15s ease;
+
+    .seg-badge {
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: #e7eefe;
+      color: #434655;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    &.active {
+      background: #2563eb;
+      border-color: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 4px 10px rgba(37, 99, 235, 0.22);
+
+      .seg-badge {
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+/* Modalidad Bar */
+.gestion-modality-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  .modality-title {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #737686;
+  }
+
+  .modality-chips-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .mod-chip {
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      background: #ffffff;
+      color: #434655;
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+
+      &.active {
+        background: #dce2f3;
+        color: #004ac6;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+/* Tarjetas Operativas */
+.gestion-cards-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.op-appointment-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &.card-history {
+    opacity: 0.92;
+  }
+
+  .op-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+
+    .op-student-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+
+      .op-avatar {
+        position: relative;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 15px;
+        font-weight: 700;
+        flex-shrink: 0;
+
+        &.avatar-blue {
+          background: #dbe1ff;
+          color: #004ac6;
+        }
+
+        &.avatar-teal {
+          background: rgba(109, 245, 225, 0.45);
+          color: #006b5f;
+        }
+
+        &.avatar-neutral {
+          background: #e2e8f0;
+          color: #475569;
+        }
+
+        .avatar-status-dot {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          width: 11px;
+          height: 11px;
+          border-radius: 50%;
+          border: 2px solid #ffffff;
+
+          &.dot-emerald {
+            background: #10b981;
+          }
+
+          &.dot-amber {
+            background: #f59e0b;
+          }
+        }
+      }
+
+      .op-student-meta {
+        min-width: 0;
+
+        h3 {
+          margin: 0 0 2px;
+          font-size: 15px;
+          font-weight: 700;
+          color: #151c27;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        p {
+          margin: 0;
+          font-size: 12px;
+          color: #737686;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+    }
+
+    .op-badge {
+      flex-shrink: 0;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      ion-icon {
+        font-size: 13px;
+      }
+
+      &.badge-confirmed {
+        background: #eff6ff;
+        color: #004ac6;
+      }
+
+      &.badge-in-progress {
+        background: #dcfce7;
+        color: #15803d;
+      }
+
+      &.badge-reschedule {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      &.badge-completed {
+        background: #ecfdf5;
+        color: #047857;
+      }
+
+      &.badge-cancelled {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+    }
+  }
+
+  /* Bloque Fecha/Hora y Cubículo (Card Confirmada) */
+  .op-schedule-venue-box {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #f0f3ff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    .venue-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .alarm-icon-box {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #004ac6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      }
+
+      .venue-time-texts {
+        .venue-date {
+          display: block;
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #004ac6;
+        }
+
+        .venue-hour {
+          margin: 1px 0 0;
+          font-size: 15px;
+          font-weight: 700;
+          color: #151c27;
+
+          small {
+            font-size: 11.5px;
+            font-weight: 500;
+            color: #737686;
+          }
+        }
+      }
+    }
+
+    .venue-right {
+      text-align: right;
+      min-width: 0;
+
+      .venue-tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 6px;
+        background: #dce2f3;
+        color: #434655;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .venue-reason {
+        margin: 3px 0 0;
+        font-size: 11.5px;
+        color: #737686;
+        max-width: 135px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  /* Bloque Reprogramación (Anterior vs Propuesta) */
+  .op-reschedule-alert-box {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fffbeb;
+    border: 1px solid #fef3c7;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+
+    .resched-alert-icon {
+      font-size: 18px;
+      color: #d97706;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .resched-alert-texts {
+      min-width: 0;
+
+      .resched-reason-title {
+        margin: 0 0 3px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #92400e;
+      }
+
+      .resched-old-time {
+        display: block;
+        font-size: 11.5px;
+        color: #737686;
+        text-decoration: line-through;
+      }
+
+      .resched-new-time {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #151c27;
+
+        ion-icon {
+          color: #006b5f;
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .op-meta-footer-row {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+
+    .meta-request-who {
+      color: #737686;
+    }
+
+    .modality-mini-badge {
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(113, 248, 228, 0.35);
+      color: #005048;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      ion-icon {
+        font-size: 13px;
+      }
+    }
+  }
+
+  .op-history-reason-box {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    background: #f8fafc;
+    font-size: 12.5px;
+    color: #475569;
+
+    p {
+      margin: 0;
+    }
+  }
+
+  /* Botones de Acción de Tarjeta */
+  .op-card-actions {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .op-btn-primary {
+      flex: 1;
+      height: 38px;
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.22);
+
+      &:active {
+        background: #1d4ed8;
+        transform: scale(0.98);
+      }
+    }
+
+    .op-btn-complete {
+      flex: 1;
+      height: 38px;
+      border: none;
+      border-radius: 12px;
+      background: #16a34a;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+
+      &:active {
+        background: #15803d;
+        transform: scale(0.98);
+      }
+    }
+
+    .op-btn-teal {
+      flex: 1;
+      height: 38px;
+      border: none;
+      border-radius: 12px;
+      background: #006b5f;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+
+      &:active {
+        opacity: 0.9;
+        transform: scale(0.98);
+      }
+    }
+
+    .op-btn-secondary {
+      height: 38px;
+      padding: 0 14px;
+      border: none;
+      border-radius: 12px;
+      background: #f0f3ff;
+      color: #434655;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+
+      &:active {
+        background: #e7eefe;
+      }
+    }
+  }
+}
+
+.gestion-empty-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 36px 20px;
+  text-align: center;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+
+  .empty-circle-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #e7eefe;
+    color: #737686;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin: 0 auto 10px;
+  }
+
+  h4 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #151c27;
+  }
+
+  p {
+    margin: 0 auto;
+    max-width: 240px;
+    font-size: 12.5px;
+    color: #737686;
+  }
+}
+
+/* ============================================================
+   P-02 AGENDA · VISTA DÍA (PROTOTIPO ALTA FIDELIDAD FIGMA)
+   ============================================================ */
+.p02-agenda-screen {
+  min-height: 100%;
+  background: #f1f5f9;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: 32px;
+}
+
+/* ============================================================
+   MODULARIZACIÓN FASES 1 Y 2:
+   Header, Vista Día (P-02), Vista Semana (P-03) y Vista Mes (P-04)
+   fueron modularizados en sus propios componentes independientes:
+   - src/app/shared/components/header-dark/
+   - src/app/features/agenda/components/agenda-day-view/
+   - src/app/features/agenda/components/agenda-week-view/
+   - src/app/features/agenda/components/agenda-month-view/
+   ============================================================ */
+
+/* ============================================================
+   P-05 DETALLE DE CITA RESERVADA (PROTOTIPO ALTA FIDELIDAD FIGMA)
+   ============================================================ */
+.p05-detail-content {
+  --background: #f8fafc;
+}
+
+.p05-screen-wrapper {
+  min-height: 100%;
+  background: #f8fafc;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Institucional Oscuro P-05 */
+.p05-topbar {
+  background: #0f2942;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.p05-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+.p05-topbar-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #2dd4bf;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.p05-topbar-spacer {
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.p05-body {
+  padding: 18px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Tarjeta 1: Resumen de la Cita y Ficha del Alumno */
+.p05-summary-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+}
+
+.p05-status-folio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.p05-confirm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #0369a1;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+
+  .p05-confirm-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0369a1;
+  }
+}
+
+.p05-folio-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.p05-student-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.p05-avatar-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: #dbeafe;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.p05-student-texts {
+  min-width: 0;
+  flex: 1;
+
+  .p05-student-name {
+    margin: 0 0 2px;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+  }
+
+  .p05-student-meta {
+    margin: 0 0 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  .p05-student-email {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.p05-divider {
+  border: none;
+  border-top: 1px solid #f1f5f9;
+  margin: 16px 0;
+}
+
+/* Grid 2x2: Fecha, Horario, Modalidad, Duración */
+.p05-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 14px;
+  column-gap: 12px;
+}
+
+.p05-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .p05-meta-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .p05-meta-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+
+    &.modality-blue {
+      color: #0369a1;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+
+      ion-icon {
+        font-size: 15px;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+/* Tarjeta 2: Motivo de Atención Registrado */
+.p05-reason-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+
+  .p05-reason-heading {
+    margin: 0 0 10px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    text-transform: uppercase;
+  }
+
+  .p05-reason-quote-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.5;
+  }
+}
+
+/* Botones de Acción P-05 */
+.p05-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.p05-btn-reschedule {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  color: #b45309;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  .p05-btn-svg {
+    width: 17px;
+    height: 17px;
+    color: #d97706;
+    flex-shrink: 0;
+  }
+
+  &:active {
+    background: #fef3c7;
+    transform: scale(0.99);
+  }
+}
+
+.p05-btn-cancel {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #dc2626;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  .p05-btn-svg {
+    width: 17px;
+    height: 17px;
+    color: #dc2626;
+    flex-shrink: 0;
+  }
+
+  &:active {
+    background: #fee2e2;
+    transform: scale(0.99);
+  }
+}

@@ -1,0 +1,66 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()">
+  <ng-template>
+    <ion-content class="p07b-modal-content">
+      <div class="p07b-screen-wrapper">
+        <!-- Icono de Advertencia Superior Circular -->
+        <div class="p07b-alert-circle-wrap">
+          <div class="p07b-alert-circle">
+            <svg class="p07b-exclamation-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Encabezado de Conflicto -->
+        <h2 class="p07b-title">Conflicto con Cita Existente</h2>
+        <p class="p07b-subtitle">
+          No es posible inhabilitar este horario directamente porque existe una cita previamente confirmada en el rango seleccionado.
+        </p>
+
+        <!-- Tarjeta de Cita Comprometida -->
+        @if (conflictSlot) {
+          <section class="p07b-conflict-card">
+            <div class="p07b-card-header">
+              <span class="p07b-card-badge">CITA COMPROMETIDA</span>
+              <span class="p07b-card-folio">Folio: {{ getFolio(conflictSlot) }}</span>
+            </div>
+
+            <div class="p07b-student-meta">
+              <h3 class="p07b-student-name">
+                {{ conflictSlot.studentName || 'Alumno registrado' }} ({{ conflictSlot.studentProgram || 'ISC' }})
+              </h3>
+              <p class="p07b-time-row">
+                {{ formatFullDate(conflictSlot.date) }} · {{ formatTime12h(conflictSlot.startTime) }} – {{ formatTime12h(conflictSlot.endTime) }}
+              </p>
+            </div>
+
+            <div class="p07b-rule-box">
+              <p class="p07b-rule-text">
+                Regla institucional: Debes proponer una reprogramación o cancelar formalmente la cita con justificación antes de inhabilitar la franja.
+              </p>
+            </div>
+          </section>
+
+          <!-- Botones de Acción P-07B -->
+          <div class="p07b-actions">
+            <button
+              type="button"
+              class="p07b-btn-primary"
+              (click)="onProposeReschedule()"
+            >
+              Proponer Reprogramación a {{ getFirstName(conflictSlot.studentName) }}
+            </button>
+
+            <button
+              type="button"
+              class="p07b-btn-secondary"
+              (click)="onBackToModify()"
+            >
+              Volver y Modificar Horas de Bloqueo
+            </button>
+          </div>
+        }
+      </div>
+    </ion-content>
+  </ng-template>
+</ion-modal>

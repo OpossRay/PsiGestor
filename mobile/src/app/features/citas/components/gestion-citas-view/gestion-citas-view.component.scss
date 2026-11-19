@@ -1,0 +1,279 @@
+.p09-screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: #f8fafc;
+  padding-bottom: 80px;
+}
+
+/* ============================================================
+   TOPBAR OSCURO INSTITUCIONAL P-09
+   ============================================================ */
+.p09-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #0f2942;
+  padding: 16px 20px;
+  color: #ffffff;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.p09-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.p09-topbar-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(56, 189, 248, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.p09-topbar-icon {
+  font-size: 20px;
+  color: #38bdf8;
+}
+
+.p09-topbar-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: #ffffff;
+}
+
+.p09-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.p09-badge-pendientes {
+  background: #f59e0b;
+  color: #0f172a;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 14px;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
+}
+
+.p09-btn-nueva {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  ion-icon {
+    font-size: 16px;
+  }
+
+  &:hover {
+    background: #0369a1;
+  }
+}
+
+/* ============================================================
+   BARRA DE PESTAÑAS SEGMENTADAS
+   ============================================================ */
+.p09-segment-bar {
+  display: flex;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  position: sticky;
+  top: 68px;
+  z-index: 15;
+}
+
+.p09-tab-btn {
+  flex: 1;
+  height: 48px;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+
+  &.active {
+    color: #0284c7;
+    font-weight: 700;
+  }
+}
+
+.p09-tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 10%;
+  right: 10%;
+  height: 2.5px;
+  background: #0284c7;
+  border-radius: 3px 3px 0 0;
+}
+
+/* ============================================================
+   BODY Y LISTADOS
+   ============================================================ */
+.p09-body {
+  padding: 16px;
+  flex: 1;
+}
+
+.p09-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Buscador */
+.p09-search-bar {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 0 12px;
+  height: 44px;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+
+  &:focus-within {
+    border-color: #0284c7;
+    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+  }
+
+  .search-icon {
+    font-size: 18px;
+    color: #64748b;
+  }
+
+  .search-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    font-size: 13px;
+    color: #0f172a;
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+  }
+
+  .clear-search-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    ion-icon {
+      font-size: 18px;
+    }
+  }
+}
+
+/* Chips de Modalidad */
+.p09-modality-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 4px 0;
+
+  .mod-chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+
+    &.active {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+    }
+  }
+}
+
+/* Estado Vacío */
+.p09-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 36px 20px;
+  text-align: center;
+  margin-top: 10px;
+
+  .empty-icon-circle {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+
+    ion-icon {
+      font-size: 28px;
+    }
+
+    &.empty-amber {
+      background: #fef3c7;
+      color: #d97706;
+    }
+
+    &.empty-blue {
+      background: #e0f2fe;
+      color: #0284c7;
+    }
+  }
+
+  h3 {
+    margin: 0 0 6px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+    max-width: 280px;
+    line-height: 1.45;
+  }
+}

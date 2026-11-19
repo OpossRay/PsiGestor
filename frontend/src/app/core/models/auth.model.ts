@@ -15,11 +15,13 @@ export interface User {
 export interface AuthResponse {
   message: string;
   user: User;
+  csrfToken?: string;
 }
 
 export interface MeResponse {
   authenticated: boolean;
   user: User | null;
+  csrfToken?: string;
 }
 
 
