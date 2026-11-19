@@ -1,163 +1,174 @@
 # PsiGestor — Render Deployment, Security & Migration Architecture Guide
 
-## 1. Environment & Service Topology
+## 1. Estrategia de Despliegue en Dos Etapas
 
-PsiGestor maintains three strictly isolated environments:
+PsiGestor se gestiona como un único producto estructurado en dos etapas operativas bien delimitadas:
 
-| Layer | Local Development | Staging (`develop`) | Production (`main`) |
-|---|---|---|---|
-| **Git Branch** | `feature/*` | `develop` (`autoDeploy: true`) | `main` (`autoDeploy: false`) |
-| **PostgreSQL** | Local Docker `psigestor_db` | `psigestor-db-staging` (`psigestor_staging`) | `psigestor-db-prod` (`psigestor_prod`) |
-| **Backend Flask API** | `http://localhost:5000` | `psigestor-api-staging` (`https://psigestor-api-staging.onrender.com`) | `psigestor-api` (`https://psigestor-api.onrender.com`) |
-| **Frontend Angular 22 SSR** | `http://localhost:4200` | `psigestor-web-staging` (`https://psigestor-web-staging.onrender.com`) | `psigestor-web` (`https://psigestor-web.onrender.com`) |
-| **Mobile App (Ionic/Capacitor)** | `environment.ts` (`http://localhost:5000`) | `environment.staging.ts` (`https://psigestor-api-staging.onrender.com`) | `environment.prod.ts` (`https://psigestor-api.onrender.com`) |
+```mermaid
+flowchart TB
+    subgraph EtapaA ["ETAPA A — Demostración Académica Gratuita ($0/mes — render.yaml)"]
+        Eval["Evaluadores / Psicóloga<br/>(Navegador Web)"]
+        MobDemo["App Móvil Ionic/Capacitor<br/>(APK Demo — environment.staging.ts)"]
+        WebFree["psigestor-web-staging<br/>Node 22 SSR (plan: free, $0)<br/>Rama: develop"]
+        ApiFree["psigestor-api-staging<br/>Python 3.12 Gunicorn (plan: free, $0)<br/>Rama: develop"]
+        DbFree[("psigestor-db-staging<br/>PostgreSQL (plan: free, $0)<br/>Datos 100% ficticios — Expira a los 30 días")]
 
----
+        Eval -->|"HTTPS First-Party Cookie<br/>HttpOnly + SameSite=Lax + CSRF"| WebFree
+        WebFree -->|"/backend-api/* (Proxy SSR 65s timeout)"| ApiFree
+        MobDemo -->|"HTTPS Bearer AccessToken (RAM)<br/>+ RefreshToken (Android Keystore)"| ApiFree
+        ApiFree -->|"Internal DATABASE_URL"| DbFree
+    end
 
-## 2. Render Plan Compatibility & Economic Impact (`plan: free` vs Paid Plans)
+    subgraph EtapaB ["ETAPA B — Infraestructura Profesional Completa ($40/mes — render.production.yaml)"]
+        WebProd["psigestor-web (plan: starter, $7)"]
+        ApiProd["psigestor-api (plan: starter, $7)"]
+        DbProd[("psigestor-db-prod<br/>(plan: basic-256mb, $6)<br/>Respaldos diarios")]
+        WebStg["psigestor-web-staging (plan: starter, $7)"]
+        ApiStg["psigestor-api-staging (plan: starter, $7)"]
+        DbStg[("psigestor-db-staging<br/>(plan: basic-256mb, $6)")]
 
-### 2.1 Default Configuration (`plan: free` — $0/month)
-All services and databases in `render.yaml` are configured with `plan: free` by default so the project never incurs automatic charges.
-
-**Important Technical Constraints of Render's Free Tier:**
-1. **`preDeployCommand` and Render Web Shell Require Paid Plans:** Render's official specification restricts `preDeployCommand` and interactive SSH/Web Shell access to paid web service plans (`starter` at \$7/month per web service). Therefore, `render.yaml` does **not** depend on `preDeployCommand` in the free plan; migrations are executed via the **Controlled Manual Migration Workflow** (Section 3.2).
-2. **PostgreSQL Free Tier Limit:** Render permits **1 free PostgreSQL database per account**, which expires 30 days after creation. To run both `psigestor-db-staging` and `psigestor-db-prod` simultaneously without paying, provision Staging and Production in separate Render accounts/workspaces, or upgrade Production to `basic-256mb` (\$6/month) only when formally authorized.
-3. **Cold Starts on Free Web Services:** Free web services spin down after 15 minutes of inactivity and take ~30–50 seconds to wake up on the first request.
-
-### 2.2 Optional Paid Plan Upgrade (Only if Explicitly Authorized)
-If the team or institution later authorizes paid plans:
-- **Backend Web Service (`plan: starter` — \$7/month):** Enables zero spin-down, interactive Render Shell, and `preDeployCommand: PYTHONPATH=backend python -m app.init_db --migrate-only`.
-- **PostgreSQL (`plan: basic-256mb` — \$6/month):** Removes the 30-day expiration limit and provides automated daily backups.
-
----
-
-## 3. Build, Start, Health Checks & Controlled Migration Workflow
-
-### 3.1 Why Database Migrations Must NEVER Run in `buildCommand`
-1. **Render Private Network Isolation During Build:** Render's internal database `connectionString` (`dpg-xxxx-a:5432`) resolves over the runtime private network, which is not reliably bound or guaranteed during the isolated build container stage.
-2. **Separation of Artifact Compilation and State Mutation:** Rebuilding or caching an application image must never mutate a live database that is currently serving traffic for the previous release.
-3. **Container Rollbacks Do Not Roll Back Database Changes:** Rolling back a deploy in Render only reverts the application container image; **it does NOT revert DDL (`ALTER TABLE`, `CREATE TABLE`) or data modifications already committed in PostgreSQL**.
-
-### 3.2 Controlled Manual Migration Workflow (Compatible with `plan: free` and Paid Plans)
-Instead of running migrations blindly inside every build or worker startup, migrations are executed as a dedicated, auditable operation from an authorized workstation (using the database's **External Database URL** with SSL from the Render Dashboard, or via Render Shell on paid plans):
-
-1. **Step 1 — Read-Only Audit (`--verify-only`):**
-   ```bash
-   DATABASE_URL="<RENDER_EXTERNAL_DATABASE_URL>?sslmode=require" \
-   APP_ENV=staging \
-   PYTHONPATH=backend \
-   python -m app.init_db --verify-only
-   ```
-   - Inspects `schema_migrations` in read-only mode.
-   - Verifies that all previously applied migration files match their recorded SHA-256 checksums.
-   - Lists any pending migration files without modifying the database.
-2. **Step 2 — Controlled Schema Migration (`--migrate-only`):**
-   ```bash
-   DATABASE_URL="<RENDER_EXTERNAL_DATABASE_URL>?sslmode=require" \
-   APP_ENV=staging \
-   PYTHONPATH=backend \
-   python -m app.init_db --migrate-only
-   ```
-   - Acquires PostgreSQL session advisory lock `pg_advisory_lock(7392045112840195)` so no two processes can run migrations concurrently.
-   - Verifies all recorded SHA-256 checksums (halts immediately with `MigrationChecksumMismatchError` on mismatch).
-   - Adopts preexisting complete schemas (verifying all tables, columns, constraints, constraint definitions, and indexes) or applies pending `.sql` migrations inside atomic transactions.
-   - Optionally provisions the initial psychologist account if `INITIAL_PSYCHOLOGIST_EMAIL` and `INITIAL_PSYCHOLOGIST_PASSWORD` are set.
-   - **Never loads demonstration/test seeds.**
-3. **Step 3 — Post-Migration Read-Only Confirmation (`--verify-only`):**
-   ```bash
-   DATABASE_URL="<RENDER_EXTERNAL_DATABASE_URL>?sslmode=require" \
-   APP_ENV=staging \
-   PYTHONPATH=backend \
-   python -m app.init_db --verify-only
-   ```
-   - Confirms 13/13 migrations applied, 0 pending, and all checksums valid (exit code `0`).
-
-### 3.3 Backend & Frontend Commands in `render.yaml`
-- **Backend (`psigestor-api-staging` & `psigestor-api`):**
-  - `buildCommand`: `pip install --no-cache-dir -r requirements.txt`
-  - `startCommand`: `SKIP_DB_INIT_ON_IMPORT=true gunicorn --chdir backend app.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60`
-  - `healthCheckPath`: `/health`
-- **Frontend SSR (`psigestor-web-staging` & `psigestor-web`):**
-  - `rootDir`: `frontend`
-  - `buildCommand` (Staging): `npm ci && npx ng build --configuration staging`
-  - `buildCommand` (Production): `npm ci && npx ng build --configuration production`
-  - `startCommand`: `node dist/PsiGestor/server/server.mjs`
-  - `healthCheckPath`: `/login`
+        WebProd --> ApiProd --> DbProd
+        WebStg --> ApiStg --> DbStg
+    end
+```
 
 ---
 
-## 4. PostgreSQL Backup & Non-Destructive Recovery Protocol
+## 2. Límites del Plan Gratuito de Render y Mitigaciones Implementadas
+
+| Límite de Render Free | Impacto Técnico | Mitigación Implementada en PsiGestor |
+|---|---|---|
+| **Límite de 1 base de datos gratuita por cuenta** | Intentar crear Staging y Producción gratuitos en un mismo Blueprint aborta el despliegue. | Separación de Blueprints: `render.yaml` aprovisiona exclusivamente Staging (`plan: free`). `render.production.yaml` define la arquitectura profesional de pago. |
+| **Suspensión tras 15 min de inactividad (Cold Start 30–50s)** | La primera petición tras inactividad tarda en responder y puede provocar un `502 Bad Gateway` en el proxy web. | En `frontend/src/server.ts` se configuró `signal: createProxyAbortSignal(65000)` en el proxy `/backend-api`, permitiendo absorber el arranque en frío del backend sin errores. |
+| **Expiración de PostgreSQL Free a los 30 días** | Render elimina la base de datos gratuita tras 30 días continuos. | Procedimiento de reconstrucción en 10 segundos: se crea una nueva base de datos gratuita y se ejecutan `--migrate-only` y `--seed-academic-demo` para regenerar el catálogo y citas dinámicas. |
+| **`preDeployCommand` requiere planes de pago** | Los despliegues automáticos no pueden ejecutar migraciones antes del inicio del contenedor. | Se implementó el flujo de migración manual controlada con `--verify-only` y `--migrate-only`. |
+
+---
+
+## 3. Seguridad de Datos y Gestión de Semillas
+
+### 3.1 Bloqueo Estricto de Semillas Históricas en Entornos Públicos
+Los archivos en `database/seeds/` (`001_students_test_data.sql`, `004_student_user.sql`, etc.) contienen matrículas y nombres reales de integrantes del equipo de desarrollo, así como contraseñas públicas (`password123`).
+- **Regla permanente:** Las semillas históricas quedan **estrictamente bloqueadas** en Staging, Producción y en Render (`should_load_demo_seeds() == False`).
+- Únicamente pueden ejecutarse en desarrollo local puro (`APP_ENV=development` fuera de Render).
+
+### 3.2 Aprovisionamiento Seguro de Demostración (`--seed-academic-demo`)
+Para la evaluación académica en Staging o demostraciones públicas, se diseñó el comando:
+```bash
+python -m app.init_db --seed-academic-demo
+```
+**Características obligatorias:**
+1. **Idempotencia:** Utiliza `ON CONFLICT DO NOTHING`. Si se ejecuta múltiples veces, no borra ni duplica información.
+2. **Rechazo de Producción:** Si `APP_ENV=production`, aborta inmediatamente con `MigrationError`.
+3. **No destructivo:** No ejecuta `TRUNCATE`, `DELETE` ni reinicializa datos existentes.
+4. **Cero contraseñas públicas:** Las contraseñas del psicólogo demo y de los alumnos demo se leen exclusivamente desde variables de entorno (`INITIAL_PSYCHOLOGIST_PASSWORD` y `DEMO_STUDENT_PASSWORD`), se rechazan contraseñas prohibidas (`password123`, `admin`, etc.) o de menos de 10 caracteres, y se generan hashes seguros con `scrypt` al vuelo.
+5. **Datos 100% ficticios:** Inserta exclusivamente estudiantes ficticios:
+   - `DEMO2026001` — Estudiante Demo Uno (ISC, 6to semestre)
+   - `DEMO2026002` — Estudiante Demo Dos (Administración, 4to semestre)
+   - `DEMO2026003` — Estudiante Demo Tres (Mecatrónica, 8vo semestre)
+6. **Disponibilidades dinámicas:** Genera bloques de horarios habituales a 90 días desde la fecha actual en tiempo real.
+
+---
+
+## 4. Procedimiento de Migración Manual Controlada (Staging / Demo)
+
+### Paso 1: Auditoría de solo lectura (`--verify-only`)
+```bash
+DATABASE_URL="<RENDER_EXTERNAL_DB_URL>?sslmode=require" \
+APP_ENV=staging \
+PYTHONPATH=backend \
+python -m app.init_db --verify-only
+```
+- Comprueba la tabla `schema_migrations`.
+- Verifica que los checksums SHA-256 de todas las migraciones aplicadas coincidan con el repositorio.
+- Informa si existen migraciones pendientes sin modificar la base de datos.
+
+### Paso 2: Aplicación atómica de migraciones (`--migrate-only`)
+```bash
+DATABASE_URL="<RENDER_EXTERNAL_DB_URL>?sslmode=require" \
+APP_ENV=staging \
+PYTHONPATH=backend \
+python -m app.init_db --migrate-only
+```
+- Adquiere el candado de sesión `pg_advisory_lock(7392045112840195)`.
+- Ejecuta las migraciones pendientes en transacciones aisladas.
+
+### Paso 3: Aprovisionamiento de datos de evaluación ficticios (`--seed-academic-demo`)
+```bash
+DATABASE_URL="<RENDER_EXTERNAL_DB_URL>?sslmode=require" \
+APP_ENV=staging \
+INITIAL_PSYCHOLOGIST_EMAIL="psicologia.demo@psigestor.demo" \
+INITIAL_PSYCHOLOGIST_PASSWORD="<CLAVE_SEGURA_DEMO>" \
+DEMO_STUDENT_PASSWORD="<CLAVE_SEGURA_ALUMNO>" \
+PYTHONPATH=backend \
+python -m app.init_db --seed-academic-demo
+```
+
+---
+
+## 5. Procedimiento de Transición de la Demostración a la Infraestructura Profesional (Etapa A → Etapa B)
+
+Cuando el proyecto reciba la aprobación formal de la psicóloga y los evaluadores institucionales para operar en producción real:
+
+1. **Aprovisionar la Infraestructura Profesional:**
+   - En el dashboard de Render, seleccionar *New -> Blueprint* y apuntar al archivo `render.production.yaml`.
+   - Se crearán las dos bases de datos persistentes (`psigestor-db-staging` y `psigestor-db-prod` en `basic-256mb`) y los servicios dedicados 24/7 en `starter`.
+2. **Aislamiento Total de Datos (No migrar datos demo a producción):**
+   - La base de datos de producción `psigestor-db-prod` inicia completamente limpia.
+   - **No se copian citas ni alumnos ficticios de la demo a producción.**
+   - Se ejecuta únicamente la estructura formal de base de datos:
+     ```bash
+     DATABASE_URL="<PROD_DATABASE_URL>?sslmode=require" \
+     APP_ENV=production \
+     PYTHONPATH=backend \
+     python -m app.init_db --migrate-only
+     ```
+3. **Aprovisionar la Cuenta Real de la Psicóloga:**
+   - En las variables de entorno de `psigestor-api` en Render, configurar:
+     - `INITIAL_PSYCHOLOGIST_EMAIL="correo.institucional@itescam.edu.mx"`
+     - `INITIAL_PSYCHOLOGIST_PASSWORD="<CLAVE_OFICIAL_ROBUSTA>"`
+   - Al desplegarse el backend o al ejecutarse `--migrate-only`, se crea la cuenta oficial con rol `psicologo`.
+4. **Generar Secretos Criptográficos Exclusivos:**
+   - Render generará nuevos `SECRET_KEY` y `MOBILE_TOKEN_SECRET` exclusivos para producción.
+5. **Compilar la Aplicación Móvil para Producción:**
+   - Compilar el proyecto móvil apuntando al backend de producción:
+     ```bash
+     cd mobile
+     npx ng build --configuration production
+     npx cap sync android
+     ```
+   - El APK resultante se conectará a `https://psigestor-api.onrender.com` con tokens seguros en Android Keystore.
+
+---
+
+## 6. Protocolo de Respaldo y Restauración PostgreSQL
 
 > [!CAUTION]
-> **Critical Warning Regarding `pg_restore --clean`:**
-> Using `pg_restore --clean --if-exists` is a **destructive operation** that executes `DROP` on existing database tables and objects before recreating them.
-> - **NEVER execute a destructive restore (`--clean`) directly against the active production database without explicit authorization and an approved recovery plan.**
-> - **ALWAYS verify the backup archive first and restore into an independent target database before switching traffic.**
+> **Advertencia sobre `pg_restore --clean`:**
+> El flag `--clean` ejecuta sentencias `DROP` destructivas sobre las tablas existentes.
+> - **NUNCA ejecutes una restauración con `--clean` directamente sobre la base de datos de producción en vivo.**
+> - **SIEMPRE restaura primero sobre una base de datos de recuperación independiente y audita la integridad antes de redirigir el tráfico.**
 
-### 4.1 Mandatory Pre-Migration Backup & Verification
-Before applying any schema migration to a database containing real data:
+### Respaldo Lógico Preventivo:
+```bash
+pg_dump "<RENDER_EXTERNAL_DB_URL>?sslmode=require" \
+  --format=custom \
+  --no-owner \
+  --no-privileges \
+  --file="backup_psigestor_$(date +%Y%m%d_%H%M%S).dump"
+```
 
-1. **Create a Logical Backup Archive (`pg_dump` custom format):**
-   ```bash
-   pg_dump "<RENDER_EXTERNAL_DATABASE_URL>?sslmode=require" \
-     --format=custom \
-     --no-owner \
-     --no-privileges \
-     --file="backup_psigestor_$(date +%Y%m%d_%H%M%S).dump"
-   ```
-2. **Verify Backup Integrity and Table Catalog (`pg_restore --list`):**
-   ```bash
-   pg_restore --list "backup_psigestor_YYYYMMDD_HHMMSS.dump"
-   ```
-   Confirm the archive is readable and lists all expected tables (`users`, `students`, `availabilities`, `appointments`, `regular_schedule`, `regular_schedule_days`, `disabled_schedules`, `auth_refresh_tokens`, `auth_rate_limits`, `schema_migrations`).
+### Verificación del Archivo de Respaldo:
+```bash
+pg_restore --list "backup_psigestor_YYYYMMDD_HHMMSS.dump"
+```
 
-### 4.2 Recommended Non-Destructive Recovery (Restore to an Independent Database First)
-If a migration or operational incident requires restoring from backup:
-
-1. **Provision or select an independent recovery PostgreSQL database (`RECOVERY_DATABASE_URL`).**
-    Do **not** overwrite the live production database in place.
-2. **Restore the verified backup into the independent database (without `--clean`):**
-   ```bash
-   pg_restore \
-     --no-owner \
-     --no-privileges \
-     --exit-on-error \
-     --dbname="<RECOVERY_DATABASE_URL>?sslmode=require" \
-     "backup_psigestor_YYYYMMDD_HHMMSS.dump"
-   ```
-3. **Audit the Restored Database:**
-   - Run `PYTHONPATH=backend DATABASE_URL="<RECOVERY_DATABASE_URL>?sslmode=require" python -m app.init_db --verify-only`.
-   - Verify row counts and data integrity on the isolated recovery instance.
-4. **Cutover Traffic (Blue/Green Switch):**
-   - Once verified and explicitly authorized, update `DATABASE_URL` on the backend service to point to the validated recovery database and deploy the matching application revision.
-
----
-
-## 5. Required Environment Variables (Without Secret Values)
-
-### 5.1 Backend Services (`psigestor-api-staging` / `psigestor-api`)
-
-| Variable | Staging | Production | Source / Notes |
-|---|---|---|---|
-| `APP_ENV` | `staging` | `production` | Controls strict security, seeding rules, and error sanitization |
-| `FLASK_DEBUG` | `false` | `false` | Debugger strictly disabled |
-| `DATABASE_URL` | Internal Render DB URL | Internal Render DB URL | Injected from `psigestor-db-staging` / `psigestor-db-prod` |
-| `SECRET_KEY` | Random >= 32 chars | Random >= 32 chars | Distinct per environment; signs Web `HttpOnly` session cookies |
-| `MOBILE_TOKEN_SECRET` | Random >= 32 chars | Random >= 32 chars | **Must be distinct from `SECRET_KEY`**; signs 15-min mobile access tokens |
-| `STRICT_AUTH` | `true` | `true` | Enforces authentication on all protected endpoints |
-| `ENFORCE_CSRF_TOKEN` | `true` | `true` | Enforces `Origin`/`Referer` + `X-CSRF-Token` on cookie-authenticated mutations |
-| `RATE_LIMIT_STORAGE` | `database` | `database` | Uses shared PostgreSQL table `auth_rate_limits` across Gunicorn workers |
-| `SESSION_COOKIE_SAMESITE` | `Lax` | `Lax` | First-party `HttpOnly` cookie via SSR reverse proxy |
-| `SESSION_COOKIE_SECURE` | `true` | `true` | Enforces HTTPS-only cookies |
-| `CORS_ALLOWED_ORIGINS` | `https://psigestor-web-staging.onrender.com,capacitor://localhost,http://localhost,https://localhost` | `https://psigestor-web.onrender.com,capacitor://localhost,http://localhost,https://localhost` | Configured manually in Render Dashboard (`sync: false`) |
-| `ALLOW_STAGING_SEEDS` | `false` (or `true` if demo data desired) | `false` (ignored in prod) | Production never loads test seeds even if set to `true` |
-| `INITIAL_PSYCHOLOGIST_EMAIL` | Institutional email | Institutional email | Configured in Render Dashboard (`sync: false`) |
-| `INITIAL_PSYCHOLOGIST_PASSWORD` | Strong password (>= 10 chars) | Strong password (>= 10 chars) | Configured in Render Dashboard (`sync: false`); demo passwords rejected |
-
-### 5.2 Frontend SSR Services (`psigestor-web-staging` / `psigestor-web`)
-
-| Variable | Staging | Production | Notes |
-|---|---|---|---|
-| `NODE_ENV` | `production` | `production` | Production Express runtime |
-| `BACKEND_URL` | `https://psigestor-api-staging.onrender.com` | `https://psigestor-api.onrender.com` | Pinned upstream origin for `/backend-api/*` SSR proxy |
-| `ALLOWED_HOSTS` | `psigestor-web-staging.onrender.com,*.onrender.com,localhost,127.0.0.1` | `psigestor-web.onrender.com,*.onrender.com,localhost,127.0.0.1` | SSR host header allowlist |
+### Restauración No Destructiva en Base de Datos Aislada:
+```bash
+pg_restore \
+  --no-owner \
+  --no-privileges \
+  --exit-on-error \
+  --dbname="<RECOVERY_DATABASE_URL>?sslmode=require" \
+  "backup_psigestor_YYYYMMDD_HHMMSS.dump"
+```

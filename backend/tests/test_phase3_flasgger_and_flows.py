@@ -31,11 +31,11 @@ PSYCHOLOGIST_USER = {
 
 STUDENT_USER = {
     "id": 2,
-    "email": "8959@itescam.edu.mx",
-    "name": "Juan Pablo Moo Uc",
+    "email": "alumno.test@itescam.edu.mx",
+    "name": "Estudiante Prueba",
     "role": "alumno",
     "student_id": 7,
-    "student_code": "8959",
+    "student_code": "TEST2026007",
     "program": "Ingeniería en Sistemas Computacionales",
     "semester": 7,
     "is_active": True,
@@ -271,7 +271,7 @@ class TestPhase3RBACPrivacyAndCoreFlows(unittest.TestCase):
         headers = self._student_bearer_headers()
 
         mock_book.return_value = (
-            88, 7, "Juan Pablo Moo Uc", date(2026, 11, 27),
+            88, 7, "Estudiante Prueba", date(2026, 11, 27),
             time(10, 0), time(11, 0), 60, "In person",
             "Cubículo 2B", None, "Orientación vocacional",
             "Reserved", datetime(2026, 11, 19, tzinfo=timezone.utc),
@@ -291,7 +291,7 @@ class TestPhase3RBACPrivacyAndCoreFlows(unittest.TestCase):
             {
                 "id": 88,
                 "student_id": 7,
-                "student_name": "Juan Pablo Moo Uc",
+                "student_name": "Estudiante Prueba",
                 "date": date(2026, 11, 27),
                 "start_time": time(10, 0),
                 "end_time": time(11, 0),

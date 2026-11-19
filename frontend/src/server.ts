@@ -8,7 +8,9 @@ import express, { Request, Response } from 'express';
 import { join } from 'node:path';
 import {
   PASSTHROUGH_RESPONSE_HEADERS,
+  SSR_PROXY_TIMEOUT_MS,
   buildSafeProxyTargetUrl,
+  createProxyAbortSignal,
   extractSafeRequestHeadersToForward,
   extractSetCookieHeadersFromUpstream,
   resolveAllowedHosts,
@@ -47,6 +49,7 @@ app.use('/backend-api', express.raw({ type: '*/*', limit: '2mb' }), async (req: 
       headers: forwardedHeaders,
       body: hasBody ? new Uint8Array(req.body as Buffer) : undefined,
       redirect: 'manual',
+      signal: createProxyAbortSignal(SSR_PROXY_TIMEOUT_MS),
     });
 
     res.status(upstreamResponse.status);

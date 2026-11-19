@@ -17,6 +17,12 @@ export const PASSTHROUGH_RESPONSE_HEADERS = [
   'retry-after',
 ] as const;
 
+export const SSR_PROXY_TIMEOUT_MS = 65000;
+
+export function createProxyAbortSignal(timeoutMs: number = SSR_PROXY_TIMEOUT_MS): AbortSignal {
+  return AbortSignal.timeout(timeoutMs);
+}
+
 export function extractSafeRequestHeadersToForward(
   incomingHeaders: Record<string, string | string[] | undefined>,
   clientIp?: string

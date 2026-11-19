@@ -599,15 +599,138 @@ def run_migrations(connection, migrations_dir: Path) -> list[str]:
 
 def should_load_demo_seeds() -> bool:
     """
-    Production NEVER loads test/demo seeds.
-    Staging ONLY loads test seeds if ALLOW_STAGING_SEEDS=true is explicitly set.
-    Development loads demo seeds by default unless SEED_DEMO_DATA=false.
+    Historical seeds (database/seeds/*.sql) contain real student names and
+    known demo credentials (password123). They are STRICTLY FORBIDDEN in any
+    public, cloud (Render) or staging/production environment.
+    They may only be executed in local development.
+    For public staging/demo, use --seed-academic-demo instead.
     """
-    if is_production():
+    if is_production_like() or is_staging():
         return False
-    if is_staging():
-        return os.getenv("ALLOW_STAGING_SEEDS", "false").strip().lower() == "true"
+    if os.getenv("RENDER", "").strip().lower() == "true":
+        return False
     return os.getenv("SEED_DEMO_DATA", "true").strip().lower() != "false"
+
+
+def seed_academic_demo(connection) -> dict:
+    """
+    Idempotent seeding exclusively for the academic demonstration.
+    - Strictly rejects APP_ENV=production.
+    - Does not delete or re-initialize existing data (ON CONFLICT DO NOTHING).
+    - Generates scrypt password hashes at runtime from environment variables.
+    - Rejects weak, empty, or default passwords (e.g. password123).
+    - Inserts 100% fictitious students (DEMO2026001..DEMO2026003).
+    - Creates demo user accounts for psychologist and students.
+    - Generates 90 days of calendar availability dynamically from the current date.
+    """
+    current_env = get_app_env()
+    if is_production() or current_env == "production":
+        raise MigrationError(
+            "CRITICAL: El modo --seed-academic-demo no puede ejecutarse en el entorno de producción (APP_ENV=production)."
+        )
+
+    psych_email = (os.getenv("INITIAL_PSYCHOLOGIST_EMAIL") or "psicologia.demo@psigestor.demo").strip().lower()
+    psych_pass = (os.getenv("INITIAL_PSYCHOLOGIST_PASSWORD") or "").strip()
+    student_pass = (os.getenv("DEMO_STUDENT_PASSWORD") or "").strip()
+
+    if not psych_pass or psych_pass.lower() in FORBIDDEN_DEMO_PASSWORDS or len(psych_pass) < 10:
+        raise MigrationError(
+            "CRITICAL: INITIAL_PSYCHOLOGIST_PASSWORD no está configurada, tiene menos de 10 caracteres "
+            "o utiliza una contraseña insegura/prohibida."
+        )
+    if not student_pass or student_pass.lower() in FORBIDDEN_DEMO_PASSWORDS or len(student_pass) < 10:
+        raise MigrationError(
+            "CRITICAL: DEMO_STUDENT_PASSWORD no está configurada, tiene menos de 10 caracteres "
+            "o utiliza una contraseña insegura/prohibida."
+        )
+
+    psych_hash = generate_password_hash(psych_pass)
+    student_hash = generate_password_hash(student_pass)
+
+    fictitious_students = [
+        ("DEMO2026001", "Estudiante Demo Uno", "Ingeniería en Sistemas Computacionales", 6),
+        ("DEMO2026002", "Estudiante Demo Dos", "Licenciatura en Administración", 4),
+        ("DEMO2026003", "Estudiante Demo Tres", "Ingeniería Mecatrónica", 8),
+    ]
+
+    fictitious_users = [
+        ("alumno.demo1@psigestor.demo", student_hash, "Estudiante Demo Uno", "alumno", "DEMO2026001"),
+        ("alumno.demo2@psigestor.demo", student_hash, "Estudiante Demo Dos", "alumno", "DEMO2026002"),
+        ("alumno.demo3@psigestor.demo", student_hash, "Estudiante Demo Tres", "alumno", "DEMO2026003"),
+    ]
+
+    with connection.cursor() as cursor:
+        for s_id, s_name, s_prog, s_sem in fictitious_students:
+            cursor.execute(
+                """
+                INSERT INTO students (student_id, name, program, semester)
+                VALUES (%s, %s, %s, %s)
+                ON CONFLICT (student_id) DO NOTHING;
+                """,
+                (s_id, s_name, s_prog, s_sem),
+            )
+
+        cursor.execute(
+            """
+            INSERT INTO users (email, password_hash, name, role, is_active)
+            VALUES (%s, %s, 'Lic. Psicología Demo', 'psicologo', TRUE)
+            ON CONFLICT (email) DO NOTHING;
+            """,
+            (psych_email, psych_hash),
+        )
+
+        for u_email, u_hash, u_name, u_role, u_sid in fictitious_users:
+            cursor.execute(
+                """
+                INSERT INTO users (email, password_hash, name, role, student_id, is_active)
+                VALUES (%s, %s, %s, %s, %s, TRUE)
+                ON CONFLICT (email) DO NOTHING;
+                """,
+                (u_email, u_hash, u_name, u_role, u_sid),
+            )
+
+        cursor.execute("SELECT id FROM regular_schedule LIMIT 1;")
+        row = cursor.fetchone()
+        if not row:
+            cursor.execute(
+                """
+                INSERT INTO regular_schedule (
+                    appointment_duration,
+                    appointment_gap_minutes,
+                    break_enabled,
+                    break_start_time,
+                    break_end_time,
+                    availability_range_value,
+                    availability_range_unit
+                ) VALUES (50, 10, FALSE, NULL, NULL, 3, 'months')
+                RETURNING id;
+                """
+            )
+            sched_id = cursor.fetchone()[0]
+
+            for day_num in range(1, 6):
+                cursor.execute(
+                    """
+                    INSERT INTO regular_schedule_days (
+                        regular_schedule_id,
+                        day_of_week,
+                        start_time,
+                        end_time
+                    ) VALUES (%s, %s, '09:00:00', '14:00:00')
+                    ON CONFLICT (regular_schedule_id, day_of_week) DO NOTHING;
+                    """,
+                    (sched_id, day_num),
+                )
+
+        connection.commit()
+
+    sync_regular_schedule_availabilities()
+    print("[init_db] Demostración académica: estudiantes y usuarios ficticios aprovisionados, disponibilidades sincronizadas a 90 días.")
+    return {
+        "status": "seeded_academic_demo",
+        "students": len(fictitious_students),
+        "users": len(fictitious_users) + 1,
+    }
 
 
 def bootstrap_initial_psychologist_if_configured(cursor) -> bool:
@@ -790,9 +913,14 @@ def init_database(
     reset: bool = False,
     migrate_only: bool = False,
     verify_only: bool = False,
+    seed_academic_demo_flag: bool = False,
 ) -> dict:
-    if reset and (migrate_only or verify_only):
-        raise ValueError("No se puede combinar --reset con --migrate-only o --verify-only.")
+    if reset and (migrate_only or verify_only or seed_academic_demo_flag):
+        raise ValueError("No se puede combinar --reset con --migrate-only, --verify-only o --seed-academic-demo.")
+    if verify_only and (migrate_only or seed_academic_demo_flag):
+        raise ValueError("No se puede combinar --verify-only con --migrate-only o --seed-academic-demo.")
+    if migrate_only and seed_academic_demo_flag:
+        raise ValueError("No se puede combinar --migrate-only con --seed-academic-demo.")
 
     validate_reset_allowed(reset)
 
@@ -832,6 +960,11 @@ def init_database(
                     print("[init_db] Cuenta inicial del psicólogo creada desde configuración segura.")
             print(f"[init_db] Ejecución controlada de migraciones (--migrate-only) completada: {len(executed)} cambios.")
             return {"status": "migrated", "changes": executed}
+
+        if seed_academic_demo_flag:
+            demo_res = seed_academic_demo(connection)
+            print(f"[init_db] Demostración académica lista: {demo_res}")
+            return {"status": "academic_demo_seeded", "changes": executed, **demo_res}
 
         if reset:
             with connection.cursor() as cursor:
@@ -875,16 +1008,20 @@ if __name__ == "__main__":
     reset_flag = "--reset" in sys.argv
     migrate_only_flag = "--migrate-only" in sys.argv
     verify_only_flag = "--verify-only" in sys.argv
+    seed_academic_demo_flag = "--seed-academic-demo" in sys.argv
 
     init_database(
         reset=reset_flag,
         migrate_only=migrate_only_flag,
         verify_only=verify_only_flag,
+        seed_academic_demo_flag=seed_academic_demo_flag,
     )
     if verify_only_flag:
         print("[init_db] Auditoría de migraciones (--verify-only) completada sin cambios.")
     elif migrate_only_flag:
         print("[init_db] Migraciones de esquema (--migrate-only) aplicadas correctamente.")
+    elif seed_academic_demo_flag:
+        print("[init_db] Base de datos aprovisionada exclusivamente con datos ficticios para la demostración académica.")
     elif reset_flag:
         print("[init_db] ¡Base de datos sincronizada al 100% con los datos semilla del equipo!")
     else:

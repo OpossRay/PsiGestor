@@ -48,12 +48,12 @@ MOCK_USERS_BY_ID = {
     },
     2: {
         "id": 2,
-        "email": "8959@itescam.edu.mx",
+        "email": "alumno.test@itescam.edu.mx",
         "password_hash": STUDENT_HASH,
-        "name": "Juan Pablo Moo Uc",
+        "name": "Estudiante Prueba",
         "role": "alumno",
         "student_id": 7,
-        "student_code": "8959",
+        "student_code": "TEST2026007",
         "program": "Ingeniería en Sistemas Computacionales",
         "semester": 7,
         "is_active": True,
@@ -259,7 +259,7 @@ class TestPhase3SeleniumFunctionalBrowserE2E(unittest.TestCase):
         submit_btn = self.driver.find_element(By.CSS_SELECTOR, "button.btn-submit")
 
         email_input.clear()
-        email_input.send_keys("8959@itescam.edu.mx")
+        email_input.send_keys("alumno.test@itescam.edu.mx")
         password_input.clear()
         password_input.send_keys("SecureStudentPass2026!")
         submit_btn.click()

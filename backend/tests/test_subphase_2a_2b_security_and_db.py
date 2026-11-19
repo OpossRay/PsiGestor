@@ -111,11 +111,11 @@ class TestSubphase2AMobileTokensAndRotation(unittest.TestCase):
     def setUp(self):
         self.sample_user = {
             "id": 7,
-            "email": "8959@itescam.edu.mx",
-            "name": "Juan Pablo Moo Uc",
+            "email": "alumno.test@itescam.edu.mx",
+            "name": "Estudiante Prueba",
             "role": "alumno",
             "student_id": 2,
-            "student_code": "8959",
+            "student_code": "TEST2026007",
             "program": "ISC",
             "semester": 7,
             "is_active": True,
@@ -166,13 +166,13 @@ class TestSubphase2AMobileTokensAndRotation(unittest.TestCase):
             future_exp,  # expires_at
             datetime.now(timezone.utc),  # revoked_at
             "new_hash_abc",  # replaced_by_hash
-            "8959@itescam.edu.mx",
-            "Juan Pablo",
+            "alumno.test@itescam.edu.mx",
+            "Estudiante Prueba",
             "alumno",
             2,
             True,
             datetime.now(timezone.utc),
-            "8959",
+            "TEST2026007",
             "ISC",
             7,
         )
@@ -322,7 +322,12 @@ class TestSubphase2BMigrationsAndSeeds(unittest.TestCase):
         with patch.dict(os.environ, {"APP_ENV": "staging", "ALLOW_STAGING_SEEDS": "false"}, clear=False):
             self.assertFalse(should_load_demo_seeds())
 
+        # Historical seeds containing real names and public password123 are blocked even in staging
         with patch.dict(os.environ, {"APP_ENV": "staging", "ALLOW_STAGING_SEEDS": "true"}, clear=False):
+            self.assertFalse(should_load_demo_seeds())
+
+        # Historical seeds are only allowed in pure local development
+        with patch.dict(os.environ, {"APP_ENV": "development", "SEED_DEMO_DATA": "true", "RENDER": "false"}, clear=False):
             self.assertTrue(should_load_demo_seeds())
 
     def test_initial_psychologist_rejects_demo_password_in_prod(self):
@@ -453,12 +458,12 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
     ):
         user_record = {
             "id": 3,
-            "email": "8959@itescam.edu.mx",
+            "email": "alumno.test@itescam.edu.mx",
             "password_hash": "scrypt:...",
-            "name": "Juan Pablo Moo Uc",
+            "name": "Estudiante Prueba",
             "role": "alumno",
             "student_id": 2,
-            "student_code": "8959",
+            "student_code": "TEST2026007",
             "program": "ISC",
             "semester": 7,
             "is_active": True,
@@ -471,7 +476,7 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
         # 1. Mobile login with X-Client-Platform: mobile
         login_res = self.client.post(
             "/api/auth/login",
-            json={"email": "8959@itescam.edu.mx", "password": "valid_password"},
+            json={"email": "alumno.test@itescam.edu.mx", "password": "valid_password"},
             headers={"X-Client-Platform": "mobile"},
         )
         self.assertEqual(login_res.status_code, 200)
@@ -529,8 +534,8 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
 
         mock_find_id.return_value = {
             "id": 3,
-            "email": "8959@itescam.edu.mx",
-            "name": "Juan Pablo",
+            "email": "alumno.test@itescam.edu.mx",
+            "name": "Estudiante Prueba",
             "role": "alumno",
             "is_active": True,
         }
@@ -576,8 +581,8 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
         future_exp = datetime.now(timezone.utc) + timedelta(days=5)
         mock_cursor.fetchone.return_value = (
             11, 7, "family-deactivated", future_exp, None, None,
-            "8959@itescam.edu.mx", "Juan Pablo", "alumno", 2, False,  # is_active = False
-            datetime.now(timezone.utc), "8959", "ISC", 7,
+            "alumno.test@itescam.edu.mx", "Estudiante Prueba", "alumno", 2, False,  # is_active = False
+            datetime.now(timezone.utc), "TEST2026007", "ISC", 7,
         )
         res_inactive = self.client.post("/api/auth/refresh", json={"refreshToken": "some_valid_raw_token"})
         self.assertEqual(res_inactive.status_code, 403)
@@ -586,8 +591,8 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
         past_exp = datetime.now(timezone.utc) - timedelta(minutes=5)
         mock_cursor.fetchone.return_value = (
             12, 7, "family-expired", past_exp, None, None,
-            "8959@itescam.edu.mx", "Juan Pablo", "alumno", 2, True,
-            datetime.now(timezone.utc), "8959", "ISC", 7,
+            "alumno.test@itescam.edu.mx", "Estudiante Prueba", "alumno", 2, True,
+            datetime.now(timezone.utc), "TEST2026007", "ISC", 7,
         )
         res_expired = self.client.post("/api/auth/refresh", json={"refreshToken": "expired_raw_token"})
         self.assertEqual(res_expired.status_code, 401)
@@ -595,8 +600,8 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
         # Case C: Reused refresh token returns 401 with code TOKEN_REUSE_DETECTED
         mock_cursor.fetchone.return_value = (
             13, 7, "family-reused", future_exp, datetime.now(timezone.utc), "already_replaced_hash",
-            "8959@itescam.edu.mx", "Juan Pablo", "alumno", 2, True,
-            datetime.now(timezone.utc), "8959", "ISC", 7,
+            "alumno.test@itescam.edu.mx", "Estudiante Prueba", "alumno", 2, True,
+            datetime.now(timezone.utc), "TEST2026007", "ISC", 7,
         )
         res_reused = self.client.post("/api/auth/refresh", json={"refreshToken": "reused_raw_token"})
         self.assertEqual(res_reused.status_code, 401)
