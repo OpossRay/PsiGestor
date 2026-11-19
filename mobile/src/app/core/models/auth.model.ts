@@ -7,6 +7,7 @@ export interface User {
   student_code?: string | null;
   program?: string | null;
   semester?: number | null;
+  has_completed_initial_test?: boolean;
 }
 
 export interface AuthResponse {

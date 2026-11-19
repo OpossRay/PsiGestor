@@ -1,0 +1,303 @@
+/* P-05 DETALLE DE CITA RESERVADA (PROTOTIPO ALTA FIDELIDAD FIGMA) */
+.p05-detail-content {
+  --background: #f8fafc;
+}
+
+.p05-screen-wrapper {
+  min-height: 100%;
+  background: #f8fafc;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Institucional Oscuro P-05 */
+.p05-topbar {
+  background: #0f2942;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.p05-back-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  color: #ffffff;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+
+  &:active {
+    background: rgba(255, 255, 255, 0.16);
+  }
+}
+
+.p05-topbar-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #2dd4bf;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.p05-topbar-spacer {
+  width: 36px;
+  flex-shrink: 0;
+}
+
+.p05-body {
+  padding: 18px 16px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Tarjeta 1: Resumen de la Cita y Ficha del Alumno */
+.p05-summary-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+}
+
+.p05-status-folio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.p05-confirm-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #0369a1;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+
+  .p05-confirm-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #0369a1;
+  }
+}
+
+.p05-folio-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.p05-student-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.p05-avatar-box {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  background: #dbeafe;
+  color: #0369a1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.p05-student-texts {
+  min-width: 0;
+  flex: 1;
+
+  .p05-student-name {
+    margin: 0 0 2px;
+    font-size: 16.5px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+  }
+
+  .p05-student-meta {
+    margin: 0 0 2px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+  }
+
+  .p05-student-email {
+    margin: 0;
+    font-size: 11.5px;
+    font-weight: 500;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.p05-divider {
+  border: none;
+  border-top: 1px solid #f1f5f9;
+  margin: 16px 0;
+}
+
+/* Grid 2x2: Fecha, Horario, Modalidad, Duración */
+.p05-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 14px;
+  column-gap: 12px;
+}
+
+.p05-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .p05-meta-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #94a3b8;
+  }
+
+  .p05-meta-value {
+    font-size: 13px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+
+    &.modality-blue {
+      color: #0369a1;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+
+      ion-icon {
+        font-size: 15px;
+        flex-shrink: 0;
+      }
+    }
+  }
+}
+
+/* Tarjeta 2: Motivo de Atención Registrado */
+.p05-reason-card {
+  background: #ffffff;
+  border-radius: 20px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+
+  .p05-reason-heading {
+    margin: 0 0 10px;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    text-transform: uppercase;
+  }
+
+  .p05-reason-quote-box {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.5;
+  }
+}
+
+/* Botones de Acción P-05 */
+.p05-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.p05-btn-reschedule {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1.5px solid #fcd34d;
+  color: #b45309;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  .p05-btn-svg {
+    width: 17px;
+    height: 17px;
+    color: #d97706;
+    flex-shrink: 0;
+  }
+
+  &:active {
+    background: #fef3c7;
+    transform: scale(0.99);
+  }
+}
+
+.p05-btn-cancel {
+  width: 100%;
+  height: 46px;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1.5px solid #fecaca;
+  color: #dc2626;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  .p05-btn-svg {
+    width: 17px;
+    height: 17px;
+    color: #dc2626;
+    flex-shrink: 0;
+  }
+
+  &:active {
+    background: #fee2e2;
+    transform: scale(0.99);
+  }
+}

@@ -1,0 +1,55 @@
+:host {
+  display: block;
+}
+
+.psi-bottom-footer {
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  box-shadow: 0 -4px 16px rgba(15, 23, 42, 0.04);
+}
+
+.psi-bottom-nav {
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 64px;
+  padding: 4px 8px;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  .psi-nav-item {
+    flex: 1;
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    color: #94a3b8;
+    font-family: inherit;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: color 0.15s ease;
+
+    .nav-svg-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+    }
+
+    span {
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+
+    &.active {
+      color: #0284c7;
+
+      span {
+        font-weight: 700;
+      }
+    }
+  }
+}

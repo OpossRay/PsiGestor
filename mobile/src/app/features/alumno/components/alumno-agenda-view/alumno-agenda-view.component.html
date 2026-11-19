@@ -1,0 +1,172 @@
+<div class="a02-view-wrapper">
+  <!-- ============================================================
+       CABECERA OSCURA INSTITUCIONAL A-02
+       ============================================================ -->
+  <header class="a02-header-dark">
+    <!-- 1. Tarjeta Especialista Asignada -->
+    <div class="a02-specialist-card">
+      <div class="a02-specialist-avatar">
+        {{ specialistAvatar }}
+      </div>
+
+      <div class="a02-specialist-info">
+        <span class="a02-specialist-tag">ESPECIALISTA ASIGNADA</span>
+        <h2 class="a02-specialist-name">{{ specialistName }}</h2>
+        <p class="a02-specialist-subtitle">{{ specialistRole }} · {{ specialistCubicle }}</p>
+      </div>
+
+      <div class="a02-online-indicator" title="En línea">
+        <span class="a02-green-dot"></span>
+      </div>
+    </div>
+
+    <!-- 2. Selector Segmentado (Día | Semana | Mes) -->
+    <div class="a02-segmented-wrap" role="tablist">
+      <button
+        type="button"
+        class="a02-seg-btn"
+        [class.active]="viewMode === 'dia'"
+        (click)="setViewMode('dia')"
+        role="tab"
+        [attr.aria-selected]="viewMode === 'dia'"
+      >
+        Día
+      </button>
+      <button
+        type="button"
+        class="a02-seg-btn"
+        [class.active]="viewMode === 'semana'"
+        (click)="setViewMode('semana')"
+        role="tab"
+        [attr.aria-selected]="viewMode === 'semana'"
+      >
+        Semana
+      </button>
+      <button
+        type="button"
+        class="a02-seg-btn"
+        [class.active]="viewMode === 'mes'"
+        (click)="setViewMode('mes')"
+        role="tab"
+        [attr.aria-selected]="viewMode === 'mes'"
+      >
+        Mes
+      </button>
+    </div>
+
+    <!-- 3. Barra Navegadora de Fechas (Día) -->
+    <div class="a02-date-nav-bar">
+      <button
+        type="button"
+        class="a02-nav-arrow-btn"
+        (click)="onPrevDay()"
+        aria-label="Día anterior"
+      >
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </button>
+
+      <div class="a02-date-center-text">
+        <h3 class="a02-nav-date">{{ formattedDateHeader }}</h3>
+        <p class="a02-nav-slots-count">
+          {{ freeSlotsCount }} {{ freeSlotsCount === 1 ? 'slot libre hoy' : 'slots libres hoy' }}
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="a02-nav-arrow-btn"
+        (click)="onNextDay()"
+        aria-label="Día siguiente"
+      >
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       BARRA DE LEYENDA (Libre | Ocupado Privado)
+       ============================================================ -->
+  <section class="a02-legend-bar">
+    <span class="a02-legend-title">Estado de Bloques:</span>
+    <div class="a02-legend-items">
+      <span class="a02-legend-item">
+        <span class="dot-indicator dot-green"></span>
+        <span class="legend-text-green">Libre</span>
+      </span>
+      <span class="a02-legend-item">
+        <span class="dot-indicator dot-gray"></span>
+        <span class="legend-text-gray">Ocupado (Privado)</span>
+      </span>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       LISTADO DE BLOQUES / SLOTS (VISTA DÍA A-02)
+       ============================================================ -->
+  <main class="a02-slots-feed">
+    @for (slot of currentDaySlots; track slot.id) {
+      <!-- 1. Slot Inhabilitado / Pausa Institucional -->
+      @if (slot.status === 'Inhabilitado') {
+        <div class="a02-slot-break">
+          <span class="a02-break-text">
+            {{ formatTimeRange(slot.startTime, slot.endTime) }} · Pausa institucional
+          </span>
+          <span class="a02-break-label">Descanso</span>
+        </div>
+      }
+
+      <!-- 2. Slot Libre / Disponible -->
+      @else if (slot.status === 'Disponible' && !isSlotInPast(slot)) {
+        <article
+          class="a02-slot-card a02-card-libre"
+          [class.active-selected]="selectedSlotId === slot.id"
+          (click)="onSelectSlot(slot)"
+        >
+          <div class="a02-slot-left">
+            <span class="a02-slot-time">{{ formatTimeRange(slot.startTime, slot.endTime) }}</span>
+            <span class="a02-slot-status status-libre">
+              <ion-icon name="checkmark-outline"></ion-icon>
+              <span>Disponible</span>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="a02-btn-select"
+            [class.btn-active]="selectedSlotId === slot.id"
+            (click)="onSelectSlot(slot); $event.stopPropagation()"
+            aria-label="Seleccionar horario disponible"
+          >
+            Seleccionar
+          </button>
+        </article>
+      }
+
+      <!-- 3. Slot Ocupado (Privado) -->
+      @else {
+        <article class="a02-slot-card a02-card-ocupado">
+          <div class="a02-slot-left">
+            <span class="a02-slot-time time-muted">{{ formatTimeRange(slot.startTime, slot.endTime) }}</span>
+            <span class="a02-slot-status status-ocupado">
+              <ion-icon name="lock-closed-outline"></ion-icon>
+              <span>Horario reservado</span>
+            </span>
+          </div>
+
+          <span class="a02-badge-ocupado">Ocupado</span>
+        </article>
+      }
+    }
+
+    <!-- Estado vacío si no hay slots en el día seleccionado -->
+    @if (!isLoading && currentDaySlots.length === 0) {
+      <div class="a02-empty-state">
+        <div class="empty-icon-circle">
+          <ion-icon name="calendar-outline"></ion-icon>
+        </div>
+        <h4>Sin horarios registrados</h4>
+        <p>No hay bloques configurados para este día. Utiliza las flechas para consultar otros días.</p>
+      </div>
+    }
+  </main>
+</div>

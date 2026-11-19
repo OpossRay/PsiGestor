@@ -1,0 +1,59 @@
+<ion-footer class="student-bottom-footer" translucent="true">
+  <nav class="student-nav-bar" role="navigation" aria-label="Navegación Alumno">
+    <!-- 1. Inicio -->
+    <button
+      type="button"
+      class="student-nav-item"
+      [class.active]="activeTab === 'inicio'"
+      (click)="selectTab('inicio')"
+      aria-label="Ir a Inicio"
+    >
+      <div class="nav-icon-wrap">
+        <ion-icon name="home-outline"></ion-icon>
+      </div>
+      <span class="nav-label">Inicio</span>
+    </button>
+
+    <!-- 2. Agendar (Activo en A-02) -->
+    <button
+      type="button"
+      class="student-nav-item"
+      [class.active]="activeTab === 'agendar'"
+      (click)="selectTab('agendar')"
+      aria-label="Ir a Agendar cita"
+    >
+      <div class="nav-icon-wrap">
+        <ion-icon name="calendar-outline"></ion-icon>
+      </div>
+      <span class="nav-label">Agendar</span>
+    </button>
+
+    <!-- 3. Mis Citas -->
+    <button
+      type="button"
+      class="student-nav-item"
+      [class.active]="activeTab === 'mis-citas'"
+      (click)="selectTab('mis-citas')"
+      aria-label="Ir a Mis Citas"
+    >
+      <div class="nav-icon-wrap">
+        <ion-icon name="bookmark-outline"></ion-icon>
+      </div>
+      <span class="nav-label">Mis Citas</span>
+    </button>
+
+    <!-- 4. Perfil -->
+    <button
+      type="button"
+      class="student-nav-item"
+      [class.active]="activeTab === 'perfil'"
+      (click)="selectTab('perfil')"
+      aria-label="Ir a Perfil"
+    >
+      <div class="nav-icon-wrap">
+        <ion-icon name="person-outline"></ion-icon>
+      </div>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</ion-footer>

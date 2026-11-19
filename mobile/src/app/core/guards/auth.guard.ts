@@ -37,7 +37,7 @@ export const roleGuard = (allowedRoles: Array<'psicologo' | 'alumno'>): CanActiv
       if (user.role === 'psicologo') {
         return router.createUrlTree(['/psicologo']);
       }
-      return router.createUrlTree(['/tabs']);
+      return router.createUrlTree(['/alumno']);
     };
 
     if (authService.currentUser()) {

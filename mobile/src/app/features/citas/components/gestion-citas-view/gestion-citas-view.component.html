@@ -1,0 +1,166 @@
+<div class="p09-screen-wrapper">
+  <!-- ============================================================
+       TOPBAR OSCURO INSTITUCIONAL P-09
+       ============================================================ -->
+  <header class="p09-topbar">
+    <div class="p09-topbar-left">
+      <div class="p09-topbar-icon-wrap">
+        <ion-icon name="time-outline" class="p09-topbar-icon"></ion-icon>
+      </div>
+      <h1 class="p09-topbar-title">Citas y Solicitudes</h1>
+    </div>
+
+    <div class="p09-topbar-right">
+      @if (pendingReschedules.length > 0) {
+        <span class="p09-badge-pendientes">
+          {{ pendingReschedules.length }} Pendiente{{ pendingReschedules.length === 1 ? '' : 's' }}
+        </span>
+      }
+      <button
+        type="button"
+        class="p09-btn-nueva"
+        (click)="onNewAppointment()"
+        aria-label="Nueva cita para alumno"
+        title="Nueva Cita"
+      >
+        <ion-icon name="add-outline"></ion-icon>
+        <span>Nueva</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       PESTAÑAS SEGMENTADAS P-09 (Programadas | Reprogramaciones)
+       ============================================================ -->
+  <nav class="p09-segment-bar" role="tablist">
+    <button
+      type="button"
+      class="p09-tab-btn"
+      [class.active]="activeSubTab === 'programadas'"
+      (click)="setSubTab('programadas')"
+      role="tab"
+      [attr.aria-selected]="activeSubTab === 'programadas'"
+    >
+      <span>Programadas ({{ scheduledAppointments.length }})</span>
+      @if (activeSubTab === 'programadas') {
+        <span class="p09-tab-indicator"></span>
+      }
+    </button>
+
+    <button
+      type="button"
+      class="p09-tab-btn"
+      [class.active]="activeSubTab === 'reprogramaciones'"
+      (click)="setSubTab('reprogramaciones')"
+      role="tab"
+      [attr.aria-selected]="activeSubTab === 'reprogramaciones'"
+    >
+      <span>Reprogramaciones ({{ pendingReschedules.length }})</span>
+      @if (activeSubTab === 'reprogramaciones') {
+        <span class="p09-tab-indicator"></span>
+      }
+    </button>
+  </nav>
+
+  <!-- ============================================================
+       CONTENIDO PRINCIPAL SEGÚN PESTAÑA ACTIVA
+       ============================================================ -->
+  <main class="p09-body">
+    <!-- 1. VISTA REPROGRAMACIONES (P-09 FIGMA) -->
+    @if (activeSubTab === 'reprogramaciones') {
+      <section class="p09-feed">
+        @for (slot of pendingReschedules; track slot.id) {
+          <app-reschedule-request-card
+            [slot]="slot"
+            [allAvailabilities]="availabilities"
+            (approve)="onApprove($event)"
+            (reject)="onReject($event)"
+            (cardClick)="onSlotClick($event)"
+          ></app-reschedule-request-card>
+        }
+
+        @if (!isLoading && pendingReschedules.length === 0) {
+          <div class="p09-empty-state">
+            <div class="empty-icon-circle empty-amber">
+              <ion-icon name="checkmark-circle-outline"></ion-icon>
+            </div>
+            <h3>Bandeja al día</h3>
+            <p>No tienes solicitudes de reprogramación pendientes por responder.</p>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- 2. VISTA PROGRAMADAS (CONFIRMADAS) -->
+    @if (activeSubTab === 'programadas') {
+      <section class="p09-feed">
+        <!-- Buscador Rápido -->
+        <div class="p09-search-bar">
+          <ion-icon name="search-outline" class="search-icon"></ion-icon>
+          <input
+            type="search"
+            class="search-input"
+            placeholder="Buscar por estudiante, matrícula o motivo..."
+            [(ngModel)]="searchQuery"
+          />
+          @if (searchQuery) {
+            <button type="button" class="clear-search-btn" (click)="searchQuery = ''">
+              <ion-icon name="close-circle-outline"></ion-icon>
+            </button>
+          }
+        </div>
+
+        <!-- Filtros Rápidos de Modalidad -->
+        <div class="p09-modality-chips">
+          <button
+            type="button"
+            class="mod-chip"
+            [class.active]="modalityFilter === 'all'"
+            (click)="modalityFilter = 'all'"
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            class="mod-chip"
+            [class.active]="modalityFilter === 'Presencial'"
+            (click)="modalityFilter = 'Presencial'"
+          >
+            Presencial
+          </button>
+          <button
+            type="button"
+            class="mod-chip"
+            [class.active]="modalityFilter === 'En línea'"
+            (click)="modalityFilter = 'En línea'"
+          >
+            En línea
+          </button>
+        </div>
+
+        <!-- Lista de Citas Programadas -->
+        @for (slot of filteredScheduledAppointments; track slot.id) {
+          <app-appointment-card
+            [slot]="slot"
+            [isInProgress]="isSlotInProgress(slot)"
+            [isCompleted]="isSlotCompleted(slot)"
+            (cardClick)="onSlotClick($event)"
+            (startSession)="startSession.emit($event)"
+            (completeSession)="completeSession.emit($event)"
+            (detailClick)="onSlotClick($event)"
+          ></app-appointment-card>
+        }
+
+        @if (!isLoading && filteredScheduledAppointments.length === 0) {
+          <div class="p09-empty-state">
+            <div class="empty-icon-circle empty-blue">
+              <ion-icon name="calendar-outline"></ion-icon>
+            </div>
+            <h3>Sin citas programadas</h3>
+            <p>No se encontraron citas confirmadas para los filtros seleccionados.</p>
+          </div>
+        }
+      </section>
+    }
+  </main>
+</div>
