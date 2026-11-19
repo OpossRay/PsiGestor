@@ -1,0 +1,174 @@
+# =============================================================================
+# PsiGestor — Render Blueprint Configuration (Staging & Production Separation)
+# =============================================================================
+# GOVERNANCE, PLAN COMPATIBILITY & MIGRATION SAFETY:
+# 1. Default Plan: All services default to `plan: free` ($0/month) so no paid
+#    subscription or credit card is required by default.
+#    NOTE ON RENDER FREE TIER LIMITS:
+#    - Render Free tier does NOT support `preDeployCommand` or interactive SSH
+#      Shell, and allows 1 free PostgreSQL instance per account (expires in 30 days).
+#    - If upgrading to a paid plan (`plan: starter` at $7/mo per web service and
+#      `plan: basic-256mb` at $6/mo per DB), you may optionally enable
+#      `preDeployCommand: PYTHONPATH=backend python -m app.init_db --migrate-only`
+#      on `psigestor-api-staging`.
+# 2. `buildCommand` NEVER connects to or modifies any database.
+# 3. Migrations in both Staging and Production are executed via the controlled
+#    manual procedure (`--verify-only` followed by `--migrate-only`) documented
+#    in `docs/RENDER_DEPLOYMENT_GUIDE.md`.
+# =============================================================================
+
+databases:
+  - name: psigestor-db-staging
+    databaseName: psigestor_staging
+    user: psigestor_staging_user
+    plan: free
+
+  # NOTE: Render allows only one `plan: free` PostgreSQL database per account.
+  # Keep `psigestor-db-prod` isolated; when provisioning Production in the same
+  # Render account, either use a separate Render workspace/account or select a
+  # paid database plan (`basic-256mb`) with explicit authorization.
+  - name: psigestor-db-prod
+    databaseName: psigestor_prod
+    user: psigestor_prod_user
+    plan: free
+
+services:
+  # ===========================================================================
+  # 1. STAGING ENVIRONMENT (Branch: develop)
+  # ===========================================================================
+  - type: web
+    name: psigestor-api-staging
+    runtime: python
+    plan: free
+    branch: develop
+    autoDeploy: true
+    healthCheckPath: /health
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    # Paid plan option (`plan: starter` only):
+    # preDeployCommand: PYTHONPATH=backend python -m app.init_db --migrate-only
+    startCommand: SKIP_DB_INIT_ON_IMPORT=true gunicorn --chdir backend app.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: APP_ENV
+        value: staging
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: psigestor-db-staging
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MOBILE_TOKEN_SECRET
+        generateValue: true
+      - key: STRICT_AUTH
+        value: "true"
+      - key: ENFORCE_CSRF_TOKEN
+        value: "true"
+      - key: RATE_LIMIT_STORAGE
+        value: database
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: ALLOW_CAPACITOR_ORIGINS
+        value: "true"
+      - key: ALLOW_STAGING_SEEDS
+        value: "false"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: INITIAL_PSYCHOLOGIST_EMAIL
+        sync: false
+      - key: INITIAL_PSYCHOLOGIST_PASSWORD
+        sync: false
+
+  - type: web
+    name: psigestor-web-staging
+    runtime: node
+    plan: free
+    rootDir: frontend
+    branch: develop
+    autoDeploy: true
+    healthCheckPath: /login
+    buildCommand: npm ci && npx ng build --configuration staging
+    startCommand: node dist/PsiGestor/server/server.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: "22.14.0"
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_URL
+        value: https://psigestor-api-staging.onrender.com
+      - key: ALLOWED_HOSTS
+        value: psigestor-web-staging.onrender.com,*.onrender.com,localhost,127.0.0.1
+
+  # ===========================================================================
+  # 2. PRODUCTION ENVIRONMENT (Branch: main — Manual Approval & Migration Gate)
+  # ===========================================================================
+  - type: web
+    name: psigestor-api
+    runtime: python
+    plan: free
+    branch: main
+    autoDeploy: false
+    healthCheckPath: /health
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: SKIP_DB_INIT_ON_IMPORT=true gunicorn --chdir backend app.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: APP_ENV
+        value: production
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: psigestor-db-prod
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MOBILE_TOKEN_SECRET
+        generateValue: true
+      - key: STRICT_AUTH
+        value: "true"
+      - key: ENFORCE_CSRF_TOKEN
+        value: "true"
+      - key: RATE_LIMIT_STORAGE
+        value: database
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: ALLOW_CAPACITOR_ORIGINS
+        value: "true"
+      - key: ALLOW_STAGING_SEEDS
+        value: "false"
+      - key: SEED_DEMO_DATA
+        value: "false"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: INITIAL_PSYCHOLOGIST_EMAIL
+        sync: false
+      - key: INITIAL_PSYCHOLOGIST_PASSWORD
+        sync: false
+
+  - type: web
+    name: psigestor-web
+    runtime: node
+    plan: free
+    rootDir: frontend
+    branch: main
+    autoDeploy: false
+    healthCheckPath: /login
+    buildCommand: npm ci && npx ng build --configuration production
+    startCommand: node dist/PsiGestor/server/server.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: "22.14.0"
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_URL
+        value: https://psigestor-api.onrender.com
+      - key: ALLOWED_HOSTS
+        value: psigestor-web.onrender.com,*.onrender.com,localhost,127.0.0.1

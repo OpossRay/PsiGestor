@@ -741,7 +741,59 @@ def validate_reset_allowed(reset: bool) -> None:
         )
 
 
-def init_database(reset: bool = False) -> None:
+def verify_migrations_state(connection, migrations_dir: Path) -> dict:
+    """
+    Read-only inspection of migration state (--verify-only).
+    Never modifies the database. Validates recorded checksums and reports pending migrations.
+    """
+    migration_files = sorted(migrations_dir.glob("*.sql"))
+    files_by_name = {mf.name: mf for mf in migration_files}
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT EXISTS (
+                SELECT 1
+                FROM information_schema.tables
+                WHERE table_schema = 'public' AND table_name = 'schema_migrations'
+            );
+            """
+        )
+        has_table = bool(cursor.fetchone()[0])
+        if not has_table:
+            return {
+                "applied": [],
+                "pending": [mf.name for mf in migration_files],
+            }
+
+        cursor.execute("SELECT version, checksum FROM schema_migrations ORDER BY version;")
+        applied_map = {row[0]: row[1] for row in cursor.fetchall()}
+
+        for version, recorded_checksum in applied_map.items():
+            if version in files_by_name:
+                current_sql = files_by_name[version].read_text(encoding="utf-8")
+                current_checksum = compute_migration_checksum(current_sql)
+                if current_checksum != recorded_checksum:
+                    raise MigrationChecksumMismatchError(
+                        f"CRITICAL: El checksum de la migración ya aplicada '{version}' cambió. "
+                        f"Registrado: {recorded_checksum} | Actual: {current_checksum}."
+                    )
+
+        pending = [mf.name for mf in migration_files if mf.name not in applied_map]
+        return {
+            "applied": sorted(applied_map.keys()),
+            "pending": pending,
+        }
+
+
+def init_database(
+    reset: bool = False,
+    migrate_only: bool = False,
+    verify_only: bool = False,
+) -> dict:
+    if reset and (migrate_only or verify_only):
+        raise ValueError("No se puede combinar --reset con --migrate-only o --verify-only.")
+
     validate_reset_allowed(reset)
 
     db_dir = get_database_dir()
@@ -750,17 +802,36 @@ def init_database(reset: bool = False) -> None:
 
     if not migrations_dir.exists():
         print(f"[init_db] No se encontró el directorio de migraciones en {migrations_dir}")
-        return
+        return {"status": "missing_migrations_dir"}
 
     connection = connect_with_retry()
     lock_acquired = False
 
     try:
+        if verify_only:
+            state = verify_migrations_state(connection, migrations_dir)
+            if state["pending"]:
+                raise MigrationError(
+                    f"Verificación fallida (--verify-only): existen migraciones pendientes de aplicar: {state['pending']}"
+                )
+            print(
+                f"[init_db] Verificación de solo lectura exitosa: {len(state['applied'])} migraciones aplicadas y checksums íntegros."
+            )
+            return {"status": "verified", **state}
+
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_lock(%s);", (MIGRATION_ADVISORY_LOCK_KEY,))
             lock_acquired = True
 
-        run_migrations(connection, migrations_dir)
+        executed = run_migrations(connection, migrations_dir)
+
+        if migrate_only:
+            with connection.cursor() as cursor:
+                if bootstrap_initial_psychologist_if_configured(cursor):
+                    connection.commit()
+                    print("[init_db] Cuenta inicial del psicólogo creada desde configuración segura.")
+            print(f"[init_db] Ejecución controlada de migraciones (--migrate-only) completada: {len(executed)} cambios.")
+            return {"status": "migrated", "changes": executed}
 
         if reset:
             with connection.cursor() as cursor:
@@ -768,6 +839,7 @@ def init_database(reset: bool = False) -> None:
                     """
                     TRUNCATE TABLE
                         auth_refresh_tokens,
+                        auth_rate_limits,
                         appointments,
                         availabilities,
                         disabled_schedules,
@@ -782,6 +854,7 @@ def init_database(reset: bool = False) -> None:
                 print("[init_db] Tablas limpiadas correctamente (--reset en desarrollo local).")
 
         run_seeds(connection, seeds_dir, reset=reset)
+        return {"status": "initialized", "changes": executed}
 
     except Exception as error:
         connection.rollback()
@@ -800,8 +873,19 @@ def init_database(reset: bool = False) -> None:
 
 if __name__ == "__main__":
     reset_flag = "--reset" in sys.argv
-    init_database(reset=reset_flag)
-    if reset_flag:
+    migrate_only_flag = "--migrate-only" in sys.argv
+    verify_only_flag = "--verify-only" in sys.argv
+
+    init_database(
+        reset=reset_flag,
+        migrate_only=migrate_only_flag,
+        verify_only=verify_only_flag,
+    )
+    if verify_only_flag:
+        print("[init_db] Auditoría de migraciones (--verify-only) completada sin cambios.")
+    elif migrate_only_flag:
+        print("[init_db] Migraciones de esquema (--migrate-only) aplicadas correctamente.")
+    elif reset_flag:
         print("[init_db] ¡Base de datos sincronizada al 100% con los datos semilla del equipo!")
     else:
         print("[init_db] Verificación de migraciones y semillas completada.")

@@ -25,16 +25,17 @@ from app.init_db import init_database
 
 load_dotenv()
 
+# Automatic DB initialization on module import is ONLY allowed in local development.
+# In staging and production, Gunicorn workers must NEVER auto-run migrations on import.
 if (
-    os.environ.get("WERKZEUG_RUN_MAIN") != "true"
+    not is_production_like()
+    and os.environ.get("WERKZEUG_RUN_MAIN") != "true"
     and os.environ.get("SKIP_DB_INIT_ON_IMPORT", "false").strip().lower() != "true"
 ):
     try:
         init_database(reset=False)
     except Exception as init_error:
-        if is_production_like():
-            raise
-        print(f"[app] Advertencia al inicializar BD: {init_error}")
+        print(f"[app] Advertencia al inicializar BD en desarrollo: {init_error}")
 
 
 def create_app() -> Flask:
