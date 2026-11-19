@@ -13,6 +13,19 @@ export interface User {
 export interface AuthResponse {
   message: string;
   user: User;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  tokenType?: string;
+}
+
+export interface RefreshResponse {
+  message: string;
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  tokenType: string;
 }
 
 export interface MeResponse {

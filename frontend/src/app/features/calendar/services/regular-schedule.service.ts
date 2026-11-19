@@ -1,6 +1,8 @@
+import { isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 
 
 export type AvailabilityRangeUnit =
@@ -75,9 +77,14 @@ export interface RegularScheduleResponse {
   providedIn: 'root'
 })
 export class RegularScheduleService {
+  private readonly platformId = inject(PLATFORM_ID);
 
-  private readonly apiUrl =
-    'http://localhost:5000';
+  private get apiUrl(): string {
+    if (isPlatformServer(this.platformId)) {
+      return environment.ssrApiUrl;
+    }
+    return environment.apiUrl;
+  }
 
 
   constructor(

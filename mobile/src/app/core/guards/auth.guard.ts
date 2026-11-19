@@ -61,7 +61,7 @@ export const guestGuard: CanActivateFn = () => {
     if (user.role === 'psicologo') {
       return router.createUrlTree(['/psicologo']);
     }
-    return router.createUrlTree(['/tabs']);
+    return router.createUrlTree(['/alumno']);
   };
 
   if (authService.currentUser()) {

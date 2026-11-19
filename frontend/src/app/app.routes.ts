@@ -5,29 +5,32 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'calendar' // TEMPORAL: Redirigir directo al calendario mientras se desarrolla
+    redirectTo: 'login'
   },
   {
     path: 'login',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/login/login')
         .then((m) => m.Login)
   },
   {
     path: 'register',
+    canActivate: [guestGuard],
     loadComponent: () =>
       import('./features/auth/register/register')
         .then((m) => m.Register)
   },
   {
     path: 'calendar',
-    // canActivate: [roleGuard(['psicologo'])], // TEMPORAL: Desactivado para entrar directo
+    canActivate: [authGuard, roleGuard(['psicologo'])],
     loadComponent: () =>
       import('./features/calendar/components/calendar/calendar')
         .then((m) => m.Calendar)
   },
   {
     path: 'portal-alumno',
+    canActivate: [authGuard, roleGuard(['alumno'])],
     loadComponent: () =>
       import('./features/patient/pages/dashboard/dashboard')
         .then((m) => m.Dashboard)
@@ -39,18 +42,21 @@ export const routes: Routes = [
   },
   {
     path: 'patient/availability',
+    canActivate: [authGuard, roleGuard(['alumno'])],
     loadComponent: () =>
       import('./features/patient/pages/availability/availability')
         .then((m) => m.Availability)
   },
   {
     path: 'patient/appointments',
+    canActivate: [authGuard, roleGuard(['alumno'])],
     loadComponent: () =>
       import('./features/patient/pages/appointments/appointments')
         .then((m) => m.Appointments)
   },
   {
     path: 'psychologist',
+    canActivate: [authGuard, roleGuard(['psicologo'])],
     loadComponent: () =>
       import('./features/psychologist/psychologist-layout.component')
         .then(m => m.PsychologistLayoutComponent),
@@ -66,11 +72,10 @@ export const routes: Routes = [
           import('./features/calendar/components/calendar/calendar')
             .then((m) => m.Calendar)
       }
-
     ]
   },
   {
     path: '**',
-    redirectTo: 'calendar'
+    redirectTo: 'login'
   }
 ];

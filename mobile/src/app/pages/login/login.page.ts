@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -30,7 +30,7 @@ import { AuthService } from '../../core/services/auth.service';
     IonSpinner
   ]
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -48,6 +48,13 @@ export class LoginPage {
       eyeOffOutline,
       alertCircleOutline
     });
+  }
+
+  ngOnInit(): void {
+    const restoreError = this.authService.sessionRestoreError();
+    if (restoreError) {
+      this.errorMessage = restoreError;
+    }
   }
 
   togglePassword(): void {

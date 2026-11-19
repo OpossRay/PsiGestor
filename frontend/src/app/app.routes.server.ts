@@ -5,20 +5,29 @@ import {
 
 export const serverRoutes: ServerRoute[] = [
   {
+    path: 'login',
+    renderMode: RenderMode.Client
+  },
+  {
+    path: 'register',
+    renderMode: RenderMode.Client
+  },
+  {
     path: 'portal-alumno',
     renderMode: RenderMode.Client
   },
-
   {
     path: 'calendar',
-    renderMode: RenderMode.Prerender
+    renderMode: RenderMode.Client
   },
-
   {
     path: 'patient/availability',
-    renderMode: RenderMode.Prerender
+    renderMode: RenderMode.Client
   },
-
+  {
+    path: 'patient/appointments',
+    renderMode: RenderMode.Client
+  },
   {
     path: '**',
     renderMode: RenderMode.Client
