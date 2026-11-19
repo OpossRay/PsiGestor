@@ -35,6 +35,58 @@ appointments_bp = Blueprint(
 @appointments_bp.route("", methods=["POST"])
 @require_auth
 def create_appointment_route():
+    """
+    Registra una nueva cita psicológica.
+    ---
+    tags:
+      - Citas
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - date
+            - start_time
+            - end_time
+            - duration
+            - modality
+            - reason
+          properties:
+            student_id:
+              type: integer
+            student_name:
+              type: string
+            date:
+              type: string
+              example: "2026-11-25"
+            start_time:
+              type: string
+              example: "09:00"
+            end_time:
+              type: string
+              example: "10:00"
+            duration:
+              type: integer
+              example: 60
+            modality:
+              type: string
+              enum: [In person, Online]
+            location:
+              type: string
+            meeting_url:
+              type: string
+            reason:
+              type: string
+    responses:
+      201:
+        description: Cita registrada correctamente
+      400:
+        description: Error de validación o conflicto de horario
+      401:
+        description: No autenticado
+    """
     data = request.get_json(silent=True)
 
     if not isinstance(data, dict):
@@ -76,6 +128,23 @@ def create_appointment_route():
 
 @appointments_bp.route("", methods=["GET"])
 def list_appointments_route():
+    """
+    Lista las citas registradas (oculta datos privados si quien consulta no es psicólogo).
+    ---
+    tags:
+      - Citas
+    parameters:
+      - name: date
+        in: query
+        type: string
+        required: false
+        description: Filtrar por fecha en formato YYYY-MM-DD
+    responses:
+      200:
+        description: Lista de citas
+      400:
+        description: Formato de fecha inválido
+    """
     date_value = request.args.get("date")
 
     if date_value:
@@ -133,6 +202,37 @@ def list_appointments_route():
 @appointments_bp.route("/book", methods=["POST"])
 @require_auth
 def book_student_appointment_route():
+    """
+    Reserva un horario disponible para el alumno autenticado.
+    ---
+    tags:
+      - Citas (Alumno)
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - availability_id
+            - reason
+          properties:
+            availability_id:
+              type: integer
+            modality:
+              type: string
+            reason:
+              type: string
+            age:
+              type: integer
+    responses:
+      201:
+        description: Cita confirmada y registrada
+      400:
+        description: Horario no disponible o datos inválidos
+      401:
+        description: No autenticado
+    """
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
         return jsonify({"error": "El cuerpo de la solicitud debe ser un JSON válido."}), 400
@@ -170,6 +270,17 @@ def book_student_appointment_route():
 @appointments_bp.route("/my", methods=["GET"])
 @require_auth
 def get_my_appointments_route():
+    """
+    Consulta las citas pertenecientes al alumno autenticado.
+    ---
+    tags:
+      - Citas (Alumno)
+    responses:
+      200:
+        description: Lista de citas del alumno
+      401:
+        description: No autenticado
+    """
     user = get_current_user()
     if not user:
         return jsonify({"error": "No autenticado."}), 401
@@ -205,6 +316,34 @@ def get_my_appointments_route():
 @appointments_bp.route("/<int:appointment_id>/cancel", methods=["POST"])
 @require_auth
 def cancel_student_appointment_route(appointment_id):
+    """
+    Cancela una cita del alumno autenticado y libera el bloque de disponibilidad.
+    ---
+    tags:
+      - Citas (Alumno)
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            reason:
+              type: string
+            observation:
+              type: string
+    responses:
+      200:
+        description: Cita cancelada correctamente
+      400:
+        description: Solicitud inválida
+      401:
+        description: No autenticado
+    """
     user = get_current_user()
     if not user:
         return jsonify({"error": "No autenticado."}), 401
@@ -222,6 +361,34 @@ def cancel_student_appointment_route(appointment_id):
 @appointments_bp.route("/<int:appointment_id>/reschedule-request", methods=["POST"])
 @require_auth
 def reschedule_request_student_route(appointment_id):
+    """
+    Solicita la reprogramación de una cita del alumno a otro horario disponible.
+    ---
+    tags:
+      - Citas (Alumno)
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            proposed_availability_id:
+              type: integer
+            reason:
+              type: string
+    responses:
+      200:
+        description: Solicitud de reprogramación enviada
+      400:
+        description: Datos inválidos
+      401:
+        description: No autenticado
+    """
     user = get_current_user()
     if not user:
         return jsonify({"error": "No autenticado."}), 401
@@ -239,6 +406,24 @@ def reschedule_request_student_route(appointment_id):
 @appointments_bp.route("/<int:appointment_id>/approve-reschedule", methods=["POST"])
 @require_auth
 def approve_reschedule_route(appointment_id):
+    """
+    Aprueba y aplica una solicitud de reprogramación pendiente sobre una cita.
+    ---
+    tags:
+      - Citas
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Reprogramación aprobada y aplicada
+      400:
+        description: Cita o propuesta inválida
+      401:
+        description: No autenticado
+    """
     try:
         approve_student_reschedule(appointment_id)
         return jsonify({"message": "Reprogramación aprobada y aplicada correctamente."}), 200
@@ -251,6 +436,24 @@ def approve_reschedule_route(appointment_id):
 @appointments_bp.route("/<int:appointment_id>/reject-reschedule", methods=["POST"])
 @require_auth
 def reject_reschedule_route(appointment_id):
+    """
+    Rechaza una solicitud de reprogramación pendiente sobre una cita.
+    ---
+    tags:
+      - Citas
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Reprogramación rechazada
+      400:
+        description: Cita inválida
+      401:
+        description: No autenticado
+    """
     try:
         result = reject_student_reschedule(appointment_id)
         return jsonify(result), 200

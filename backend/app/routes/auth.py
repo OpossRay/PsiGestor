@@ -62,6 +62,41 @@ def _attach_csrf_cookie(response, csrf_token: str):
 
 @auth_bp.route("/register", methods=["POST"])
 def register():
+    """
+    Registra una nueva cuenta de alumno verificando su matrícula en el catálogo oficial.
+    ---
+    tags:
+      - Autenticación
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - name
+            - email
+            - password
+            - studentCode
+          properties:
+            name:
+              type: string
+            email:
+              type: string
+            password:
+              type: string
+            studentCode:
+              type: string
+            program:
+              type: string
+            semester:
+              type: integer
+    responses:
+      201:
+        description: Cuenta de alumno registrada con éxito
+      400:
+        description: Datos inválidos o matrícula no registrada
+    """
     data = request.get_json(silent=True) or {}
 
     name = data.get("name")
@@ -100,6 +135,40 @@ def register():
 
 @auth_bp.route("/login", methods=["POST"])
 def login():
+    """
+    Autentica un usuario (Web con cookie HttpOnly + CSRF, o Móvil con Access/Refresh Tokens).
+    ---
+    tags:
+      - Autenticación
+    parameters:
+      - name: X-Client-Platform
+        in: header
+        type: string
+        required: false
+        description: Enviar 'mobile' para recibir accessToken (15m) y refreshToken (14d)
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - email
+            - password
+          properties:
+            email:
+              type: string
+            password:
+              type: string
+    responses:
+      200:
+        description: Inicio de sesión exitoso
+      401:
+        description: Credenciales inválidas
+      403:
+        description: Cuenta desactivada
+      429:
+        description: Límite de intentos excedido (Rate Limit)
+    """
     data = request.get_json(silent=True) or {}
 
     email = (data.get("email") or "").strip()
@@ -155,6 +224,32 @@ def login():
 
 @auth_bp.route("/refresh", methods=["POST"])
 def refresh_tokens():
+    """
+    Rota atómicamente el refreshToken móvil y emite un nuevo accessToken de corta duración.
+    ---
+    tags:
+      - Autenticación
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - refreshToken
+          properties:
+            refreshToken:
+              type: string
+    responses:
+      200:
+        description: Par de tokens renovado exitosamente
+      401:
+        description: Token inválido, expirado o reutilización detectada (familia revocada)
+      403:
+        description: Usuario desactivado
+      429:
+        description: Demasiadas solicitudes de renovación
+    """
     data = request.get_json(silent=True) or {}
     raw_refresh_token = data.get("refreshToken")
 
@@ -195,6 +290,26 @@ def refresh_tokens():
 
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
+    """
+    Cierra la sesión actual (limpia cookie HttpOnly web y/o revoca el refreshToken móvil).
+    ---
+    tags:
+      - Autenticación
+    parameters:
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            refreshToken:
+              type: string
+    responses:
+      200:
+        description: Sesión cerrada correctamente
+      403:
+        description: Fallo de validación CSRF
+    """
     csrf_error = validate_csrf_for_cookie_session()
     if csrf_error is not None:
         return csrf_error
@@ -211,6 +326,17 @@ def logout():
 @auth_bp.route("/revoke-all", methods=["POST"])
 @require_auth
 def revoke_all():
+    """
+    Revoca inmediatamente todas las sesiones móviles (refresh tokens) activas del usuario.
+    ---
+    tags:
+      - Autenticación
+    responses:
+      200:
+        description: Sesiones móviles revocadas con éxito
+      401:
+        description: No autenticado
+    """
     user = get_current_user()
     if not user:
         return jsonify({"error": "No autenticado."}), 401
@@ -227,6 +353,15 @@ def revoke_all():
 
 @auth_bp.route("/me", methods=["GET"])
 def me():
+    """
+    Devuelve el estado de autenticación y el perfil del usuario actual.
+    ---
+    tags:
+      - Autenticación
+    responses:
+      200:
+        description: Estado de sesión actual (authenticated true/false)
+    """
     user = get_current_user()
     if not user:
         return jsonify({"authenticated": False, "user": None}), 200

@@ -60,7 +60,32 @@ def create_app() -> Flask:
         expose_headers=["X-CSRF-Token"],
     )
 
-    Swagger(flask_app)
+    swagger_template = {
+        "swagger": "2.0",
+        "info": {
+            "title": "PsiGestor API",
+            "description": (
+                "API REST oficial de PsiGestor para Web (Angular SSR con cookies HttpOnly + CSRF) "
+                "y Aplicación Móvil (Ionic/Capacitor con Access Tokens de corta duración y Refresh Tokens rotativos)."
+            ),
+            "version": "2.0.0",
+        },
+        "securityDefinitions": {
+            "BearerAuth": {
+                "type": "apiKey",
+                "name": "Authorization",
+                "in": "header",
+                "description": "Token de acceso móvil en formato: Bearer <accessToken>",
+            },
+            "CsrfToken": {
+                "type": "apiKey",
+                "name": "X-CSRF-Token",
+                "in": "header",
+                "description": "Token CSRF requerido en operaciones mutantes autenticadas por cookie.",
+            },
+        },
+    }
+    Swagger(flask_app, template=swagger_template)
 
     flask_app.register_blueprint(auth_bp)
     flask_app.register_blueprint(availability_bp)
@@ -70,13 +95,29 @@ def create_app() -> Flask:
 
     @flask_app.route("/")
     def inicio():
+        """
+        Verifica disponibilidad básica del servicio raíz.
+        ---
+        tags:
+          - Sistema
+        responses:
+          200:
+            description: Servicio activo
+        """
         return "Pfunciona"
 
     @flask_app.route("/health", methods=["GET"])
     def health_check():
         """
-        Health check endpoint for Render and monitoring.
-        Never exposes credentials, database names, or internal stack traces.
+        Verifica el estado de salud del backend y la conectividad con PostgreSQL sin exponer secretos.
+        ---
+        tags:
+          - Sistema
+        responses:
+          200:
+            description: Servicio y base de datos operativos
+          503:
+            description: Servicio degradado o sin conexión a base de datos
         """
         connection = None
         try:
@@ -108,8 +149,17 @@ def create_app() -> Flask:
     @flask_app.route("/db", methods=["GET"])
     def probar_db():
         """
-        Diagnostic route preserved for verify_environment.py compatibility.
-        In staging/production, restricts access and suppresses internal DB metadata.
+        Ruta de diagnóstico de base de datos (restringida en staging y producción).
+        ---
+        tags:
+          - Sistema
+        responses:
+          200:
+            description: Conexión verificada
+          403:
+            description: No autorizado en entornos productivos
+          500:
+            description: Error de conexión a base de datos
         """
         if is_production_like():
             user = get_current_user()

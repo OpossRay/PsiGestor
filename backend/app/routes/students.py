@@ -11,6 +11,27 @@ students_bp = Blueprint("students", __name__)
 @students_bp.route("/students", methods=["GET"])
 @require_role("psicologo")
 def list_students():
+    """
+    Busca alumnos en el catálogo oficial por nombre o matrícula (exclusivo psicólogo).
+    ---
+    tags:
+      - Alumnos
+    parameters:
+      - name: search
+        in: query
+        type: string
+        required: false
+        description: Texto de búsqueda por nombre o matrícula
+    responses:
+      200:
+        description: Lista de alumnos encontrados
+      400:
+        description: Texto de búsqueda inválido
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado (requiere rol psicologo)
+    """
     search_text = request.args.get("search", "").strip()
 
     if len(search_text) > 100:
