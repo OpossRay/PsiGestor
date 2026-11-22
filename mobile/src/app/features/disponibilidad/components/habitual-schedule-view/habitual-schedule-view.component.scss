@@ -1,0 +1,468 @@
+.p06-screen-wrapper {
+  min-height: 100%;
+  background: #f8fafc;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header Institucional Oscuro P-06 */
+.p05-topbar {
+  background: #0f2942;
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.p05-back-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 22px;
+  }
+}
+
+.p05-topbar-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.04em;
+  text-align: center;
+  flex: 1;
+}
+
+.p05-topbar-spacer {
+  width: 26px;
+}
+
+.p06-body {
+  padding: 16px 16px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Banner Superior: Parámetros Semanales Base */
+.p06-info-banner {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 14px;
+  padding: 14px 16px;
+
+  .p06-banner-title {
+    margin: 0 0 4px;
+    font-size: 13px;
+    font-weight: 800;
+    color: #0369a1;
+  }
+
+  .p06-banner-desc {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #475569;
+    line-height: 1.45;
+  }
+}
+
+/* Tarjetas Blancas P-06 */
+.p06-card {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid #e2e8f0;
+  padding: 16px 18px;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.03);
+
+  .p06-card-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .p06-card-heading {
+      margin: 0;
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      color: #0f172a;
+      text-transform: uppercase;
+    }
+
+    .p06-hint-text {
+      font-size: 11px;
+      color: #0284c7;
+      font-weight: 600;
+    }
+  }
+
+  .p06-card-heading {
+    margin: 0 0 12px;
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: #0f172a;
+    text-transform: uppercase;
+  }
+}
+
+/* Lista de Días Laborales Activos */
+.p06-days-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.p06-day-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:first-child {
+    padding-top: 4px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 2px;
+  }
+
+  .p06-day-name {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #1e293b;
+    min-width: 85px;
+  }
+
+  .p06-day-hours {
+    font-size: 12.5px;
+    font-weight: 500;
+    color: #64748b;
+    text-align: center;
+    flex: 1;
+
+    &.inactive-text {
+      color: #cbd5e1;
+    }
+  }
+
+  &.row-inactive {
+    .p06-day-name {
+      color: #94a3b8;
+    }
+  }
+}
+
+/* Chip Interactivo para Editar Horario */
+.p06-hours-chip-btn {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 5px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #0369a1;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex: 1;
+  justify-content: center;
+  max-width: 220px;
+
+  .hours-icon {
+    font-size: 14px;
+    color: #0284c7;
+  }
+
+  .hours-text {
+    letter-spacing: -0.01em;
+  }
+
+  .edit-icon {
+    font-size: 13px;
+    color: #0284c7;
+    opacity: 0.7;
+  }
+
+  &:hover, &:active {
+    background: #e0f2fe;
+    border-color: #7dd3fc;
+    transform: scale(0.98);
+  }
+}
+
+/* Interruptor Toggle iOS-style */
+.p06-toggle-switch {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  border: none;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s ease;
+
+  .p06-toggle-knob {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.2);
+    transform: translateX(0);
+    transition: transform 0.2s ease;
+  }
+
+  &.is-on {
+    background: #0369a1;
+
+    .p06-toggle-knob {
+      transform: translateX(20px);
+    }
+  }
+}
+
+/* Tarjeta 2: Duración y Descanso */
+.p06-params-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.p06-param-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  .p06-param-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .p06-param-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    height: 40px;
+    padding: 0 10px;
+    display: flex;
+    align-items: center;
+  }
+
+  .p06-native-select {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 800;
+    color: #0f172a;
+    cursor: pointer;
+    appearance: none;
+  }
+}
+
+/* Botón Primario: Guardar Horario Habitual */
+.p06-save-btn {
+  width: 100%;
+  height: 48px;
+  border-radius: 12px;
+  background: #0369a1;
+  border: none;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(3, 105, 161, 0.26);
+  transition: background 0.15s ease, transform 0.12s ease;
+  margin-top: 2px;
+
+  &:active {
+    background: #075985;
+    transform: scale(0.99);
+  }
+}
+
+/* Enlace secundario para Inhabilitar Horario (P-07) */
+.p06-disable-link-btn {
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+
+  ion-icon {
+    font-size: 16px;
+    color: #64748b;
+  }
+
+  &:active {
+    background: #f1f5f9;
+  }
+}
+
+/* Sheet / Editor de Horario Emergente */
+.p06-editor-sheet {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 18px 18px 0 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+
+    .editor-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .title-icon {
+        font-size: 20px;
+        color: #0284c7;
+      }
+
+      h3 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 800;
+        color: #0f172a;
+      }
+    }
+
+    .editor-close-btn {
+      background: #f1f5f9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #64748b;
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 18px;
+      }
+    }
+  }
+
+  .editor-desc {
+    margin: 0 0 16px;
+    font-size: 13px;
+    color: #64748b;
+  }
+
+  .editor-pickers-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+
+    .picker-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      label {
+        font-size: 12px;
+        font-weight: 700;
+        color: #334155;
+      }
+
+      .picker-box {
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        height: 44px;
+        padding: 0 10px;
+        display: flex;
+        align-items: center;
+
+        .editor-time-input {
+          width: 100%;
+          border: none;
+          background: transparent;
+          font-family: inherit;
+          font-size: 14px;
+          font-weight: 800;
+          color: #0f172a;
+          outline: none;
+          cursor: pointer;
+        }
+      }
+
+      .preview-text {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0284c7;
+        text-align: center;
+      }
+    }
+  }
+
+  .editor-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    .btn-apply-day {
+      width: 100%;
+      height: 44px;
+      border-radius: 10px;
+      background: #0284c7;
+      border: none;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 13.5px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(2, 132, 199, 0.25);
+    }
+
+    .btn-apply-all {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #0369a1;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+    }
+  }
+}

@@ -12,6 +12,12 @@ describe('BreakSchedule', () => {
 
     fixture = TestBed.createComponent(BreakSchedule);
     component = fixture.componentInstance;
+    component.config = {
+      enabled: false,
+      startTime: '10:00',
+      endTime: '11:00',
+    };
+    fixture.detectChanges();
     await fixture.whenStable();
   });
 

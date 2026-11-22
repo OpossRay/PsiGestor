@@ -1,0 +1,240 @@
+.p09-reprog-card {
+  background: #ffffff;
+  border: 1.5px solid #fcd34d;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+
+  &:active {
+    transform: scale(0.995);
+  }
+}
+
+/* Cabecera con badge y hora */
+.p09-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.p09-badge-cambio {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.p09-badge-dot {
+  font-size: 8px;
+  line-height: 1;
+  color: #f59e0b;
+}
+
+.p09-card-time {
+  font-size: 12px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+/* Fila de Estudiante */
+.p09-student-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.p09-student-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #fef3c7;
+  color: #b45309;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(217, 119, 6, 0.15);
+}
+
+.p09-student-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.p09-student-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.p09-student-matricula {
+  margin: 0;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Cajas de Horarios */
+.p09-box {
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 10px;
+}
+
+.p09-box-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #64748b;
+}
+
+.p09-label-green {
+  color: #16a34a;
+}
+
+.p09-box-original {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.p09-value-original {
+  font-size: 14px;
+  font-weight: 700;
+  color: #475569;
+  text-decoration: line-through;
+  letter-spacing: -0.2px;
+}
+
+.p09-box-propuesta {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+}
+
+.p09-value-propuesta {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+
+.p09-agenda-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-top: 2px;
+
+  &.status-free {
+    color: #16a34a;
+
+    .status-icon {
+      font-size: 14px;
+      color: #16a34a;
+    }
+  }
+
+  &.status-busy {
+    color: #dc2626;
+
+    .status-icon {
+      font-size: 14px;
+      color: #dc2626;
+    }
+  }
+}
+
+/* Caja de Motivo / Cursiva */
+.p09-reason-box {
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.p09-reason-text {
+  margin: 0;
+  font-size: 12px;
+  font-style: italic;
+  color: #475569;
+  line-height: 1.45;
+}
+
+/* Botones de Acción */
+.p09-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.p09-btn {
+  flex: 1;
+  height: 44px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-sizing: border-box;
+}
+
+.p09-btn-reject {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+  }
+
+  &:active {
+    background: #f1f5f9;
+  }
+}
+
+.p09-btn-approve {
+  background: #16a34a;
+  border: none;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.25);
+
+  .approve-icon {
+    font-size: 18px;
+  }
+
+  &:hover {
+    background: #15803d;
+  }
+
+  &:active {
+    background: #166534;
+  }
+}

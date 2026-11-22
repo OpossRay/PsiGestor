@@ -1,0 +1,204 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()">
+  <ng-template>
+    <ion-content class="p08-modal-content">
+      <div class="p08-screen-wrapper">
+        <!-- Header Institucional Oscuro P-08 -->
+        <header class="p08-topbar">
+          <button
+            type="button"
+            class="p08-back-btn"
+            (click)="onClose()"
+            aria-label="Cerrar modal de nueva cita"
+          >
+            <ion-icon name="arrow-back-outline"></ion-icon>
+          </button>
+          <h1 class="p08-topbar-title">NUEVA CITA PARA ALUMNO</h1>
+          <div class="p08-topbar-spacer"></div>
+        </header>
+
+        <form class="p08-body" (ngSubmit)="saveManualAppointment()">
+          <!-- 1. Tarjeta: ESPACIO EN AGENDA -->
+          <section class="p08-card p08-slot-card">
+            <div class="p08-slot-header" (click)="toggleSlotPicker()">
+              <div class="p08-slot-header-left">
+                <span class="p08-section-label">ESPACIO EN AGENDA</span>
+                @if (currentSlot && !isSlotInPast(currentSlot)) {
+                  <span class="p08-badge-disponible">Disponible</span>
+                } @else {
+                  <span class="p08-badge-nodisponible">Sin disponibilidad</span>
+                }
+              </div>
+              <button
+                type="button"
+                class="p08-slot-toggle-btn"
+                (click)="toggleSlotPicker(); $event.stopPropagation()"
+                aria-label="Elegir otro espacio disponible"
+              >
+                <ion-icon [name]="isSlotPickerOpen ? 'chevron-up-outline' : 'chevron-down-outline'"></ion-icon>
+              </button>
+            </div>
+
+            <div class="p08-slot-current" (click)="toggleSlotPicker()">
+              <span class="p08-slot-text">
+                {{ formatSlotDisplay(currentSlot) }}
+              </span>
+            </div>
+
+            <!-- Selector desplegable de espacios disponibles -->
+            @if (isSlotPickerOpen) {
+              <div class="p08-slot-picker-list">
+                <div class="p08-picker-title">
+                  <span>Espacios disponibles futuros ({{ availableSlots.length }})</span>
+                </div>
+
+                @if (availableSlots.length === 0) {
+                  <div class="p08-picker-empty">
+                    <p>No hay espacios disponibles en fechas u horarios futuros.</p>
+                  </div>
+                } @else {
+                  <div class="p08-picker-items">
+                    @for (s of availableSlots; track s.id) {
+                      <button
+                        type="button"
+                        class="p08-picker-item"
+                        [class.selected]="currentSlot?.id === s.id"
+                        (click)="selectSlot(s)"
+                      >
+                        <div class="p08-picker-item-info">
+                          <strong>{{ formatSlotDate(s.date) }}</strong>
+                          <span>{{ formatTime12h(s.startTime) }} – {{ formatTime12h(s.endTime) }} ({{ s.duration || 45 }} min)</span>
+                        </div>
+                        @if (currentSlot?.id === s.id) {
+                          <ion-icon name="checkmark-circle" class="p08-picker-check"></ion-icon>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </section>
+
+          <!-- 2. Tarjeta: Formulario Buscar Alumno, Modalidad y Motivo -->
+          <section class="p08-card p08-form-card">
+            <!-- Buscar Alumno por Nombre o Matrícula -->
+            <h2 class="p08-card-heading">Buscar Alumno por Nombre o Matrícula</h2>
+
+            <div class="p08-search-box">
+              <ion-icon name="search-outline" class="p08-search-icon"></ion-icon>
+              <input
+                type="text"
+                class="p08-search-input"
+                placeholder="Buscar alumno..."
+                [value]="bookingForm.studentSearch"
+                (input)="onStudentSearchInput($any($event).target.value)"
+              />
+              @if (isSearchingStudents) {
+                <ion-spinner name="crescent" class="p08-search-spinner"></ion-spinner>
+              } @else if (bookingForm.studentSearch || bookingForm.selectedStudent) {
+                <button
+                  type="button"
+                  class="p08-clear-btn"
+                  (click)="clearStudent()"
+                  aria-label="Limpiar búsqueda"
+                >
+                  <ion-icon name="close-circle"></ion-icon>
+                </button>
+              }
+            </div>
+
+            <!-- Resultados desplegables de búsqueda -->
+            @if (studentSearchResults.length > 0) {
+              <div class="p08-search-dropdown">
+                @for (student of studentSearchResults; track student.id) {
+                  <button
+                    type="button"
+                    class="p08-search-result-item"
+                    (click)="selectStudent(student)"
+                  >
+                    <div class="p08-result-avatar">
+                      {{ getStudentInitials(student.name) }}
+                    </div>
+                    <div class="p08-result-text">
+                      <strong>{{ student.name }}</strong>
+                      <span>Matrícula: {{ student.studentId }} · {{ student.semester }}mo Semestre</span>
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+
+            <!-- Alumno Seleccionado (Figma P-08) -->
+            @if (bookingForm.selectedStudent) {
+              <div class="p08-selected-student-card">
+                <div class="p08-student-avatar">
+                  {{ getStudentInitials(bookingForm.selectedStudent.name) }}
+                </div>
+                <div class="p08-student-details">
+                  <h3 class="p08-student-name">{{ bookingForm.selectedStudent.name }}</h3>
+                  <p class="p08-student-matricula">
+                    Matrícula: {{ bookingForm.selectedStudent.studentId }} · {{ bookingForm.selectedStudent.semester }}mo Semestre
+                  </p>
+                </div>
+                <ion-icon name="checkmark-circle" class="p08-student-check"></ion-icon>
+              </div>
+            }
+
+            <!-- Modalidad de Atención -->
+            <label class="p08-field-label">Modalidad de Atención</label>
+            <div class="p08-modality-group">
+              <button
+                type="button"
+                class="p08-modality-btn"
+                [class.active]="bookingForm.modality === 'In person'"
+                (click)="setModality('In person')"
+              >
+                <ion-icon name="business-outline"></ion-icon>
+                <span>Presencial</span>
+              </button>
+              <button
+                type="button"
+                class="p08-modality-btn"
+                [class.active]="bookingForm.modality === 'Online'"
+                (click)="setModality('Online')"
+              >
+                <ion-icon name="videocam-outline"></ion-icon>
+                <span>En Línea</span>
+              </button>
+            </div>
+
+            <!-- Motivo General de Atención -->
+            <label class="p08-field-label">Motivo General de Atención</label>
+            <textarea
+              class="p08-textarea"
+              rows="3"
+              placeholder="Seguimiento de tutoría académica y técnica de estudio."
+              [(ngModel)]="bookingForm.reason"
+              name="bookingReason"
+            ></textarea>
+          </section>
+
+          <!-- Botón de Confirmación P-08 -->
+          <button
+            type="submit"
+            class="p08-submit-btn"
+            [disabled]="isSavingAppointment || !bookingForm.selectedStudent || !currentSlot || isSlotInPast(currentSlot)"
+          >
+            @if (isSavingAppointment) {
+              <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
+              <span>Registrando cita...</span>
+            } @else {
+              <span>Confirmar y Registrar Cita</span>
+            }
+          </button>
+        </form>
+      </div>
+    </ion-content>
+
+    <!-- Barra de Navegación Inferior Institucional P-08 -->
+    <app-bottom-nav
+      [activeTab]="activeTab"
+      (tabChange)="onNavTab($event)"
+    ></app-bottom-nav>
+  </ng-template>
+</ion-modal>

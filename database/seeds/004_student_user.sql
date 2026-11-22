@@ -1,7 +1,6 @@
 -- =============================================================================
--- Seed 004: Cuentas de Alumnos de prueba oficiales para PsiGestor
+-- Seed 004: Cuentas de Alumnos de prueba oficiales para PsiGestor (Desarrollo Local)
 -- =============================================================================
--- Contraseña para ambas cuentas: password123
 
 -- 1. Alumna de prueba: Ana Lopez Hernandez
 INSERT INTO users (
@@ -14,7 +13,7 @@ INSERT INTO users (
 )
 SELECT
     'ana.lopez@itescam.edu.mx',
-    'scrypt:32768:8:1$La5CgSq1FT9QEZAu$99be02d2819d7b6ab31668144dac661ae9359c9b253fb190bf2b69f409f4c861d2647a09f8a580c41473c007adaee441a139983c8824b07e3e0622e96bb96e1a',
+    'scrypt:32768:8:1$VElecOKIffMmz4Kk$20cc66b5516bd383b41694ffc5591473d01c5c3df106c50c058e1f32b5c7d4c231ac1b30de456353914aa5da1486b0a4f87861b10fc22d605a746791ae31c8b7',
     'Ana Lopez Hernandez',
     'alumno',
     s.id,
@@ -25,7 +24,7 @@ WHERE s.student_id = 'TEST2026001'
       SELECT 1 FROM users u WHERE u.email = 'ana.lopez@itescam.edu.mx'
   );
 
--- 2. Alumno de prueba: Juan Pablo Moo Uc
+-- 2. Alumno de prueba: Estudiante Ficticio Siete
 INSERT INTO users (
     email,
     password_hash,
@@ -35,14 +34,14 @@ INSERT INTO users (
     is_active
 )
 SELECT
-    '8959@itescam.edu.mx',
-    'scrypt:32768:8:1$La5CgSq1FT9QEZAu$99be02d2819d7b6ab31668144dac661ae9359c9b253fb190bf2b69f409f4c861d2647a09f8a580c41473c007adaee441a139983c8824b07e3e0622e96bb96e1a',
-    'Juan Pablo Moo Uc',
+    'alumno.prueba@itescam.edu.mx',
+    'scrypt:32768:8:1$VElecOKIffMmz4Kk$20cc66b5516bd383b41694ffc5591473d01c5c3df106c50c058e1f32b5c7d4c231ac1b30de456353914aa5da1486b0a4f87861b10fc22d605a746791ae31c8b7',
+    'Estudiante Ficticio Siete',
     'alumno',
     s.id,
     TRUE
 FROM students s
-WHERE s.student_id = '8959'
+WHERE s.student_id = 'TEST2026007'
   AND NOT EXISTS (
-      SELECT 1 FROM users u WHERE u.email = '8959@itescam.edu.mx'
+      SELECT 1 FROM users u WHERE u.email = 'alumno.prueba@itescam.edu.mx'
   );

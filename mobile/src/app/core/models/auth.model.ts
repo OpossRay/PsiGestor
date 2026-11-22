@@ -7,11 +7,25 @@ export interface User {
   student_code?: string | null;
   program?: string | null;
   semester?: number | null;
+  has_completed_initial_test?: boolean;
 }
 
 export interface AuthResponse {
   message: string;
   user: User;
+  accessToken?: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  tokenType?: string;
+}
+
+export interface RefreshResponse {
+  message: string;
+  user: User;
+  accessToken: string;
+  refreshToken: string;
+  expiresIn: number;
+  tokenType: string;
 }
 
 export interface MeResponse {

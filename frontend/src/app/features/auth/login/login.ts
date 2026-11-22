@@ -49,7 +49,7 @@ export class Login {
         console.log('Usuario recibido:', response.user);
         console.log('Rol recibido:', response.user.role);
         if (role === 'psicologo') {
-          this.router.navigate(['/calendar']);
+          this.router.navigate(['/psychologist/agenda']);
         } else {
           this.router.navigate(['/portal-alumno']);
         }

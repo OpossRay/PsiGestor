@@ -1,5 +1,6 @@
 
 import { Routes } from '@angular/router';
+
 import {
   authGuard,
   guestGuard,
@@ -78,11 +79,6 @@ export const routes: Routes = [
         .then((m) => m.Appointments)
   },
   {
-    path: 'calendar',
-    redirectTo: 'psychologist/calendar',
-    pathMatch: 'full'
-  },
-  {
     path: 'psychologist',
     canActivate: [
       authGuard,
@@ -90,18 +86,23 @@ export const routes: Routes = [
     ],
     loadComponent: () =>
       import('./features/psychologist/psychologist-layout.component')
-        .then(m => m.PsychologistLayoutComponent),
+        .then((m) => m.PsychologistLayoutComponent),
     children: [
       {
         path: '',
-        redirectTo: 'calendar',
-        pathMatch: 'full'
+        pathMatch: 'full',
+        redirectTo: 'agenda'
+      },
+      {
+        path: 'agenda',
+        loadComponent: () =>
+          import('./features/psychologist/pages/agenda/agenda')
+            .then((m) => m.Agenda)
       },
       {
         path: 'calendar',
-        loadComponent: () =>
-          import('./features/calendar/components/calendar/calendar')
-            .then((m) => m.Calendar)
+        pathMatch: 'full',
+        redirectTo: 'agenda'
       },
       {
         path: 'test',
@@ -110,6 +111,16 @@ export const routes: Routes = [
             .then((m) => m.PipgResultsComponent)
       }
     ]
+  },
+  {
+    path: 'psychologist/calendar',
+    pathMatch: 'full',
+    redirectTo: 'psychologist/agenda'
+  },
+  {
+    path: 'calendar',
+    pathMatch: 'full',
+    redirectTo: 'psychologist/agenda'
   },
   {
     path: '**',

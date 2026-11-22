@@ -1,31 +1,19 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   IonContent,
-  IonCard,
-  IonCardHeader,
-  IonCardTitle,
-  IonCardSubtitle,
-  IonCardContent,
-  IonSegment,
-  IonSegmentButton,
-  IonLabel,
-  IonItem,
-  IonInput,
-  IonButton,
   IonIcon,
   IonSpinner
 } from '@ionic/angular';
 import { addIcons } from 'ionicons';
 import {
-  personOutline,
+  mailOutline,
   lockClosedOutline,
-  schoolOutline,
-  shieldCheckmarkOutline,
-  heartOutline,
-  logInOutline
+  eyeOutline,
+  eyeOffOutline,
+  alertCircleOutline
 } from 'ionicons/icons';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -37,47 +25,40 @@ import { AuthService } from '../../core/services/auth.service';
   imports: [
     CommonModule,
     FormsModule,
-    RouterLink,
     IonContent,
-    IonCard,
-    IonCardHeader,
-    IonCardTitle,
-    IonCardSubtitle,
-    IonCardContent,
-    IonSegment,
-    IonSegmentButton,
-    IonLabel,
-    IonItem,
-    IonInput,
-    IonButton,
     IonIcon,
     IonSpinner
   ]
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
 
-  selectedRole: 'psicologo' | 'alumno' = 'psicologo';
   email = '';
   password = '';
+  showPassword = false;
   errorMessage = '';
   isLoading = false;
 
   constructor() {
     addIcons({
-      personOutline,
+      mailOutline,
       lockClosedOutline,
-      schoolOutline,
-      shieldCheckmarkOutline,
-      heartOutline,
-      logInOutline
+      eyeOutline,
+      eyeOffOutline,
+      alertCircleOutline
     });
   }
 
-  onRoleChange(event: any): void {
-    this.selectedRole = event.detail.value;
-    this.errorMessage = '';
+  ngOnInit(): void {
+    const restoreError = this.authService.sessionRestoreError();
+    if (restoreError) {
+      this.errorMessage = restoreError;
+    }
+  }
+
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
   }
 
   onSubmit(): void {
@@ -95,18 +76,17 @@ export class LoginPage {
     }).subscribe({
       next: (res) => {
         this.isLoading = false;
-        // Validar si el rol coincide con la pestaña seleccionada
-        if (res.user.role !== this.selectedRole) {
-          const expected = this.selectedRole === 'psicologo' ? 'Psicólogo' : 'Alumno';
-          const actual = res.user.role === 'psicologo' ? 'Psicólogo' : 'Alumno';
-          this.errorMessage = `Esta cuenta pertenece al perfil "${actual}". Cambia la pestaña a "${actual}" para ingresar.`;
-          return;
-        }
-
         if (res.user.role === 'psicologo') {
           this.router.navigate(['/psicologo']);
         } else {
-          this.router.navigate(['/tabs']);
+          // Hook preparado para evaluación/test inicial obligatorio a futuro (primer ingreso)
+          if (this.checkStudentInitialTest(res.user)) {
+            // A futuro: redirigir a la pantalla del test inicial
+            // this.router.navigate(['/test-inicial']);
+            this.router.navigate(['/alumno']);
+          } else {
+            this.router.navigate(['/alumno']);
+          }
         }
       },
       error: (err) => {
@@ -115,5 +95,15 @@ export class LoginPage {
         this.errorMessage = msg;
       }
     });
+  }
+
+  /**
+   * Hook preparado para verificar si el alumno es de primer ingreso
+   * y requiere realizar el test inicial antes de acceder a la agenda.
+   * Por el momento se omite hasta que sea entregado por el equipo.
+   */
+  private checkStudentInitialTest(user: any): boolean {
+    const isTestFeatureDelivered = false; // Activar a true cuando se entregue el test
+    return isTestFeatureDelivered && !user?.has_completed_initial_test;
   }
 }

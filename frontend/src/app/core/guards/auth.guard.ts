@@ -12,6 +12,7 @@ export const authGuard: CanActivateFn = () => {
     if (!user) {
       return router.createUrlTree(['/login']);
     }
+
     return true;
   };
 
@@ -41,7 +42,7 @@ export const roleGuard = (
       }
 
       if (user.role === 'psicologo') {
-        return router.createUrlTree(['/psychologist']);
+        return router.createUrlTree(['/psychologist/agenda']);
       }
 
       return router.createUrlTree(['/portal-alumno']);
@@ -67,7 +68,7 @@ export const guestGuard: CanActivateFn = () => {
     }
 
     if (user.role === 'psicologo') {
-      return router.createUrlTree(['/psychologist']);
+      return router.createUrlTree(['/psychologist/agenda']);
     }
 
     return router.createUrlTree(['/portal-alumno']);
@@ -92,7 +93,7 @@ export const pipgGuard: CanActivateFn = () => {
     }
 
     if (user.role === 'psicologo') {
-      return router.createUrlTree(['/psychologist']);
+      return router.createUrlTree(['/psychologist/agenda']);
     }
 
     const status = authService.pipgState()?.status;
@@ -123,7 +124,7 @@ export const pipgRequiredGuard: CanActivateFn = () => {
     }
 
     if (user.role === 'psicologo') {
-      return router.createUrlTree(['/psychologist']);
+      return router.createUrlTree(['/psychologist/agenda']);
     }
 
     if (authService.pipgState()?.status !== 'completed') {

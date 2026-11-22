@@ -23,12 +23,14 @@ export interface PipgState {
 export interface AuthResponse {
   message: string;
   user: User;
+  csrfToken?: string;
 }
 
 export interface MeResponse {
   authenticated: boolean;
   user: User | null;
   pipg: PipgState | null;
+  csrfToken?: string;
 }
 
 export interface NavOption {

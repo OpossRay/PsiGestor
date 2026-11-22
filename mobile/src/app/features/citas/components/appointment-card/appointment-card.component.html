@@ -1,0 +1,236 @@
+<!-- ==========================================
+     TARJETA A: CITA CONFIRMADA (RESERVADA / EN ATENCIÓN)
+     ========================================== -->
+@if (slot.status === 'Reservado' && !isCompleted) {
+  <article class="op-appointment-card" (click)="onCardClick()">
+    <div class="op-card-top">
+      <div class="op-student-row">
+        <div class="op-avatar avatar-blue">
+          {{ slot.studentInitials || 'AL' }}
+          <span class="avatar-status-dot dot-emerald"></span>
+        </div>
+        <div class="op-student-meta">
+          <div class="op-name-line">
+            <h3>{{ slot.studentName || 'Alumno registrado' }}</h3>
+          </div>
+          <p>
+            {{ slot.folio || ('CITA-' + slot.id) }} • {{ slot.studentProgram || 'Ingeniería en Sistemas' }}
+            @if (slot.studentSemester) {
+              {{ slot.studentSemester }}° Sem
+            }
+          </p>
+        </div>
+      </div>
+
+      @if (isInProgress) {
+        <span class="op-badge badge-in-progress">
+          <ion-icon name="radio-outline"></ion-icon>
+          <span>En curso</span>
+        </span>
+      } @else {
+        <span class="op-badge badge-confirmed">
+          <ion-icon name="checkmark-circle-outline"></ion-icon>
+          <span>Confirmada</span>
+        </span>
+      }
+    </div>
+
+    <!-- Bloque de Fecha, Hora y Ubicación -->
+    <div class="op-schedule-venue-box">
+      <div class="venue-left">
+        <div class="alarm-icon-box">
+          <ion-icon name="time-outline"></ion-icon>
+        </div>
+        <div class="venue-time-texts">
+          <span class="venue-date">{{ formatCardDate(slot.date) }}</span>
+          <p class="venue-hour">
+            {{ formatTime12h(slot.startTime) }}
+            <small>({{ slot.duration || 45 }} min)</small>
+          </p>
+        </div>
+      </div>
+
+      <div class="venue-right">
+        <span class="venue-tag">
+          @if (slot.modality === 'Online' || slot.modality === 'En línea') {
+            En línea
+          } @else {
+            {{ slot.location || 'Cubículo 2B' }}
+          }
+        </span>
+        <p class="venue-reason">{{ slot.consultationReason || 'Seguimiento psicopedagógico' }}</p>
+      </div>
+    </div>
+
+    <!-- Botones de Acción (Iniciar cita / Finalizar cita + Detalle/Expediente) -->
+    <div class="op-card-actions">
+      @if (!isInProgress) {
+        <button
+          type="button"
+          class="op-btn-primary"
+          (click)="onStartSession($event)"
+        >
+          <ion-icon name="play"></ion-icon>
+          <span>Iniciar cita</span>
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="op-btn-complete"
+          (click)="onCompleteSession($event)"
+        >
+          <ion-icon name="checkmark-done-outline"></ion-icon>
+          <span>Concluir cita</span>
+        </button>
+      }
+
+      <button
+        type="button"
+        class="op-btn-secondary"
+        (click)="onDetailClick($event)"
+      >
+        <ion-icon name="folder-open-outline"></ion-icon>
+        <span>Detalle</span>
+      </button>
+    </div>
+  </article>
+}
+
+<!-- ==========================================
+     TARJETA B: REPROGRAMACIÓN / POR VALIDAR
+     ========================================== -->
+@if (slot.status === 'Reprogramacion pendiente' && !isCompleted) {
+  <article class="op-appointment-card" (click)="onCardClick()">
+    <div class="op-card-top">
+      <div class="op-student-row">
+        <div class="op-avatar avatar-teal">
+          {{ slot.studentInitials || 'AL' }}
+          <span class="avatar-status-dot dot-amber"></span>
+        </div>
+        <div class="op-student-meta">
+          <h3>{{ slot.studentName || 'Alumno registrado' }}</h3>
+          <p>
+            {{ slot.folio || ('CITA-' + slot.id) }} • {{ slot.studentProgram || 'Ingeniería' }}
+          </p>
+        </div>
+      </div>
+
+      <span class="op-badge badge-reschedule">
+        <ion-icon name="sync-outline"></ion-icon>
+        <span>Reprogramación</span>
+      </span>
+    </div>
+
+    <!-- Caja de Comparativa de Horario Anterior vs Propuesto -->
+    <div class="op-reschedule-alert-box">
+      <ion-icon name="alert-circle-outline" class="resched-alert-icon"></ion-icon>
+      <div class="resched-alert-texts">
+        <p class="resched-reason-title">{{ slot.consultationReason || 'Solicitud de cambio de horario' }}</p>
+        <span class="resched-old-time">
+          Anterior: {{ formatCardDate(slot.date) }} • {{ formatTime12h(slot.startTime) }}
+        </span>
+        <span class="resched-new-time">
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+          Propuesta: {{ formatCardDate(slot.proposedDate || slot.date) }} • {{ formatTime12h(slot.proposedStartTime || slot.startTime) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Meta de Modalidad -->
+    <div class="op-meta-footer-row">
+      <span class="meta-request-who">
+        @if (slot.rescheduleRequestedBy === 'alumno') {
+          Solicitado por el estudiante
+        } @else {
+          Propuesto por psicólogo (esperando alumno)
+        }
+      </span>
+
+      <span class="modality-mini-badge">
+        @if (slot.modality === 'Online' || slot.modality === 'En línea') {
+          <ion-icon name="videocam-outline"></ion-icon>
+          <span>En línea</span>
+        } @else {
+          <ion-icon name="business-outline"></ion-icon>
+          <span>Presencial</span>
+        }
+      </span>
+    </div>
+
+    <!-- Botones de Acción de Reprogramación -->
+    <div class="op-card-actions">
+      @if (slot.rescheduleRequestedBy === 'alumno') {
+        <button
+          type="button"
+          class="op-btn-teal"
+          (click)="onApproveReschedule($event)"
+        >
+          <ion-icon name="sync-outline"></ion-icon>
+          <span>Confirmar cambio</span>
+        </button>
+        <button
+          type="button"
+          class="op-btn-secondary"
+          (click)="onRejectReschedule($event)"
+        >
+          <span>Rechazar</span>
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="op-btn-teal"
+          (click)="onChangeReschedule($event)"
+        >
+          <ion-icon name="sync-outline"></ion-icon>
+          <span>Cambiar propuesta</span>
+        </button>
+        <button
+          type="button"
+          class="op-btn-secondary"
+          (click)="onDetailClick($event)"
+        >
+          <span>Ver detalle</span>
+        </button>
+      }
+    </div>
+  </article>
+}
+
+<!-- ==========================================
+     TARJETA C: HISTORIAL (CONCLUIDAS O CANCELADAS)
+     ========================================== -->
+@if (slot.status === 'Cancelado' || isCompleted) {
+  <article class="op-appointment-card card-history" (click)="onCardClick()">
+    <div class="op-card-top">
+      <div class="op-student-row">
+        <div class="op-avatar avatar-neutral">
+          {{ slot.studentInitials || 'AL' }}
+        </div>
+        <div class="op-student-meta">
+          <h3>{{ slot.studentName || 'Alumno registrado' }}</h3>
+          <p>{{ formatCardDate(slot.date) }} • {{ formatTime12h(slot.startTime) }}</p>
+        </div>
+      </div>
+
+      @if (isCompleted) {
+        <span class="op-badge badge-completed">
+          <ion-icon name="checkmark-done-outline"></ion-icon>
+          <span>Terminada</span>
+        </span>
+      } @else {
+        <span class="op-badge badge-cancelled">
+          <ion-icon name="close-circle-outline"></ion-icon>
+          <span>Cancelada</span>
+        </span>
+      }
+    </div>
+
+    <div class="op-history-reason-box">
+      @if (isCompleted) {
+        <p><strong>Atención concluida:</strong> {{ slot.consultationReason || 'Sesión psicopedagógica finalizada' }}</p>
+      } @else {
+        <p><strong>Motivo de cancelación:</strong> {{ slot.cancellationReason || 'No especificado' }}</p>
+      }
+    </div>
+  </article>
+}

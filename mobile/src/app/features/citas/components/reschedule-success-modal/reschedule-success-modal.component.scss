@@ -1,0 +1,144 @@
+.p10-modal-content {
+  --background: #ffffff;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+}
+
+.p10-screen-wrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+  padding: 32px 20px 28px 20px;
+  background: #ffffff;
+  box-sizing: border-box;
+}
+
+.p10-top-spacer {
+  height: 24px;
+}
+
+.p10-center-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  justify-content: center;
+}
+
+/* Badge Circular Verde con Calendario */
+.p10-success-badge {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #dcfce7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(22, 163, 74, 0.15);
+}
+
+.p10-calendar-svg {
+  width: 44px;
+  height: 44px;
+}
+
+/* Títulos */
+.p10-title {
+  margin: 0 0 8px 0;
+  font-size: 23px;
+  font-weight: 800;
+  color: #0f2942;
+  letter-spacing: -0.4px;
+}
+
+.p10-subtitle {
+  margin: 0 0 32px 0;
+  font-size: 13.5px;
+  color: #64748b;
+  line-height: 1.5;
+  max-width: 320px;
+}
+
+/* Tarjeta de Resumen */
+.p10-card {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 8px 18px;
+  box-shadow: 0 2px 8px rgba(15, 41, 66, 0.04);
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.p10-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 0;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.p10-label {
+  font-size: 13px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.p10-value {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #0f172a;
+  text-align: right;
+  letter-spacing: -0.1px;
+
+  &.p10-value-blue {
+    color: #0284c7;
+    font-weight: 800;
+  }
+
+  &.p10-value-green {
+    color: #16a34a;
+    font-weight: 800;
+  }
+}
+
+/* Footer & Botón */
+.p10-footer {
+  width: 100%;
+  margin-top: 24px;
+}
+
+.p10-btn-agenda {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  height: 48px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  transition: background 0.15s, transform 0.15s;
+
+  &:hover {
+    background: #0369a1;
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}

@@ -57,9 +57,9 @@ INSERT INTO appointments (
 SELECT * FROM (
     VALUES
         (1, 'Ana Lopez Hernandez', DATE '2026-10-19', TIME '08:00:00', TIME '09:00:00', 60, 'In person', 'cubiculo 2', 'seguimiento', 'Reserved'),
-        (2, 'Carlos Mendez Ruiz', DATE '2026-10-19', TIME '09:15:00', TIME '10:15:00', 60, 'In person', 'cubiculo 2', 'ALCOHOL', 'Reserved'),
-        (4, 'Jose Eduardo Perez', DATE '2026-10-21', TIME '08:00:00', TIME '09:00:00', 60, 'In person', 'cubiculo 2', 'faltas', 'Reserved'),
-        (5, 'Sofia Ramirez Castillo', DATE '2026-10-21', TIME '09:15:00', TIME '10:15:00', 60, 'In person', 'cubiculo 2', 'mal humor', 'Cancelled')
+        (2, 'Carlos Mendez Ruiz', DATE '2026-10-19', TIME '09:15:00', TIME '10:15:00', 60, 'In person', 'cubiculo 2', 'Orientacion academica', 'Reserved'),
+        (4, 'Jose Eduardo Perez', DATE '2026-10-21', TIME '08:00:00', TIME '09:00:00', 60, 'In person', 'cubiculo 2', 'Seguimiento academico', 'Reserved'),
+        (5, 'Sofia Ramirez Castillo', DATE '2026-10-21', TIME '09:15:00', TIME '10:15:00', 60, 'In person', 'cubiculo 2', 'Orientacion vocacional', 'Cancelled')
 ) AS seed_app (student_id, student_name, date, start_time, end_time, duration, modality, location, reason, status)
 WHERE NOT EXISTS (
     SELECT 1 FROM appointments a
@@ -95,7 +95,7 @@ SELECT * FROM (
     VALUES
         -- Lunes 19 de Octubre 2026
         (DATE '2026-10-19', TIME '08:00:00', TIME '09:00:00', 60, 0, 'Reservado', 'regular_schedule', 1, 'Ana Lopez Hernandez', 'AL', 20, '6° Semestre', 'Ingenieria en Sistemas Computacionales', 'seguimiento', 'Presencial', 'cubiculo 2', 'PSI-2026-0001', NULL::DATE, NULL::TIME, NULL::TIME),
-        (DATE '2026-10-19', TIME '09:15:00', TIME '10:15:00', 60, 0, 'Reprogramacion pendiente', 'regular_schedule', 1, 'Carlos Mendez Ruiz', 'CM', 20, '4° Semestre', 'Ingenieria en Sistemas Computacionales', 'ALCOHOL', 'Presencial', 'cubiculo 2', 'PSI-2026-0002', DATE '2026-10-19', TIME '11:30:00', TIME '12:30:00'),
+        (DATE '2026-10-19', TIME '09:15:00', TIME '10:15:00', 60, 0, 'Reprogramacion pendiente', 'regular_schedule', 1, 'Carlos Mendez Ruiz', 'CM', 20, '4° Semestre', 'Ingenieria en Sistemas Computacionales', 'Orientacion academica', 'Presencial', 'cubiculo 2', 'PSI-2026-0002', DATE '2026-10-19', TIME '11:30:00', TIME '12:30:00'),
         (DATE '2026-10-19', TIME '11:00:00', TIME '12:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
         (DATE '2026-10-19', TIME '12:00:00', TIME '13:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
         (DATE '2026-10-19', TIME '13:00:00', TIME '14:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
@@ -108,8 +108,8 @@ SELECT * FROM (
         (DATE '2026-10-20', TIME '13:00:00', TIME '14:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
 
         -- Miércoles 21 de Octubre 2026
-        (DATE '2026-10-21', TIME '08:00:00', TIME '09:00:00', 60, 0, 'Reservado', 'regular_schedule', 1, 'Jose Eduardo Perez', 'JE', 20, '2° Semestre', 'Ingenieria en Sistemas Computacionales', 'faltas', 'Presencial', 'cubiculo 2', 'PSI-2026-0003', NULL::DATE, NULL::TIME, NULL::TIME),
-        (DATE '2026-10-21', TIME '09:15:00', TIME '10:15:00', 60, 0, 'Cancelado', 'regular_schedule', 1, 'Sofia Ramirez Castillo', 'SR', 20, '6° Semestre', 'Ingenieria Informática', 'mal humor', 'Presencial', 'cubiculo 2', 'PSI-2026-0004', NULL::DATE, NULL::TIME, NULL::TIME),
+        (DATE '2026-10-21', TIME '08:00:00', TIME '09:00:00', 60, 0, 'Reservado', 'regular_schedule', 1, 'Jose Eduardo Perez', 'JE', 20, '2° Semestre', 'Ingenieria en Sistemas Computacionales', 'Seguimiento academico', 'Presencial', 'cubiculo 2', 'PSI-2026-0003', NULL::DATE, NULL::TIME, NULL::TIME),
+        (DATE '2026-10-21', TIME '09:15:00', TIME '10:15:00', 60, 0, 'Cancelado', 'regular_schedule', 1, 'Sofia Ramirez Castillo', 'SR', 20, '6° Semestre', 'Ingenieria Informática', 'Orientacion vocacional', 'Presencial', 'cubiculo 2', 'PSI-2026-0004', NULL::DATE, NULL::TIME, NULL::TIME),
         (DATE '2026-10-21', TIME '11:00:00', TIME '12:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
         (DATE '2026-10-21', TIME '12:00:00', TIME '13:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
         (DATE '2026-10-21', TIME '13:00:00', TIME '14:00:00', 60, 0, 'Disponible', 'regular_schedule', 1, NULL, NULL, NULL, NULL, NULL, NULL, 'Presencial', 'Cubículo 2B', NULL, NULL::DATE, NULL::TIME, NULL::TIME),
@@ -187,7 +187,7 @@ INSERT INTO disabled_schedules (
 )
 SELECT * FROM (
     VALUES
-        (DATE '2026-10-23', DATE '2026-10-23', TIME '09:00:00', TIME '10:00:00', 'Reunión', 'surgio una reunion para poder ver festividades del tecnologico', 'Puntual', 'Inhabilitado')
+        (DATE '2026-10-23', DATE '2026-10-23', TIME '09:00:00', TIME '10:00:00', 'Reunión', 'Reunion institucional de coordinacion academica', 'Puntual', 'Inhabilitado')
 ) AS seed_dis (start_date, end_date, start_time, end_time, reason, observation, type, status)
 WHERE NOT EXISTS (
     SELECT 1 FROM disabled_schedules ds

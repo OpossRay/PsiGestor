@@ -10,8 +10,8 @@ VALUES
      'Ingenieria en Sistemas Computacionales', 2),
     ('TEST2026005', 'Sofia Ramirez Castillo',
      'Ingenieria Informática', 6),
-    ('8990', 'Jesus Alfredo May Brito',
+    ('TEST2026006', 'Estudiante Ficticio Seis',
      'Ingenieria en Sistemas Computacionales', 7),
-    ('8959', 'Juan Pablo Moo Uc',
+    ('TEST2026007', 'Estudiante Ficticio Siete',
      'Ingenieria en Sistemas Computacionales', 7)
 ON CONFLICT (student_id) DO NOTHING;

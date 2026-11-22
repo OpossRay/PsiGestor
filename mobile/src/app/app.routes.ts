@@ -18,9 +18,14 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(['psicologo'])]
   },
   {
-    path: 'tabs',
-    loadChildren: () => import('./tabs/tabs.routes').then(m => m.routes),
+    path: 'alumno',
+    loadComponent: () => import('./pages/alumno/alumno.page').then(m => m.AlumnoPage),
     canActivate: [authGuard, roleGuard(['alumno'])]
+  },
+  {
+    path: 'tabs',
+    redirectTo: 'alumno',
+    pathMatch: 'full'
   },
   {
     path: '',

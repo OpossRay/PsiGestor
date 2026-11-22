@@ -4,27 +4,74 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import { join } from 'node:path';
+import {
+  PASSTHROUGH_RESPONSE_HEADERS,
+  SSR_PROXY_TIMEOUT_MS,
+  buildSafeProxyTargetUrl,
+  createProxyAbortSignal,
+  extractSafeRequestHeadersToForward,
+  extractSetCookieHeadersFromUpstream,
+  resolveAllowedHosts,
+  resolveConfiguredBackendOrigin,
+} from './app/core/security/ssr-proxy-security';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
+const configuredBackendUrl = resolveConfiguredBackendOrigin(process.env['BACKEND_URL']);
 
 const app = express();
 const angularApp = new AngularNodeAppEngine({
-  allowedHosts: ['localhost', '127.0.0.1'],
+  allowedHosts: resolveAllowedHosts(process.env['ALLOWED_HOSTS']),
 });
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Same-origin reverse proxy for /backend-api/* to preserve first-party HttpOnly SameSite=Lax cookies.
+ * Strictly pinned to the environment-configured BACKEND_URL.
  */
+app.use('/backend-api', express.raw({ type: '*/*', limit: '2mb' }), async (req: Request, res: Response) => {
+  const targetUrl = buildSafeProxyTargetUrl(req.url || '/', configuredBackendUrl);
+  if (!targetUrl) {
+    res.status(400).json({ error: 'Invalid proxy target path.' });
+    return;
+  }
+
+  const clientIpRaw = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+  const clientIp = typeof clientIpRaw === 'string' ? clientIpRaw : undefined;
+  const forwardedHeaders = extractSafeRequestHeadersToForward(req.headers, clientIp);
+
+  const method = (req.method || 'GET').toUpperCase();
+  const hasBody = method !== 'GET' && method !== 'HEAD' && Buffer.isBuffer(req.body) && req.body.length > 0;
+
+  try {
+    const upstreamResponse = await fetch(targetUrl.toString(), {
+      method,
+      headers: forwardedHeaders,
+      body: hasBody ? new Uint8Array(req.body as Buffer) : undefined,
+      redirect: 'manual',
+      signal: createProxyAbortSignal(SSR_PROXY_TIMEOUT_MS),
+    });
+
+    res.status(upstreamResponse.status);
+
+    const setCookies = extractSetCookieHeadersFromUpstream(upstreamResponse.headers);
+    if (setCookies.length > 0) {
+      res.setHeader('Set-Cookie', setCookies);
+    }
+
+    for (const hName of PASSTHROUGH_RESPONSE_HEADERS) {
+      const hVal = upstreamResponse.headers.get(hName);
+      if (hVal) {
+        res.setHeader(hName, hVal);
+      }
+    }
+
+    const responseBuffer = Buffer.from(await upstreamResponse.arrayBuffer());
+    res.send(responseBuffer);
+  } catch {
+    res.status(502).json({ error: 'Error de comunicación con el servidor backend.' });
+  }
+});
 
 /**
  * Serve static files from /browser

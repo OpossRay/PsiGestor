@@ -1,0 +1,110 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()">
+  <ng-template>
+    @if (mode === 'confirm') {
+      <ion-header>
+        <ion-toolbar color="danger">
+          <ion-title>Cancelar Cita</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="onClose()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding modal-bg">
+        @if (slot) {
+          <div class="cancel-summary">
+            <p><strong>Alumno:</strong> {{ slot.studentName }}</p>
+            <p><strong>Horario:</strong> {{ slot.date }} • {{ slot.startTime }} - {{ slot.endTime }}</p>
+          </div>
+
+          <form (ngSubmit)="confirmCancel()">
+            <ion-item lines="inset" class="form-item">
+              <ion-select
+                label="Motivo de Cancelación"
+                labelPlacement="floating"
+                [(ngModel)]="reason"
+                name="cancelReason"
+                required
+              >
+                <ion-select-option value="Fuerza mayor">Fuerza mayor</ion-select-option>
+                <ion-select-option value="Inasistencia del alumno">Inasistencia del alumno</ion-select-option>
+                <ion-select-option value="Emergencia médica">Emergencia médica</ion-select-option>
+                <ion-select-option value="Actividad académica">Actividad académica</ion-select-option>
+                <ion-select-option value="Otro motivo">Otro motivo</ion-select-option>
+              </ion-select>
+            </ion-item>
+
+            <ion-item lines="inset" class="form-item">
+              <ion-textarea
+                label="Observaciones adicionales"
+                labelPlacement="floating"
+                rows="3"
+                placeholder="Detalla la razón de la cancelación..."
+                [(ngModel)]="observation"
+                name="cancelObservation"
+              ></ion-textarea>
+            </ion-item>
+
+            <ion-button expand="block" color="danger" type="submit" class="ion-margin-top">
+              <ion-icon name="close-circle-outline" slot="start"></ion-icon>
+              Confirmar Cancelación
+            </ion-button>
+          </form>
+        }
+      </ion-content>
+    } @else {
+      <!-- Modo View (Detalle de Cancelación) -->
+      <ion-header>
+        <ion-toolbar color="danger">
+          <ion-title>Detalle de Cancelación</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="onClose()">Cerrar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding modal-bg">
+        @if (slot) {
+          <div class="detail-container">
+            <div class="detail-status-row">
+              <ion-badge color="danger">Cita Cancelada</ion-badge>
+              <span class="detail-folio">{{ slot.folio || ('CITA-' + slot.id) }}</span>
+            </div>
+
+            <div class="detail-card cancel-box">
+              <ion-icon name="close-circle-outline" color="danger" class="cancel-big-icon"></ion-icon>
+              <h3>Esta cita fue cancelada</h3>
+              <p>El espacio original no se impartió.</p>
+            </div>
+
+            <div class="detail-card">
+              <div class="card-icon-title">
+                <ion-icon name="person-outline" color="medium"></ion-icon>
+                <strong>Alumno Atendido</strong>
+              </div>
+              <p class="card-highlight">{{ slot.studentName || 'Alumno registrado' }}</p>
+              <small class="card-sub">{{ slot.date }} • {{ slot.startTime }} - {{ slot.endTime }}</small>
+            </div>
+
+            <div class="detail-card">
+              <div class="card-icon-title">
+                <ion-icon name="alert-circle-outline" color="danger"></ion-icon>
+                <strong>Motivo de la Cancelación</strong>
+              </div>
+              <p class="card-highlight text-danger">{{ slot.cancellationReason || 'Fuerza mayor / Ajuste escolar' }}</p>
+              @if (slot.cancellationObservation) {
+                <blockquote class="reason-quote">
+                  {{ slot.cancellationObservation }}
+                </blockquote>
+              }
+            </div>
+
+            <ion-button expand="block" color="medium" fill="outline" (click)="onClose()" class="ion-margin-top">
+              Cerrar Detalle
+            </ion-button>
+          </div>
+        }
+      </ion-content>
+    }
+  </ng-template>
+</ion-modal>

@@ -3,12 +3,20 @@ import { Injectable, PLATFORM_ID, inject, signal } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of, map } from 'rxjs';
+
 import {
   AuthResponse,
   MeResponse,
   User,
   PipgState
 } from '../models/auth.model';
+
+import {
+  clearCsrfToken,
+  setCsrfToken
+} from '../interceptors/credentials.interceptor';
+
+import { environment } from '../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
@@ -23,15 +31,19 @@ export class AuthService {
 
   private get baseUrl(): string {
     if (isPlatformServer(this.platformId)) {
-      return 'http://backend:5000/api/auth';
+      return `${environment.ssrApiUrl}/api/auth`;
     }
 
-    return 'http://localhost:5000/api/auth';
+    return `${environment.apiUrl}/api/auth`;
   }
 
   checkSession(): Observable<User | null> {
     return this.http.get<MeResponse>(`${this.baseUrl}/me`).pipe(
       map(response => {
+        if (response.csrfToken) {
+          setCsrfToken(response.csrfToken);
+        }
+
         const user = response.authenticated ? response.user : null;
 
         this.currentUser.set(user);
@@ -56,6 +68,10 @@ export class AuthService {
       credentials
     ).pipe(
       tap(response => {
+        if (response.csrfToken) {
+          setCsrfToken(response.csrfToken);
+        }
+
         this.currentUser.set(response.user);
         this.pipgState.set(null);
       })
@@ -87,10 +103,12 @@ export class AuthService {
       {}
     ).pipe(
       tap(() => {
+        clearCsrfToken();
         this.currentUser.set(null);
         this.pipgState.set(null);
       }),
       catchError(() => {
+        clearCsrfToken();
         this.currentUser.set(null);
         this.pipgState.set(null);
 

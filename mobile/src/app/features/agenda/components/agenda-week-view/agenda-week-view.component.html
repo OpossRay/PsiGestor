@@ -1,0 +1,116 @@
+<section class="p03-week-surface">
+  <!-- Fila 1: Navegador Semanal + Botón Hoy -->
+  <div class="p03-week-nav-row">
+    <div class="p03-week-stepper">
+      <button
+        type="button"
+        class="p02-step-btn"
+        (click)="onPrevWeek()"
+        aria-label="Semana anterior"
+      >
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </button>
+
+      <span class="p03-week-title" (click)="onToday()">
+        {{ formattedWeekLabel }}
+      </span>
+
+      <button
+        type="button"
+        class="p02-step-btn"
+        (click)="onNextWeek()"
+        aria-label="Semana siguiente"
+      >
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+
+    <button type="button" class="p02-today-btn" (click)="onToday()">
+      Hoy
+    </button>
+  </div>
+
+  <!-- Fila 2: Cabecera de Columnas (GMT-6 + DOM a SÁB) -->
+  <div class="p03-days-header-grid">
+    <div class="p03-gmt-cell">GMT-6</div>
+
+    @for (day of weekDays; track day.dateStr) {
+      <button
+        type="button"
+        class="p03-day-col-head"
+        [class.is-selected]="day.isSelected"
+        [class.is-today]="day.isToday"
+        [class.is-weekend]="day.isWeekend"
+        (click)="onSelectDate(day.date)"
+      >
+        <span class="p03-day-abbr">{{ day.upperLabel }}</span>
+        <span class="p03-day-num-badge">{{ day.dayNumber }}</span>
+      </button>
+    }
+  </div>
+
+  <!-- Fila 3: Cuerpo del Calendario Semanal (08:00 a 14:00) -->
+  <div class="p03-schedule-body">
+    <!-- Columna izquierda de horas -->
+    <div class="p03-hours-gutter">
+      @for (hour of weekGridHours; track hour) {
+        <div class="p03-hour-label">{{ hour }}</div>
+      }
+    </div>
+
+    <!-- 7 Columnas de días con bloques posicionados -->
+    <div class="p03-columns-track">
+      <!-- Líneas horizontales guía por cada hora -->
+      <div class="p03-horizontal-guides" aria-hidden="true">
+        @for (hour of weekGridHours; track hour) {
+          <div class="p03-guide-line"></div>
+        }
+      </div>
+
+      @for (day of weekDays; track day.dateStr) {
+        <div
+          class="p03-day-column"
+          [class.selected-column]="day.isSelected"
+          (click)="onSelectDate(day.date)"
+        >
+          @for (block of getWeekDayBlocks(day); track block.key) {
+            <div
+              class="p03-event-chip"
+              [ngClass]="'chip-' + block.variant"
+              [style.top.px]="block.topPx"
+              (click)="onBlockClick(block, day.date, $event)"
+            >
+              <span class="chip-line1">{{ block.line1 }}</span>
+              @if (block.line2) {
+                <span class="chip-line2">{{ block.line2 }}</span>
+              }
+              @if (block.line3) {
+                <span class="chip-line3">{{ block.line3 }}</span>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Fila 4: Leyenda Inferior de Estados (Cita, Libre, Reprog., Inhab.) -->
+  <footer class="p03-legend-bar">
+    <div class="p03-legend-item">
+      <span class="legend-dot dot-cita"></span>
+      <span>Cita ({{ weekStats.citas }})</span>
+    </div>
+    <div class="p03-legend-item">
+      <span class="legend-dot dot-libre"></span>
+      <span>Libre ({{ weekStats.libres }})</span>
+    </div>
+    <div class="p03-legend-item">
+      <span class="legend-dot dot-reprog"></span>
+      <span>Reprog. ({{ weekStats.reprog }})</span>
+    </div>
+    <div class="p03-legend-item">
+      <span class="legend-dot dot-inhab"></span>
+      <span>Inhab. ({{ weekStats.inhab }})</span>
+    </div>
+  </footer>
+</section>

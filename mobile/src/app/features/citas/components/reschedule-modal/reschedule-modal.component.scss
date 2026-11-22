@@ -1,0 +1,204 @@
+.modal-bg {
+  --background: #f8fafc;
+}
+
+.reschedule-banner {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+
+  p {
+    margin: 4px 0;
+    font-size: 13px;
+    color: #78350f;
+  }
+}
+
+.form-item {
+  --background: #ffffff;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.reschedule-slots-section {
+  margin-top: 14px;
+
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .slots-chips-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .slot-chip-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      color: #334155;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      ion-icon {
+        font-size: 16px;
+        color: #64748b;
+      }
+
+      &.selected {
+        background: #f59e0b;
+        color: #ffffff;
+        border-color: #d97706;
+
+        ion-icon {
+          color: #ffffff;
+        }
+      }
+
+      &:active {
+        transform: scale(0.97);
+      }
+    }
+  }
+
+  .no-slots-alert {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 10px 14px;
+    border-radius: 8px;
+
+    p {
+      margin: 0;
+      font-size: 13px;
+      color: #991b1b;
+    }
+  }
+}
+
+/* Detail review mode styles */
+.detail-container {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.detail-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+
+  .detail-folio {
+    font-size: 12px;
+    font-weight: 700;
+    color: #64748b;
+  }
+}
+
+.detail-card {
+  background: #ffffff;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+
+  &.student-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    border-left: 4px solid #f59e0b;
+
+    .avatar-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: #fef3c7;
+      color: #b45309;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .student-info-col {
+      h3 {
+        margin: 0 0 2px;
+        font-size: 16px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .student-academic {
+        margin: 0;
+        font-size: 13px;
+        color: #64748b;
+      }
+
+      .waiting-text {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #d97706;
+      }
+    }
+  }
+
+  &.proposed-card {
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
+
+  .card-icon-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+
+    ion-icon {
+      font-size: 18px;
+    }
+
+    strong {
+      font-size: 13px;
+      color: #475569;
+    }
+  }
+
+  .card-highlight {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .text-warning {
+    color: #b45309 !important;
+  }
+
+  .card-sub {
+    font-size: 12px;
+    color: #64748b;
+  }
+}
+
+.detail-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
