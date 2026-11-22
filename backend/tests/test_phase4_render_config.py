@@ -273,7 +273,7 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
         ]
         result = init_database(verify_only=True)
         self.assertEqual(result["status"], "verified")
-        self.assertEqual(len(result["applied"]), 13)
+        self.assertEqual(len(result["applied"]), 14)
         self.assertEqual(result["pending"], [])
 
 

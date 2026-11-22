@@ -111,6 +111,10 @@ class TestPhase3SeleniumFunctionalBrowserE2E(unittest.TestCase):
             patch("app.services.auth_service.find_user_by_email", side_effect=_mock_find_user_by_email),
             patch("app.services.auth_service.find_user_by_id", side_effect=_mock_find_user_by_id),
             patch(
+    "app.routes.auth.get_assessment_by_student",
+    return_value={"status": "completed"},
+),
+            patch(
                 "app.routes.availability.list_availabilities",
                 return_value=[
                     (

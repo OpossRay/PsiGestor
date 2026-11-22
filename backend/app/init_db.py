@@ -295,6 +295,36 @@ MIGRATION_SIGNATURES: dict[str, dict] = {
             "idx_auth_rate_limits_attempted_at",
         },
     },
+        "013_create_pipg_assessments.sql": {
+        "kind": "create_table",
+        "tables": {"pipg_assessments"},
+        "columns": {
+            "pipg_assessments": {
+                "id",
+                "student_id",
+                "status",
+                "answers",
+                "direct_scores",
+                "percentile_scores",
+                "started_at",
+                "completed_at",
+                "created_at",
+                "updated_at",
+            },
+        },
+        "constraints": {
+            "pipg_assessments": {
+                "pipg_assessments_student_id_key",
+                "fk_pipg_assessment_student",
+                "pipg_assessment_status_check",
+                "pipg_assessment_completion_check",
+            },
+        },
+        "indexes": {
+            "idx_pipg_assessments_status",
+            "pipg_assessments_student_id_key",
+        },
+    },
 }
 
 

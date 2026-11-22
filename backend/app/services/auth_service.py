@@ -241,6 +241,13 @@ def register_student(
     )
 
     full_user = find_user_by_id(created_user["id"])
+
+    # Iniciar sesión automáticamente después del registro.
+    session.clear()
+    session["user_id"] = full_user["id"]
+    session["role"] = full_user["role"]
+    session["email"] = full_user["email"]
+
     return sanitize_user(full_user)
 
 

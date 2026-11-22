@@ -1,0 +1,256 @@
+
+<main class="pipg-container">
+
+  <header class="pipg-header">
+    <div>
+      <span class="eyebrow">EVALUACIÓN PSICOLÓGICA</span>
+      <h1>Inventario de Personalidad de Gordon</h1>
+      <p>
+        Lee las cuatro descripciones de cada grupo. Selecciona una que
+        más se parezca a ti y otra que menos se parezca a ti.
+      </p>
+    </div>
+
+    <div class="progress-card" *ngIf="!completed">
+      <strong>{{ answeredGroups }} / {{ questions.length }}</strong>
+      <span>Grupos contestados</span>
+
+      <div class="progress-track">
+        <div class="progress-value" [style.width.%]="progress"></div>
+      </div>
+
+      <small>{{ progress }}% completado</small>
+    </div>
+
+    <button
+      type="button"
+      class="logout-button"
+      (click)="logout()"
+      [disabled]="loading || navigating || submitting">
+      Cerrar sesión
+    </button>
+  </header>
+
+  <section class="instructions" *ngIf="!completed">
+    <strong>Instrucciones</strong>
+    <p>
+      En cada grupo selecciona exactamente dos opciones diferentes:
+      una en «Más se parece a mí» (+) y otra en «Menos se parece a mí» (-).
+      Tus respuestas se guardan automáticamente.
+    </p>
+  </section>
+
+  <section class="question-card" *ngIf="loading">
+    <h2>Cargando evaluación...</h2>
+    <p>Estamos recuperando tus respuestas guardadas.</p>
+  </section>
+
+  <section
+    class="question-card"
+    *ngIf="!loading && errorMessage && !showReview && !completed">
+    <h2>No se pudo cargar la evaluación</h2>
+    <p class="error-message">{{ errorMessage }}</p>
+
+    <button
+      type="button"
+      class="primary-button"
+      (click)="loadAssessment()">
+      Reintentar
+    </button>
+  </section>
+
+  <section
+    class="question-card"
+    *ngIf="!loading && !errorMessage && !showReview && !completed && currentQuestion as question">
+
+    <div class="question-heading">
+      <span>GRUPO {{ question.id }} DE {{ questions.length }}</span>
+      <span>{{ currentQuestionIndex + 1 }} / {{ questions.length }}</span>
+    </div>
+
+    <h2>
+      ¿Cuál descripción se parece más y cuál menos a ti?
+    </h2>
+
+    <div class="selection-labels">
+      <span class="plus-label">+ Más se parece a mí</span>
+      <span class="minus-label">− Menos se parece a mí</span>
+    </div>
+
+    <article
+      class="option"
+      *ngFor="let option of question.options"
+      [class.option-plus]="isSelected(question.id, option.id, 'plus')"
+      [class.option-minus]="isSelected(question.id, option.id, 'minus')">
+
+      <div class="option-content">
+        <span class="part-label">
+          {{ getPartLabel(option) }}
+        </span>
+
+        <p>{{ option.text }}</p>
+      </div>
+
+      <div class="option-actions">
+
+        <button
+          type="button"
+          class="choice-button plus-button"
+          [class.selected]="isSelected(question.id, option.id, 'plus')"
+          [disabled]="
+            isSelected(question.id, option.id, 'minus') ||
+            saving || navigating || submitting
+          "
+          (click)="selectOption(question, option, 'plus')">
+
+          <span>+</span>
+          Más
+        </button>
+
+        <button
+          type="button"
+          class="choice-button minus-button"
+          [class.selected]="isSelected(question.id, option.id, 'minus')"
+          [disabled]="
+            isSelected(question.id, option.id, 'plus') ||
+            saving || navigating || submitting
+          "
+          (click)="selectOption(question, option, 'minus')">
+
+          <span>−</span>
+          Menos
+        </button>
+
+      </div>
+    </article>
+
+    <p class="validation-message" *ngIf="showValidation">
+      Selecciona una opción «Más» y una opción «Menos» diferentes.
+    </p>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <footer class="question-footer">
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="previousQuestion()"
+        [disabled]="
+          currentQuestionIndex === 0 ||
+          navigating || loading || submitting
+        ">
+        Anterior
+      </button>
+
+      <span class="save-status">
+        {{
+          submitting ? 'Enviando evaluación...' :
+          navigating ? 'Guardando y avanzando...' :
+          saving ? 'Guardando respuestas...' :
+          saveMessage
+        }}
+      </span>
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="nextQuestion()"
+        [disabled]="navigating || loading || submitting">
+
+        {{
+          navigating ? 'Guardando...' :
+          currentQuestionIndex === questions.length - 1
+            ? 'Revisar respuestas'
+            : 'Siguiente'
+        }}
+      </button>
+
+    </footer>
+  </section>
+
+  <section
+    class="question-card review-card"
+    *ngIf="!loading && showReview && !completed">
+
+    <span class="eyebrow">REVISIÓN FINAL</span>
+    <h2>Revisa tus respuestas</h2>
+
+    <p>
+      Has contestado {{ answeredGroups }} de {{ questions.length }} grupos.
+      Una vez que completes la evaluación, no podrás modificarla ni repetirla.
+    </p>
+
+    <div class="review-list">
+      <div class="review-item" *ngFor="let question of questions">
+
+        <strong>Grupo {{ question.id }}</strong>
+
+        <span [class.missing]="!answers[question.id]?.plus">
+          Más: {{ getOptionText(question, answers[question.id]?.plus) }}
+        </span>
+
+        <span [class.missing]="!answers[question.id]?.minus">
+          Menos: {{ getOptionText(question, answers[question.id]?.minus) }}
+        </span>
+
+        <button
+          type="button"
+          (click)="editQuestion(question.id)"
+          [disabled]="submitting || navigating">
+          Editar
+        </button>
+
+      </div>
+    </div>
+
+    <p class="error-message" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </p>
+
+    <footer class="question-footer">
+
+      <button
+        type="button"
+        class="secondary-button"
+        (click)="showReview = false"
+        [disabled]="submitting || navigating">
+        Volver
+      </button>
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="finishAssessment()"
+        [disabled]="
+          submitting ||
+          saving ||
+          answeredGroups !== questions.length
+        ">
+
+        {{
+          submitting ? 'Enviando...' :
+          saving ? 'Guardando respuestas...' :
+          'Finalizar evaluación'
+        }}
+      </button>
+
+    </footer>
+  </section>
+
+  <section
+    class="question-card completed-card"
+    *ngIf="completed">
+
+    <h2>Evaluación completada</h2>
+
+    <p>
+      Tus respuestas fueron registradas correctamente.
+      Ya puedes continuar utilizando la plataforma.
+    </p>
+
+  </section>
+
+</main>

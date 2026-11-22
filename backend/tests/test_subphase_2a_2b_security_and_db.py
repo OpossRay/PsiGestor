@@ -392,7 +392,7 @@ class TestSubphase2BMigrationsAndSeeds(unittest.TestCase):
     def test_all_migration_files_have_complete_signatures(self):
         migrations_dir = BACKEND_DIR.parent / "database" / "migrations"
         sql_files = sorted(f.name for f in migrations_dir.glob("*.sql"))
-        self.assertEqual(len(sql_files), 13)
+        self.assertEqual(len(sql_files), 14)
         for fname in sql_files:
             self.assertIn(fname, MIGRATION_SIGNATURES, f"Missing signature for {fname}")
 
@@ -439,6 +439,7 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
         self.env_patcher.stop()
         auth_rate_limiter.reset()
 
+    @patch("app.routes.auth.get_assessment_by_student", return_value=None)
     @patch("app.services.auth_service.store_refresh_token")
     @patch("app.services.auth_service.rotate_refresh_token_atomic")
     @patch("app.services.auth_service.revoke_refresh_token_by_hash", return_value=True)
@@ -455,6 +456,7 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
         mock_revoke_one,
         mock_rotate_atomic,
         mock_store_rt,
+        mock_pipg,
     ):
         user_record = {
             "id": 3,
@@ -494,6 +496,7 @@ class TestSubphase2AFullWebAndMobileAuthFlows(unittest.TestCase):
             "/api/auth/me",
             headers={"Authorization": f"Bearer {access_token}"},
         )
+        print("RESPUESTA DE /me:", me_res.get_json())
         self.assertEqual(me_res.status_code, 200)
         self.assertTrue(me_res.get_json()["authenticated"])
         self.assertEqual(me_res.get_json()["user"]["id"], 3)
@@ -698,12 +701,12 @@ class TestSubphase2BMigrationScenariosInDepth(unittest.TestCase):
         migrations_dir = BACKEND_DIR.parent / "database" / "migrations"
         results = run_migrations(mock_conn, migrations_dir)
 
-        self.assertEqual(len(results), 13)
+        self.assertEqual(len(results), 14)
         self.assertTrue(all(r.startswith("applied:") for r in results))
 
     @patch("app.init_db._fetch_existing_schema_metadata")
     @patch("app.init_db.ensure_schema_migrations_table")
-    def test_existing_database_adopts_001_to_011_and_applies_only_012(
+    def test_existing_database_adopts_001_to_011_and_applies_012_and_013(
         self, mock_ensure_table, mock_fetch_meta
     ):
         mock_ensure_table.return_value = {}
@@ -716,11 +719,13 @@ class TestSubphase2BMigrationScenariosInDepth(unittest.TestCase):
         migrations_dir = BACKEND_DIR.parent / "database" / "migrations"
         results = run_migrations(mock_conn, migrations_dir)
 
-        self.assertEqual(len(results), 13)
+        self.assertEqual(len(results), 14)
         adopted = [r for r in results if r.startswith("adopted:")]
         applied = [r for r in results if r.startswith("applied:")]
-        self.assertEqual(len(adopted), 12)
-        self.assertEqual(applied, ["applied:012_create_auth_refresh_tokens.sql"])
+        self.assertEqual(len(adopted), 13)
+        self.assertEqual(applied, [
+    "applied:012_create_auth_refresh_tokens.sql",
+])
 
     def test_partial_alter_table_or_outdated_constraint_raises_schema_adoption_error(self):
         meta = self._build_full_schema_metadata_for_001_to_011()

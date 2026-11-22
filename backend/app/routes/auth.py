@@ -1,5 +1,8 @@
+
 from flask import Blueprint, request, jsonify, make_response
+
 from app.config import get_session_cookie_config, is_production_like
+from app.repositories.pipg_repository import get_assessment_by_student
 from app.repositories.refresh_token_repository import (
     ExpiredRefreshTokenError,
     InvalidRefreshTokenError,
@@ -33,10 +36,12 @@ def _is_mobile_client_request(data: dict | None = None) -> bool:
     header_platform = (request.headers.get("X-Client-Platform") or "").strip().lower()
     if header_platform in ("mobile", "capacitor", "ionic", "android", "ios"):
         return True
+
     if isinstance(data, dict):
         body_platform = str(data.get("clientPlatform") or "").strip().lower()
         if body_platform in ("mobile", "capacitor", "ionic", "android", "ios"):
             return True
+
     return False
 
 
@@ -363,10 +368,33 @@ def me():
         description: Estado de sesión actual (authenticated true/false)
     """
     user = get_current_user()
-    if not user:
-        return jsonify({"authenticated": False, "user": None}), 200
 
-    payload = {"authenticated": True, "user": user}
+    if not user:
+        return jsonify({
+            "authenticated": False,
+            "user": None,
+            "pipg": None,
+        }), 200
+
+    pipg_status = None
+
+    if user["role"] == "alumno" and user.get("studentId"):
+        assessment = get_assessment_by_student(user["studentId"])
+
+        pipg_status = {
+            "status": assessment["status"] if assessment else "not_started",
+            "completed": (
+                assessment is not None
+                and assessment["status"] == "completed"
+            ),
+        }
+
+    payload = {
+        "authenticated": True,
+        "user": user,
+        "pipg": pipg_status,
+    }
+
     if not is_request_using_bearer_auth():
         csrf_token = ensure_csrf_token()
         payload["csrfToken"] = csrf_token

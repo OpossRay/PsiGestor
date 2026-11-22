@@ -1,0 +1,174 @@
+<section class="pipg-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">EVALUACIONES PSICOPEDAGÓGICAS</span>
+      <h1>Resultados P-IPG</h1>
+      <p>Consulta las evaluaciones completadas por los estudiantes.</p>
+    </div>
+
+    <button class="refresh-button" type="button" (click)="loadResults()" [disabled]="isLoading()">
+      <span>↻</span>
+      Actualizar
+    </button>
+  </header>
+
+  <div class="summary-card">
+    <div class="summary-icon">📋</div>
+    <div>
+      <span>Evaluaciones completadas</span>
+      <strong>{{ assessments().length }}</strong>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+  <div class="state-message">
+    <div class="loader"></div>
+    <p>Cargando resultados...</p>
+  </div>
+  } @else if (errorMessage()) {
+  <div class="state-message error">
+    <p>{{ errorMessage() }}</p>
+    <button type="button" (click)="loadResults()">Intentar nuevamente</button>
+  </div>
+  } @else if (assessments().length === 0) {
+  <div class="empty-state">
+    <div class="empty-icon">📄</div>
+    <h2>Aún no hay resultados</h2>
+    <p>Cuando los estudiantes completen su evaluación P-IPG, sus resultados aparecerán aquí.</p>
+  </div>
+  } @else {
+  <div class="results-section">
+    <div class="section-heading">
+      <h2>Evaluaciones registradas</h2>
+      <span>{{ assessments().length }} registros</span>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th>Fecha de inicio</th>
+            <th>Fecha de finalización</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (assessment of assessments(); track assessment.id) {
+          <tr>
+            <td>
+              <strong>
+                {{ assessment.studentName || 'Estudiante #' + assessment.studentId }}
+              </strong>
+              <small>
+                {{ assessment.studentCode || 'Evaluación P-IPG' }}
+              </small> <small>Evaluación P-IPG</small>
+            </td>
+
+            <td>
+              {{ assessment.startedAt ? (assessment.startedAt | date:'dd/MM/yyyy') : '—' }}
+            </td>
+
+            <td>
+              {{ assessment.completedAt ? (assessment.completedAt | date:'dd/MM/yyyy') : '—' }}
+            </td>
+
+            <td>
+              <span class="status completed">
+                Completada
+              </span>
+            </td>
+
+            <td>
+              <button class="details-button" type="button" (click)="selectAssessment(assessment)">
+                Ver resultados
+              </button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+  }
+
+  @if (selectedAssessment(); as selected) {
+  <div class="modal-backdrop" (click)="closeDetails()">
+    <section class="details-modal" role="dialog" aria-modal="true" aria-labelledby="details-title"
+      (click)="$event.stopPropagation()">
+      <header class="modal-header">
+        <div>
+          <span class="eyebrow">EVALUACIÓN COMPLETADA</span>
+          <h2 id="details-title">
+            Resultados de {{ selected.studentName || 'Estudiante #' + selected.studentId }}
+          </h2>
+        </div>
+
+        <button class="close-button" type="button" aria-label="Cerrar" (click)="closeDetails()">
+          ×
+        </button>
+      </header>
+
+      <div class="modal-content">
+        <div class="detail-info">
+          <div>
+            <span>Fecha de inicio</span>
+            <strong>
+              {{ selected.startedAt ? (selected.startedAt | date:'dd/MM/yyyy HH:mm') : '—' }}
+            </strong>
+          </div>
+
+          <div>
+            <span>Fecha de finalización</span>
+            <strong>
+              {{ selected.completedAt ? (selected.completedAt | date:'dd/MM/yyyy HH:mm') : '—' }}
+            </strong>
+          </div>
+        </div>
+
+        <h3>Puntuaciones directas</h3>
+
+        @if (getScoreEntries(selected.directScores).length > 0) {
+        <div class="score-grid">
+          @for (score of getScoreEntries(selected.directScores); track score.key) {
+          <div class="score-card">
+            <span>{{ score.key }}</span>
+            <strong>{{ score.value }}</strong>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="no-data">No hay puntuaciones directas disponibles.</p>
+        }
+
+        <h3>Puntuaciones percentiles</h3>
+
+        @if (getPercentileEntries(selected.percentileScores).length > 0) {
+        <div class="score-grid">
+          @for (score of getPercentileEntries(selected.percentileScores); track score.key) {
+          <div class="score-card">
+            <span>{{ score.key }}</span>
+            <strong>
+              {{ score.value === null ? 'No disponible' : score.value }}
+            </strong>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="no-data">No hay puntuaciones percentiles disponibles.</p>
+        }
+
+        <p class="results-note">
+          Los resultados se muestran conforme a los datos calculados y almacenados por el sistema.
+        </p>
+      </div>
+
+      <footer class="modal-footer">
+        <button type="button" (click)="closeDetails()">Cerrar</button>
+      </footer>
+    </section>
+  </div>
+  }
+</section>

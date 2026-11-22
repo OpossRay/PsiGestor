@@ -1,7 +1,7 @@
+
 from flask import Flask, jsonify
 import os
 from dotenv import load_dotenv
-from flask_cors import CORS
 from flasgger import Swagger
 from werkzeug.exceptions import HTTPException
 
@@ -21,7 +21,7 @@ from app.routes.students import students_bp
 from app.routes.auth import auth_bp
 from app.services.auth_service import get_current_user
 from app.init_db import init_database
-
+from app.routes.pipg import pipg_bp
 
 load_dotenv()
 
@@ -46,6 +46,8 @@ def create_app() -> Flask:
     get_mobile_token_secret()
 
     flask_app.config.update(get_session_cookie_config())
+
+    from flask_cors import CORS
 
     CORS(
         flask_app,
@@ -93,6 +95,7 @@ def create_app() -> Flask:
     flask_app.register_blueprint(regular_schedule_bp)
     flask_app.register_blueprint(appointments_bp)
     flask_app.register_blueprint(students_bp)
+    flask_app.register_blueprint(pipg_bp)
 
     @flask_app.route("/")
     def inicio():
