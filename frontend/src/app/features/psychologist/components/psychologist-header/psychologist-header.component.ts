@@ -24,10 +24,11 @@ export class PsychologistHeaderComponent {
 
   // Opciones de navegación exclusivas para el rol Psicóloga
   navOptions: NavOption[] = [
-    { label: 'Agenda', route: '/calendar' }
+    { label: 'Agenda', route: '/calendar' },
    // { label: 'Citas', route: '/psychologist/appointments' },
     //{ label: 'Pacientes', route: '/psychologist/patients' },
     //{ label: 'Reportes', route: '/psychologist/reports' }
+    { label: 'Test', route: '/psychologist/test' }
   ];
 
   toggleMobileMenu(): void {

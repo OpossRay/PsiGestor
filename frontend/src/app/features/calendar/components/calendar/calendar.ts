@@ -1,6 +1,5 @@
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { BookAppointmentModal } from '../../../patient/components/book-appointment-modal/book-appointment-modal';
-import { PsychologistHeaderComponent } from '../../../psychologist/components/psychologist-header/psychologist-header.component';
 
 import {
   afterNextRender,
@@ -103,7 +102,6 @@ export interface PatientScheduleSelection {
     CancelModal,
     CalendarToolbar,
     ManageScheduleModal,
-    PsychologistHeaderComponent,
     BookAppointmentModal
   ],
 

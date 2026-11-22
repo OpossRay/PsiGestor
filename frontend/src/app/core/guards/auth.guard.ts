@@ -1,29 +1,32 @@
+
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
-import { map, of } from 'rxjs';
+import { map } from 'rxjs';
 
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Si ya tenemos el usuario en la señal
-  if (authService.currentUser()) {
+  const checkUser = (user: any) => {
+    if (!user) {
+      return router.createUrlTree(['/login']);
+    }
     return true;
+  };
+
+  if (authService.currentUser()) {
+    return checkUser(authService.currentUser());
   }
 
-  // Si aún no se ha verificado, consultamos sesión al backend
   return authService.checkSession().pipe(
-    map(user => {
-      if (user) {
-        return true;
-      }
-      return router.createUrlTree(['/login']);
-    })
+    map(user => checkUser(user))
   );
 };
 
-export const roleGuard = (allowedRoles: Array<'psicologo' | 'alumno'>): CanActivateFn => {
+export const roleGuard = (
+  allowedRoles: Array<'psicologo' | 'alumno'>
+): CanActivateFn => {
   return () => {
     const authService = inject(AuthService);
     const router = inject(Router);
@@ -32,13 +35,15 @@ export const roleGuard = (allowedRoles: Array<'psicologo' | 'alumno'>): CanActiv
       if (!user) {
         return router.createUrlTree(['/login']);
       }
+
       if (allowedRoles.includes(user.role)) {
         return true;
       }
-      // Redirigir a la vista que le corresponde si no tiene permiso para esta ruta
+
       if (user.role === 'psicologo') {
-        return router.createUrlTree(['/calendar']);
+        return router.createUrlTree(['/psychologist']);
       }
+
       return router.createUrlTree(['/portal-alumno']);
     };
 
@@ -60,10 +65,11 @@ export const guestGuard: CanActivateFn = () => {
     if (!user) {
       return true;
     }
-    // Si ya está autenticado, redirigir según su rol
+
     if (user.role === 'psicologo') {
-      return router.createUrlTree(['/calendar']);
+      return router.createUrlTree(['/psychologist']);
     }
+
     return router.createUrlTree(['/portal-alumno']);
   };
 
@@ -73,5 +79,65 @@ export const guestGuard: CanActivateFn = () => {
 
   return authService.checkSession().pipe(
     map(user => checkGuest(user))
+  );
+};
+
+export const pipgGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  const checkAccess = (user: any) => {
+    if (!user) {
+      return router.createUrlTree(['/login']);
+    }
+
+    if (user.role === 'psicologo') {
+      return router.createUrlTree(['/psychologist']);
+    }
+
+    const status = authService.pipgState()?.status;
+
+    if (status === 'completed') {
+      return router.createUrlTree(['/portal-alumno']);
+    }
+
+    return true;
+  };
+
+  if (authService.currentUser() && authService.pipgState()) {
+    return checkAccess(authService.currentUser());
+  }
+
+  return authService.checkSession().pipe(
+    map(user => checkAccess(user))
+  );
+};
+
+export const pipgRequiredGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  const checkAccess = (user: any) => {
+    if (!user) {
+      return router.createUrlTree(['/login']);
+    }
+
+    if (user.role === 'psicologo') {
+      return router.createUrlTree(['/psychologist']);
+    }
+
+    if (authService.pipgState()?.status !== 'completed') {
+      return router.createUrlTree(['/pipg-test']);
+    }
+
+    return true;
+  };
+
+  if (authService.currentUser() && authService.pipgState()) {
+    return checkAccess(authService.currentUser());
+  }
+
+  return authService.checkSession().pipe(
+    map(user => checkAccess(user))
   );
 };

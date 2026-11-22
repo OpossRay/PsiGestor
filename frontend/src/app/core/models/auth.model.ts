@@ -1,3 +1,4 @@
+
 export interface User {
   id: number;
   email: string;
@@ -12,6 +13,13 @@ export interface User {
   createdAt?: string;
 }
 
+export type PipgStatus = 'not_started' | 'in_progress' | 'completed';
+
+export interface PipgState {
+  status: PipgStatus;
+  completed: boolean;
+}
+
 export interface AuthResponse {
   message: string;
   user: User;
@@ -20,9 +28,8 @@ export interface AuthResponse {
 export interface MeResponse {
   authenticated: boolean;
   user: User | null;
+  pipg: PipgState | null;
 }
-
-
 
 export interface NavOption {
   label: string;

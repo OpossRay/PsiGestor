@@ -28,6 +28,8 @@ export class Login {
   }
 
   onSubmit(): void {
+    console.log('Se ejecutó onSubmit');
+    console.log('Correo:', this.email);
     if (!this.email || !this.password) {
       this.errorMessage.set('Por favor completa todos los campos.');
       return;
@@ -41,8 +43,11 @@ export class Login {
       password: this.password
     }).subscribe({
       next: (response) => {
+        console.log('LOGIN EXITOSO:', response);
         this.isLoading.set(false);
         const role = response.user.role;
+        console.log('Usuario recibido:', response.user);
+        console.log('Rol recibido:', response.user.role);
         if (role === 'psicologo') {
           this.router.navigate(['/calendar']);
         } else {
@@ -50,6 +55,7 @@ export class Login {
         }
       },
       error: (err) => {
+        console.error('ERROR LOGIN:', err);
         this.isLoading.set(false);
         const errorDetail = err?.error?.error || 'Credenciales incorrectas o error en el servidor.';
         this.errorMessage.set(errorDetail);

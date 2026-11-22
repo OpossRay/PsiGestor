@@ -1,4 +1,6 @@
 from flask import Blueprint, request, jsonify
+from app.repositories.pipg_repository import get_assessment_by_student
+
 from app.services.auth_service import (
     authenticate_user,
     register_student,
@@ -70,6 +72,29 @@ def logout():
 @auth_bp.route("/me", methods=["GET"])
 def me():
     user = get_current_user()
+
     if not user:
-        return jsonify({"authenticated": False, "user": None}), 200
-    return jsonify({"authenticated": True, "user": user}), 200
+        return jsonify({
+            "authenticated": False,
+            "user": None,
+            "pipg": None,
+        }), 200
+
+    pipg_status = None
+
+    if user["role"] == "alumno" and user.get("studentId"):
+        assessment = get_assessment_by_student(user["studentId"])
+
+        pipg_status = {
+            "status": assessment["status"] if assessment else "not_started",
+            "completed": (
+                assessment is not None
+                and assessment["status"] == "completed"
+            ),
+        }
+
+    return jsonify({
+        "authenticated": True,
+        "user": user,
+        "pipg": pipg_status,
+    }), 200

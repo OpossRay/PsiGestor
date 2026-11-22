@@ -10,6 +10,7 @@ from app.routes.appointments import appointments_bp
 from app.routes.students import students_bp
 from app.routes.auth import auth_bp
 from app.init_db import init_database
+from app.routes.pipg import pipg_bp
 
 
 load_dotenv()
@@ -50,6 +51,7 @@ app.register_blueprint(availability_bp)
 app.register_blueprint(regular_schedule_bp)
 app.register_blueprint(appointments_bp)
 app.register_blueprint(students_bp)
+app.register_blueprint(pipg_bp)
 
 @app.route("/")
 def inicio():
