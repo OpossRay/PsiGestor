@@ -1,0 +1,188 @@
+<div class="p06-screen-wrapper">
+  <!-- Header Institucional Oscuro P-06 -->
+  <header class="p05-topbar">
+    <button
+      type="button"
+      class="p05-back-btn"
+      (click)="onBack()"
+      aria-label="Volver a la agenda"
+    >
+      <ion-icon name="arrow-back-outline"></ion-icon>
+    </button>
+    <h1 class="p05-topbar-title">DISPONIBILIDAD HABITUAL</h1>
+    <div class="p05-topbar-spacer"></div>
+  </header>
+
+  <main class="p06-body">
+    <!-- Banner Informativo: Parámetros Semanales Base -->
+    <section class="p06-info-banner">
+      <h2 class="p06-banner-title">Parámetros Semanales Base</h2>
+      <p class="p06-banner-desc">
+        Configura tus jornadas laborales y franja de descanso recurrente para generar automáticamente tus espacios en la agenda.
+      </p>
+    </section>
+
+    <!-- Tarjeta 1: DÍAS LABORALES ACTIVOS -->
+    <section class="p06-card">
+      <div class="p06-card-title-row">
+        <h3 class="p06-card-heading">DÍAS LABORALES ACTIVOS</h3>
+        <span class="p06-hint-text">Toca un horario para editarlo</span>
+      </div>
+
+      <div class="p06-days-list">
+        @for (day of days; track day.key) {
+          <div class="p06-day-row" [class.row-inactive]="!day.active">
+            <span class="p06-day-name">{{ day.label }}</span>
+
+            <!-- Botón / Chip de Horario Editable -->
+            @if (day.active) {
+              <button
+                type="button"
+                class="p06-hours-chip-btn"
+                (click)="openEditHours(day)"
+                title="Presiona para cambiar horario de {{ day.label }}"
+              >
+                <ion-icon name="time-outline" class="hours-icon"></ion-icon>
+                <span class="hours-text">{{ getDayHoursLabel(day) }}</span>
+                <ion-icon name="pencil-outline" class="edit-icon"></ion-icon>
+              </button>
+            } @else {
+              <span class="p06-day-hours inactive-text">Inactivo</span>
+            }
+
+            <!-- Switch On/Off -->
+            <button
+              type="button"
+              role="switch"
+              class="p06-toggle-switch"
+              [class.is-on]="day.active"
+              [attr.aria-checked]="day.active"
+              (click)="toggleDay(day)"
+            >
+              <span class="p06-toggle-knob"></span>
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Tarjeta 2: DURACIÓN Y DESCANSO -->
+    <section class="p06-card">
+      <h3 class="p06-card-heading">DURACIÓN Y DESCANSO</h3>
+
+      <div class="p06-params-grid">
+        <div class="p06-param-col">
+          <label class="p06-param-label">Duración Cita</label>
+          <div class="p06-param-box">
+            <select
+              class="p06-native-select"
+              [ngModel]="duration"
+              (ngModelChange)="onDurationChange($event)"
+              name="habitualDuration"
+            >
+              <option value="30 minutos">30 minutos</option>
+              <option value="45 minutos">45 minutos</option>
+              <option value="60 minutos">60 minutos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="p06-param-col">
+          <label class="p06-param-label">Descanso Diario</label>
+          <div class="p06-param-box">
+            <select
+              class="p06-native-select"
+              [ngModel]="dailyBreak"
+              (ngModelChange)="onDailyBreakChange($event)"
+              name="habitualBreak"
+            >
+              <option value="12:00 PM – 01:00 PM">12:00 PM – 01:00 PM</option>
+              <option value="01:00 PM – 02:00 PM">01:00 PM – 02:00 PM</option>
+              <option value="02:00 PM – 03:00 PM">02:00 PM – 03:00 PM</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Botón Primario: Guardar Horario Habitual -->
+    <button
+      type="button"
+      class="p06-save-btn"
+      (click)="onSave()"
+    >
+      Guardar Horario Habitual
+    </button>
+
+    <!-- Acceso directo complementario a P-07 Inhabilitar Horario -->
+    <button
+      type="button"
+      class="p06-disable-link-btn"
+      (click)="onOpenDisable()"
+    >
+      <ion-icon name="ban-outline"></ion-icon>
+      <span>Inhabilitar horario puntual o por rango</span>
+    </button>
+  </main>
+</div>
+
+<!-- Modal / Editor Rápido de Horario para el Día Seleccionado -->
+<ion-modal [isOpen]="isEditingHours" (didDismiss)="closeEditHours()">
+  <ng-template>
+    <div class="p06-editor-sheet">
+      <header class="editor-header">
+        <div class="editor-title-wrap">
+          <ion-icon name="time-outline" class="title-icon"></ion-icon>
+          <h3>Horario de {{ editingDay?.label }}</h3>
+        </div>
+        <button type="button" class="editor-close-btn" (click)="closeEditHours()">
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <div class="editor-body">
+        <p class="editor-desc">
+          Elige la hora de entrada y salida para los días <strong>{{ editingDay?.label }}</strong>.
+        </p>
+
+        <div class="editor-pickers-grid">
+          <div class="picker-col">
+            <label>Hora Inicio</label>
+            <div class="picker-box">
+              <input
+                type="time"
+                class="editor-time-input"
+                [(ngModel)]="tempStartTime"
+                name="tempStartTime"
+              />
+            </div>
+            <span class="preview-text">{{ formatTime12h(tempStartTime) }}</span>
+          </div>
+
+          <div class="picker-col">
+            <label>Hora Término</label>
+            <div class="picker-box">
+              <input
+                type="time"
+                class="editor-time-input"
+                [(ngModel)]="tempEndTime"
+                name="tempEndTime"
+              />
+            </div>
+            <span class="preview-text">{{ formatTime12h(tempEndTime) }}</span>
+          </div>
+        </div>
+
+        <div class="editor-actions">
+          <button type="button" class="btn-apply-day" (click)="applyHoursToCurrentDay()">
+            Aplicar a {{ editingDay?.label }}
+          </button>
+
+          <button type="button" class="btn-apply-all" (click)="applyHoursToAllActiveDays()">
+            Aplicar este horario a todos los días activos
+          </button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
+</ion-modal>

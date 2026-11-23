@@ -1,0 +1,229 @@
+<div class="portal-layout">
+  <!-- Encabezado compartido del alumno -->
+  <app-student-header></app-student-header>
+
+  <!-- Notificación Toast -->
+  @if (toastMessage) {
+ <!-- <div class="toast-notification success">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <span>{{ toastMessage }}</span>
+  </div>
+  -->
+
+    <div
+      class="toast-notification"
+      [class.success]="toastType === 'success'"
+      [class.warning]="toastType === 'warning'"
+      [class.error]="toastType === 'error'"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>
+      <span>{{ toastMessage }}</span>
+    </div>
+  }
+
+  <!-- Contenido principal -->
+  <main class="portal-main">
+
+    <!-- Banner de bienvenida con botón de acción rápida -->
+    <div class="welcome-banner">
+      <div class="welcome-text">
+        <h2>¡Hola, {{ user?.name }}! 👋</h2>
+        <p>Gestiona tus atenciones psicológicas institucionales con total autonomía y comodidad.</p>
+      </div>
+      <a routerLink="/patient/availability" class="btn-agendar-cta">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <line x1="12" y1="14" x2="12" y2="18"></line>
+          <line x1="10" y1="16" x2="14" y2="16"></line>
+        </svg>
+        <span>Agendar Nueva Cita</span>
+      </a>
+    </div>
+
+    <!-- Sección de dos columnas: Ficha Académica y Mis Citas -->
+    <div class="portal-content-grid">
+
+      <!-- Columna izquierda: Información del Estudiante -->
+      <aside class="sidebar-info">
+        <div class="portal-card">
+          <div class="card-header">
+            <span class="card-icon">🎓</span>
+            <h3>Ficha Académica</h3>
+          </div>
+          <div class="student-info-list">
+            <div class="info-row">
+              <span class="label">Carrera:</span>
+              <strong class="val">{{ user?.program || 'Por definir' }}</strong>
+            </div>
+            <div class="info-row">
+              <span class="label">Semestre:</span>
+              <strong class="val">{{ user?.semester ? user?.semester + '° Semestre' : 'N/A' }}</strong>
+            </div>
+            <div class="info-row">
+              <span class="label">Correo:</span>
+              <strong class="val">{{ user?.email }}</strong>
+            </div>
+            <div class="info-row">
+              <span class="label">Estado de cuenta:</span>
+              <span class="status-active">Activa y verificada</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="portal-card info-box-card">
+          <div class="card-header">
+            <span class="card-icon">💡</span>
+            <h3>Indicaciones</h3>
+          </div>
+          <p class="text-hint">
+            • Puedes solicitar reprogramar tu cita si necesitas cambiar tu horario.<br>
+            • Si no puedes asistir, cancela tu cita con anticipación para liberar el espacio.<br>
+            • Las citas presenciales se atienden en <strong>Cubículo 2B</strong>.
+          </p>
+        </div>
+      </aside>
+
+      <!-- Resumen de citas -->
+      <section class="appointments-section">
+        <div class="section-header-row">
+          <div>
+            <h2>Mi próxima cita</h2>
+            <p>Consulta los detalles de tu siguiente sesión.</p>
+          </div>
+        </div>
+
+        @if (isLoadingAppointments) {
+        <div class="loading-state">
+          <p>Cargando tu próxima cita...</p>
+        </div>
+        } @else if (nextAppointment; as appointment) {
+        <div class="appointment-card">
+          <div class="apt-card-top">
+            <span class="badge badge-reserved">
+              <span class="status-dot"></span>
+              Confirmada
+            </span>
+          </div>
+
+          <div class="apt-card-body">
+            <div class="apt-meta-row">
+              <span class="meta-label">Fecha:</span>
+              <span class="meta-val">{{ formatDate(appointment.date) }}</span>
+            </div>
+
+            <div class="apt-meta-row">
+              <span class="meta-label">Horario:</span>
+              <span class="meta-val">
+                {{ appointment.start_time }} - {{ appointment.end_time }}
+              </span>
+            </div>
+
+            <div class="apt-meta-row">
+              <span class="meta-label">Modalidad:</span>
+              <span class="meta-val">{{ appointment.modality }}</span>
+            </div>
+
+            @if (appointment.location) {
+            <div class="apt-meta-row">
+              <span class="meta-label">Lugar:</span>
+              <span class="meta-val">{{ appointment.location }}</span>
+            </div>
+            }
+          </div>
+        </div>
+        } @else {
+        <div class="empty-state">
+          <p>No tienes próximas citas confirmadas.</p>
+        </div>
+        }
+
+        <a routerLink="/patient/appointments" class="view-all-appointments">
+          Ver todas mis citas
+        </a>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Modal de Solicitar Reprogramación -->
+  @if (reschedulingAppointment) {
+  <app-reschedule-appointment-modal [appointment]="reschedulingAppointment" (close)="closeRescheduleModal()"
+    (rescheduleRequested)="onRescheduleRequested()"></app-reschedule-appointment-modal>
+  }
+
+  <!-- Modal de Cancelar Cita -->
+  @if (cancellingAppointment) {
+  <app-cancel-appointment-modal [appointment]="cancellingAppointment" (close)="closeCancelModal()"
+    (appointmentCancelled)="onAppointmentCancelled()"></app-cancel-appointment-modal>
+  }
+
+  <!-- Modal de Confirmación Estilizado para Rechazar / Descartar Reprogramación -->
+  @if (rejectingRescheduleAppointment) {
+    <div class="confirm-modal-backdrop" (click)="closeRejectRescheduleModal()">
+      <div class="confirm-modal-card" (click)="$event.stopPropagation()">
+        <div class="confirm-modal-header">
+          <div class="confirm-modal-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="confirm-modal-title-group">
+            @if (rejectingRescheduleAppointment.reschedule_requested_by === 'psicologo') {
+              <h3>Rechazar propuesta de reprogramación</h3>
+              <p>
+                ¿Estás seguro de que deseas rechazar la propuesta de la psicóloga?
+                Al rechazarla, tu cita se cancelará definitivamente ya que la psicóloga no cuenta con disponibilidad en el horario original.
+              </p>
+            } @else {
+              <h3>Descartar solicitud de cambio</h3>
+              <p>
+                ¿Deseas descartar tu solicitud de cambio de horario?
+                Tu cita continuará agendada en el horario original ({{ formatDate(rejectingRescheduleAppointment.date) }} • {{ rejectingRescheduleAppointment.start_time }} hrs).
+              </p>
+            }
+          </div>
+          <button type="button" class="confirm-modal-close" (click)="closeRejectRescheduleModal()" [disabled]="isProcessing">&times;</button>
+        </div>
+
+        <div class="confirm-modal-footer">
+          <button
+            type="button"
+            class="btn-modal-secondary"
+            (click)="closeRejectRescheduleModal()"
+            [disabled]="isProcessing"
+          >
+            Volver
+          </button>
+          <button
+            type="button"
+            class="btn-modal-danger"
+            (click)="confirmRejectReschedule()"
+            [disabled]="isProcessing"
+          >
+            @if (isProcessing) {
+              Procesando...
+            } @else if (rejectingRescheduleAppointment.reschedule_requested_by === 'psicologo') {
+              Sí, rechazar y cancelar cita
+            } @else {
+              Sí, descartar solicitud
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

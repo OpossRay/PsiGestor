@@ -1,0 +1,75 @@
+<article class="p09-reprog-card" (click)="onCardClick()">
+  <!-- Cabecera de la tarjeta con badge y tiempo relativo -->
+  <div class="p09-card-header">
+    <span class="p09-badge-cambio">
+      <span class="p09-badge-dot">●</span> SOLICITUD DE CAMBIO
+    </span>
+    <span class="p09-card-time">Hace 15 min</span>
+  </div>
+
+  <!-- Información del Estudiante -->
+  <div class="p09-student-row">
+    <div class="p09-student-avatar">
+      {{ getStudentInitials(slot.studentName) }}
+    </div>
+    <div class="p09-student-info">
+      <h3 class="p09-student-name">{{ slot.studentName || 'Estudiante' }}</h3>
+      <p class="p09-student-matricula">{{ getStudentDetail(slot) }}</p>
+    </div>
+  </div>
+
+  <!-- Caja 1: Horario Fijado Original (Tachado) -->
+  <div class="p09-box p09-box-original">
+    <span class="p09-box-label">HORARIO FIJADO ORIGINAL</span>
+    <span class="p09-box-value p09-value-original">
+      {{ formatP09Date(slot.date, slot.startTime, slot.endTime) }}
+    </span>
+  </div>
+
+  <!-- Caja 2: Nueva Fecha Propuesta por Alumna/o (Verde) -->
+  <div class="p09-box p09-box-propuesta">
+    <span class="p09-box-label p09-label-green">
+      NUEVA FECHA PROPUESTA POR {{ isFemale(slot.studentName) ? 'ALUMNA' : 'ALUMNO' }}
+    </span>
+    <span class="p09-box-value p09-value-propuesta">
+      {{ formatP09Date(slot.proposedDate || slot.date, slot.proposedStartTime || slot.startTime, slot.proposedEndTime || slot.endTime) }}
+    </span>
+    <div class="p09-agenda-status" [class.status-free]="isProposedSlotFree" [class.status-busy]="!isProposedSlotFree">
+      @if (isProposedSlotFree) {
+        <ion-icon name="checkmark-outline" class="status-icon"></ion-icon>
+        <span>Espacio actualmente libre en tu agenda</span>
+      } @else {
+        <ion-icon name="time-outline" class="status-icon"></ion-icon>
+        <span>Espacio ocupado o en conflicto en tu agenda</span>
+      }
+    </div>
+  </div>
+
+  <!-- Caja 3: Motivo / Mensaje del Alumno en Cursiva -->
+  <div class="p09-reason-box">
+    <p class="p09-reason-text">
+      “{{ getStudentReason(slot) }}”
+    </p>
+  </div>
+
+  <!-- Botones de Acción (Rechazar / Aprobar) -->
+  <div class="p09-actions-row">
+    <button
+      type="button"
+      class="p09-btn p09-btn-reject"
+      (click)="onReject($event)"
+      aria-label="Rechazar solicitud de cambio"
+    >
+      Rechazar
+    </button>
+    <button
+      type="button"
+      class="p09-btn p09-btn-approve"
+      (click)="onApprove($event)"
+      aria-label="Aprobar cambio de horario"
+    >
+      <ion-icon name="checkmark-outline" class="approve-icon"></ion-icon>
+      <span>Aprobar Cambio</span>
+    </button>
+  </div>
+</article>

@@ -1,0 +1,147 @@
+<div class="a02b-view-wrapper">
+  <!-- ============================================================
+       CABECERA OSCURA INSTITUCIONAL A-02b
+       ============================================================ -->
+  <header class="a02b-header-dark">
+    <!-- Fila Superior: Título Agenda Semanal y Badge de Slots Libres -->
+    <div class="a02b-top-row">
+      <div class="a02b-title-group">
+        <span class="a02b-tag">AGENDA SEMANAL</span>
+        <h2 class="a02b-title">{{ weekTitle }}</h2>
+      </div>
+
+      <div class="a02b-badge-libres">
+        <span>{{ freeSlotsCountInWeek }} {{ freeSlotsCountInWeek === 1 ? 'slot libre' : 'slots libres' }}</span>
+      </div>
+    </div>
+
+    <!-- Selector Segmentado (Día | Semana | Mes) -->
+    <div class="a02b-segmented-wrap" role="tablist">
+      <button
+        type="button"
+        class="a02b-seg-btn"
+        [class.active]="viewMode === 'dia'"
+        (click)="setViewMode('dia')"
+        role="tab"
+        [attr.aria-selected]="viewMode === 'dia'"
+      >
+        Día
+      </button>
+      <button
+        type="button"
+        class="a02b-seg-btn"
+        [class.active]="viewMode === 'semana'"
+        (click)="setViewMode('semana')"
+        role="tab"
+        [attr.aria-selected]="viewMode === 'semana'"
+      >
+        Semana
+      </button>
+      <button
+        type="button"
+        class="a02b-seg-btn"
+        [class.active]="viewMode === 'mes'"
+        (click)="setViewMode('mes')"
+        role="tab"
+        [attr.aria-selected]="viewMode === 'mes'"
+      >
+        Mes
+      </button>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MATRIZ HORARIA SEMANAL TIPO GOOGLE CALENDAR
+       ============================================================ -->
+  <main class="a02b-body">
+    <div class="a02b-matrix-card">
+      <!-- Fila de Cabecera: Hora + Días Lunes a Viernes -->
+      <div class="a02b-matrix-header">
+        <div class="a02b-col-header a02b-col-hour">Hora</div>
+        @for (day of weekDays; track day.dateStr) {
+          <div
+            class="a02b-col-header a02b-col-day"
+            [class.active-day]="day.isSelected"
+            (click)="onDayHeaderClick(day)"
+          >
+            <span class="day-pill" [class.pill-active]="day.isSelected">
+              {{ day.dayLetter }} {{ day.dayNum }}
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Filas de Horas y Celdas de la Matriz -->
+      <div class="a02b-matrix-rows">
+        @for (row of matrixRows; track row.hour) {
+          <div class="a02b-matrix-row">
+            <!-- Columna de la Hora -->
+            <div class="a02b-cell a02b-cell-hour">
+              {{ row.hourDisplay }}
+            </div>
+
+            <!-- Celdas para cada día de la semana -->
+            @for (cell of row.cells; let idx = $index; track idx) {
+              <div class="a02b-cell a02b-cell-day">
+                <!-- 1. Celda Seleccionada -->
+                @if (cell.status === 'selected') {
+                  <button
+                    type="button"
+                    class="a02b-chip a02b-chip-selected"
+                    (click)="onCellClick(cell, weekDays[idx])"
+                    aria-label="Horario seleccionado"
+                  >
+                    {{ cell.hour }}
+                  </button>
+                }
+
+                <!-- 2. Celda Libre / Disponible -->
+                @else if (cell.status === 'libre') {
+                  <button
+                    type="button"
+                    class="a02b-chip a02b-chip-libre"
+                    (click)="onCellClick(cell, weekDays[idx])"
+                    aria-label="Espacio libre para agendar"
+                  >
+                    Libre
+                  </button>
+                }
+
+                <!-- 3. Celda Ocupada (Privado) -->
+                @else if (cell.status === 'ocupado') {
+                  <span class="a02b-chip a02b-chip-ocupado">
+                    Ocup.
+                  </span>
+                }
+
+                <!-- 4. Celda Vacía -->
+                @else {
+                  <span class="a02b-chip-empty">-</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ============================================================
+         TARJETA FLOTANTE INFERIOR: SELECCIÓN ACTUAL & CONTINUAR
+         ============================================================ -->
+    <section class="a02b-selection-card">
+      <span class="a02b-selection-text">
+        {{ currentSelectionText }}
+      </span>
+
+      <button
+        type="button"
+        class="a02b-btn-continuar"
+        [disabled]="!selectedSlot"
+        (click)="onContinue()"
+        aria-label="Continuar con la reserva de cita"
+      >
+        Continuar
+      </button>
+    </section>
+  </main>
+</div>

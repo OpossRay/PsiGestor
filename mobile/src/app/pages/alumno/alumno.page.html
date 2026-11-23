@@ -1,0 +1,95 @@
+<ion-content class="alumno-content">
+  <ion-refresher slot="fixed" (ionRefresh)="loadData($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- ============================================================
+       PESTAÑA AGENDAR (VISTAS DEL ALUMNO)
+       ============================================================ -->
+  @if (activeTab === 'agendar') {
+    <!-- VISTA A-02: VISTA DÍA -->
+    @if (calendarViewMode === 'dia') {
+      <app-alumno-agenda-view
+        [specialistName]="specialistName"
+        [specialistRole]="specialistRole"
+        [specialistCubicle]="specialistCubicle"
+        [specialistAvatar]="specialistAvatar"
+        [availabilities]="availabilities"
+        [disabledSchedules]="disabledSchedules"
+        [selectedDate]="selectedDate"
+        [selectedSlotId]="selectedSlotId"
+        [viewMode]="calendarViewMode"
+        [isLoading]="isLoading"
+        (dateChange)="onDateChange($event)"
+        (slotSelect)="onSlotSelect($event)"
+        (viewModeChange)="onViewModeChange($event)"
+      ></app-alumno-agenda-view>
+    }
+
+    <!-- VISTA A-02b: VISTA SEMANA (MATRIZ HORARIA TIPO GOOGLE CALENDAR) -->
+    @if (calendarViewMode === 'semana') {
+      <app-alumno-agenda-week-view
+        [availabilities]="availabilities"
+        [disabledSchedules]="disabledSchedules"
+        [selectedDate]="selectedDate"
+        [selectedSlotId]="selectedSlotId"
+        [viewMode]="calendarViewMode"
+        [isLoading]="isLoading"
+        (dateChange)="onDateChange($event)"
+        (slotSelect)="onSlotSelect($event)"
+        (viewModeChange)="onViewModeChange($event)"
+        (continue)="onContinueBooking($event)"
+      ></app-alumno-agenda-week-view>
+    }
+  }
+
+  <!-- ============================================================
+       VISTA INICIO ALUMNO
+       ============================================================ -->
+  @if (activeTab === 'inicio') {
+    <div class="alumno-empty-panel">
+      <div class="panel-card">
+        <h2>Panel de Alumno</h2>
+        <p>Bienvenido a PsiGestor. Ve a la pestaña <strong>Agendar</strong> para reservar una sesión con tu especialista.</p>
+        <button type="button" class="panel-btn" (click)="onTabChange('agendar')">
+          Ver Horarios Disponibles
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================
+       VISTA MIS CITAS ALUMNO
+       ============================================================ -->
+  @if (activeTab === 'mis-citas') {
+    <div class="alumno-empty-panel">
+      <div class="panel-card">
+        <h2>Mis Citas</h2>
+        <p>Aquí podrás consultar tus citas confirmadas y solicitar reprogramaciones.</p>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================
+       VISTA PERFIL ALUMNO
+       ============================================================ -->
+  @if (activeTab === 'perfil') {
+    <div class="alumno-empty-panel">
+      <div class="panel-card">
+        <h2>Perfil de Estudiante</h2>
+        <p>{{ authService.currentUser()?.name || 'Estudiante' }}</p>
+        <small>{{ authService.currentUser()?.email }}</small>
+
+        <button type="button" class="logout-btn" (click)="onLogout()">
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  }
+</ion-content>
+
+<!-- BARRA DE NAVEGACIÓN INFERIOR ALUMNO (INICIO, AGENDAR, MIS CITAS, PERFIL) -->
+<app-student-bottom-nav
+  [activeTab]="activeTab"
+  (tabChange)="onTabChange($event)"
+></app-student-bottom-nav>

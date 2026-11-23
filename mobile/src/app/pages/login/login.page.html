@@ -1,0 +1,89 @@
+<ion-content [fullscreen]="true" class="login-content">
+  <!-- Formas decorativas superiores derechas -->
+  <div class="top-wave-decoration" aria-hidden="true">
+    <div class="wave-layer wave-outer"></div>
+    <div class="wave-layer wave-inner"></div>
+  </div>
+
+  <div class="login-wrapper">
+    <div class="login-container">
+      <!-- Logo e identidad -->
+      <div class="brand-section">
+        <div class="app-logo-box"></div>
+        <h1 class="brand-title">PsiGestor</h1>
+      </div>
+
+      <!-- Encabezado de inicio de sesión -->
+      <div class="heading-section">
+        <h2 class="login-title">Iniciar sesión</h2>
+        <p class="login-subtitle">Accede a tu cuenta para continuar</p>
+      </div>
+
+      <!-- Mensaje de error -->
+      @if (errorMessage) {
+        <div class="error-banner" role="alert">
+          <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+          <span class="error-text">{{ errorMessage }}</span>
+        </div>
+      }
+
+      <!-- Formulario -->
+      <form class="login-form" (ngSubmit)="onSubmit()">
+        <!-- Correo institucional -->
+        <div class="input-field">
+          <ion-icon name="mail-outline" class="field-icon"></ion-icon>
+          <input
+            type="email"
+            placeholder="Correo institucional"
+            [(ngModel)]="email"
+            name="email"
+            required
+            autocomplete="email"
+          />
+        </div>
+
+        <!-- Contraseña -->
+        <div class="input-field">
+          <ion-icon name="lock-closed-outline" class="field-icon"></ion-icon>
+          <input
+            [type]="showPassword ? 'text' : 'password'"
+            placeholder="Contraseña"
+            [(ngModel)]="password"
+            name="password"
+            required
+            autocomplete="current-password"
+          />
+          <button
+            type="button"
+            class="password-toggle"
+            (click)="togglePassword()"
+            aria-label="Mostrar u ocultar contraseña"
+          >
+            <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'"></ion-icon>
+          </button>
+        </div>
+
+        <!-- Botón primario -->
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
+            <span>Ingresando...</span>
+          } @else {
+            <span>Ingresar</span>
+          }
+        </button>
+      </form>
+
+      <!-- Enlace inferior -->
+      <div class="forgot-password-wrapper">
+        <a href="javascript:void(0)" class="forgot-password-link">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+    </div>
+  </div>
+</ion-content>

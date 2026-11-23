@@ -1,0 +1,85 @@
+# =============================================================================
+# PsiGestor — Render Blueprint (Etapa A: Demostración Académica Gratuita)
+# =============================================================================
+# GOVERNANCE, PLAN COMPATIBILITY & MIGRATION SAFETY:
+# 1. 100% Free Plan ($0/month): All web services use `plan: free` with no credit
+#    card required.
+# 2. Managed PostgreSQL in Neon Free Tier:
+#    PostgreSQL is hosted independently in Neon (1 GB storage, 100 CU-hours,
+#    permanent persistence without Render's 30-day database expiration limit).
+#    Therefore, this Blueprint defines 0 Render databases and delegates storage
+#    to Neon via the external DATABASE_URL environment variable.
+# 3. For professional persistent infrastructure with dedicated staging and
+#    production databases in Render/Neon (Etapa B), see `render.production.yaml`.
+# 4. `buildCommand` NEVER connects to or modifies any database.
+# 5. Migrations are executed via the controlled manual procedure
+#    (`--verify-only` followed by `--migrate-only` and `--seed-academic-demo`)
+#    documented in `docs/RENDER_DEPLOYMENT_GUIDE.md`.
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # STAGING ENVIRONMENT (Branch: develop — Free Academic Demo)
+  # ===========================================================================
+  - type: web
+    name: psigestor-api-staging
+    runtime: python
+    plan: free
+    branch: develop
+    autoDeploy: true
+    healthCheckPath: /health
+    buildCommand: pip install --no-cache-dir -r requirements.txt
+    startCommand: SKIP_DB_INIT_ON_IMPORT=true gunicorn --chdir backend app.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
+      - key: APP_ENV
+        value: staging
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MOBILE_TOKEN_SECRET
+        generateValue: true
+      - key: STRICT_AUTH
+        value: "true"
+      - key: ENFORCE_CSRF_TOKEN
+        value: "true"
+      - key: RATE_LIMIT_STORAGE
+        value: database
+      - key: SESSION_COOKIE_SAMESITE
+        value: Lax
+      - key: SESSION_COOKIE_SECURE
+        value: "true"
+      - key: ALLOW_CAPACITOR_ORIGINS
+        value: "true"
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: INITIAL_PSYCHOLOGIST_EMAIL
+        sync: false
+      - key: INITIAL_PSYCHOLOGIST_PASSWORD
+        sync: false
+      - key: DEMO_STUDENT_PASSWORD
+        sync: false
+
+  - type: web
+    name: psigestor-web-staging
+    runtime: node
+    plan: free
+    rootDir: frontend
+    branch: develop
+    autoDeploy: true
+    healthCheckPath: /login
+    buildCommand: npm ci && npx ng build --configuration staging
+    startCommand: node dist/PsiGestor/server/server.mjs
+    envVars:
+      - key: NODE_VERSION
+        value: "22.14.0"
+      - key: NODE_ENV
+        value: production
+      - key: BACKEND_URL
+        value: https://psigestor-api-staging.onrender.com
+      - key: ALLOWED_HOSTS
+        value: psigestor-web-staging.onrender.com,*.onrender.com,localhost,127.0.0.1

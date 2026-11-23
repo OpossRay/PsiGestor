@@ -1,0 +1,463 @@
+from flask import Blueprint, jsonify, request
+from datetime import date as date_type
+from app.config import is_production_like
+from app.services.appointment_service import (
+    register_appointment,
+    book_student_appointment,
+    get_student_appointments,
+    cancel_student_appointment,
+    request_student_reschedule,
+    approve_student_reschedule,
+    reject_student_reschedule,
+)
+from app.services.auth_service import (
+    get_current_user,
+    require_auth,
+    viewer_has_full_access,
+    redact_private_fields,
+)
+from app.repositories.appointment_repository import get_appointments
+
+
+def _safe_error_message(prefix: str, error: Exception) -> str:
+    if is_production_like():
+        return prefix
+    return f"{prefix}: {error}"
+
+
+appointments_bp = Blueprint(
+    "appointments",
+    __name__,
+    url_prefix="/appointments",
+)
+
+
+@appointments_bp.route("", methods=["POST"])
+@require_auth
+def create_appointment_route():
+    """
+    Registra una nueva cita psicológica.
+    ---
+    tags:
+      - Citas
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - date
+            - start_time
+            - end_time
+            - duration
+            - modality
+            - reason
+          properties:
+            student_id:
+              type: integer
+            student_name:
+              type: string
+            date:
+              type: string
+              example: "2026-11-25"
+            start_time:
+              type: string
+              example: "09:00"
+            end_time:
+              type: string
+              example: "10:00"
+            duration:
+              type: integer
+              example: 60
+            modality:
+              type: string
+              enum: [In person, Online]
+            location:
+              type: string
+            meeting_url:
+              type: string
+            reason:
+              type: string
+    responses:
+      201:
+        description: Cita registrada correctamente
+      400:
+        description: Error de validación o conflicto de horario
+      401:
+        description: No autenticado
+    """
+    data = request.get_json(silent=True)
+
+    if not isinstance(data, dict):
+        return jsonify({
+            "error": "El cuerpo de la solicitud debe ser un JSON válido."
+        }), 400
+
+    try:
+        user = get_current_user()
+        appointment = register_appointment(data, user=user if user and user.get("role") == "alumno" else None)
+
+        return jsonify({
+            "message": "Cita registrada correctamente.",
+            "appointment": {
+                "id": appointment[0],
+                "student_id": appointment[1],
+                "student_name": appointment[2],
+                "date": appointment[3].isoformat(),
+                "start_time": appointment[4].strftime("%H:%M"),
+                "end_time": appointment[5].strftime("%H:%M"),
+                "duration": appointment[6],
+                "modality": appointment[7],
+                "location": appointment[8],
+                "meeting_url": appointment[9],
+                "reason": appointment[10],
+                "status": appointment[11],
+                "created_at": appointment[12].isoformat(),
+            },
+        }), 201
+
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+    except Exception:
+        return jsonify({
+            "error": "No fue posible registrar la cita."
+        }), 500
+
+
+@appointments_bp.route("", methods=["GET"])
+def list_appointments_route():
+    """
+    Lista las citas registradas (oculta datos privados si quien consulta no es psicólogo).
+    ---
+    tags:
+      - Citas
+    parameters:
+      - name: date
+        in: query
+        type: string
+        required: false
+        description: Filtrar por fecha en formato YYYY-MM-DD
+    responses:
+      200:
+        description: Lista de citas
+      400:
+        description: Formato de fecha inválido
+    """
+    date_value = request.args.get("date")
+
+    if date_value:
+        try:
+            date_value = date_type.fromisoformat(date_value)
+        except ValueError:
+            return jsonify({
+                "error": "La fecha debe tener el formato YYYY-MM-DD."
+            }), 400
+
+    try:
+        appointments = get_appointments(date_value)
+
+        for appointment in appointments:
+            appointment["date"] = appointment["date"].isoformat()
+            appointment["start_time"] = appointment["start_time"].strftime("%H:%M")
+            appointment["end_time"] = appointment["end_time"].strftime("%H:%M")
+
+            if appointment.get("created_at"):
+                appointment["created_at"] = (
+                    appointment["created_at"].isoformat()
+                )
+            if appointment.get("rescheduled_at"):
+                appointment["rescheduled_at"] = (
+                    appointment["rescheduled_at"].isoformat()
+                )
+            if appointment.get("proposed_date"):
+                appointment["proposed_date"] = (
+                    appointment["proposed_date"].isoformat()
+                )
+            if appointment.get("proposed_start_time"):
+                appointment["proposed_start_time"] = (
+                    appointment["proposed_start_time"].strftime("%H:%M")
+                )
+            if appointment.get("proposed_end_time"):
+                appointment["proposed_end_time"] = (
+                    appointment["proposed_end_time"].strftime("%H:%M")
+                )
+
+        if not viewer_has_full_access():
+            appointments = redact_private_fields(appointments)
+
+        return jsonify({"appointments": appointments}), 200
+
+    except Exception:
+        return jsonify({
+            "error": "No fue posible consultar las citas."
+        }), 500
+
+
+# =============================================================================
+# RUTAS DE GESTIÓN PARA EL ALUMNO / PACIENTE
+# =============================================================================
+
+@appointments_bp.route("/book", methods=["POST"])
+@require_auth
+def book_student_appointment_route():
+    """
+    Reserva un horario disponible para el alumno autenticado.
+    ---
+    tags:
+      - Citas (Alumno)
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - availability_id
+            - reason
+          properties:
+            availability_id:
+              type: integer
+            modality:
+              type: string
+            reason:
+              type: string
+            age:
+              type: integer
+    responses:
+      201:
+        description: Cita confirmada y registrada
+      400:
+        description: Horario no disponible o datos inválidos
+      401:
+        description: No autenticado
+    """
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "El cuerpo de la solicitud debe ser un JSON válido."}), 400
+
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "Debes iniciar sesión para agendar una cita."}), 401
+
+    try:
+        appointment = book_student_appointment(user, data)
+        return jsonify({
+            "message": "Cita confirmada y registrada correctamente.",
+            "appointment": {
+                "id": appointment[0],
+                "student_id": appointment[1],
+                "student_name": appointment[2],
+                "date": appointment[3].isoformat(),
+                "start_time": appointment[4].strftime("%H:%M"),
+                "end_time": appointment[5].strftime("%H:%M"),
+                "duration": appointment[6],
+                "modality": appointment[7],
+                "location": appointment[8],
+                "meeting_url": appointment[9],
+                "reason": appointment[10],
+                "status": appointment[11],
+                "created_at": appointment[12].isoformat(),
+            }
+        }), 201
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception as error:
+        return jsonify({"error": _safe_error_message("Error al procesar la reserva", error)}), 500
+
+
+@appointments_bp.route("/my", methods=["GET"])
+@require_auth
+def get_my_appointments_route():
+    """
+    Consulta las citas pertenecientes al alumno autenticado.
+    ---
+    tags:
+      - Citas (Alumno)
+    responses:
+      200:
+        description: Lista de citas del alumno
+      401:
+        description: No autenticado
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "No autenticado."}), 401
+
+    try:
+        appointments = get_student_appointments(user)
+
+        for apt in appointments:
+            if apt.get("date"):
+                apt["date"] = apt["date"].isoformat()
+            if apt.get("start_time"):
+                apt["start_time"] = apt["start_time"].strftime("%H:%M")
+            if apt.get("end_time"):
+                apt["end_time"] = apt["end_time"].strftime("%H:%M")
+            if apt.get("created_at"):
+                apt["created_at"] = apt["created_at"].isoformat()
+            if apt.get("cancelled_at"):
+                apt["cancelled_at"] = apt["cancelled_at"].isoformat()
+            if apt.get("rescheduled_at"):
+                apt["rescheduled_at"] = apt["rescheduled_at"].isoformat()
+            if apt.get("proposed_date"):
+                apt["proposed_date"] = apt["proposed_date"].isoformat()
+            if apt.get("proposed_start_time"):
+                apt["proposed_start_time"] = apt["proposed_start_time"].strftime("%H:%M")
+            if apt.get("proposed_end_time"):
+                apt["proposed_end_time"] = apt["proposed_end_time"].strftime("%H:%M")
+
+        return jsonify({"appointments": appointments}), 200
+    except Exception as error:
+        return jsonify({"error": _safe_error_message("No fue posible consultar tus citas", error)}), 500
+
+
+@appointments_bp.route("/<int:appointment_id>/cancel", methods=["POST"])
+@require_auth
+def cancel_student_appointment_route(appointment_id):
+    """
+    Cancela una cita del alumno autenticado y libera el bloque de disponibilidad.
+    ---
+    tags:
+      - Citas (Alumno)
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            reason:
+              type: string
+            observation:
+              type: string
+    responses:
+      200:
+        description: Cita cancelada correctamente
+      400:
+        description: Solicitud inválida
+      401:
+        description: No autenticado
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "No autenticado."}), 401
+
+    data = request.get_json(silent=True) or {}
+    try:
+        cancel_student_appointment(user, appointment_id, data)
+        return jsonify({"message": "La cita ha sido cancelada correctamente."}), 200
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception as error:
+        return jsonify({"error": _safe_error_message("No fue posible cancelar la cita", error)}), 500
+
+
+@appointments_bp.route("/<int:appointment_id>/reschedule-request", methods=["POST"])
+@require_auth
+def reschedule_request_student_route(appointment_id):
+    """
+    Solicita la reprogramación de una cita del alumno a otro horario disponible.
+    ---
+    tags:
+      - Citas (Alumno)
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            proposed_availability_id:
+              type: integer
+            reason:
+              type: string
+    responses:
+      200:
+        description: Solicitud de reprogramación enviada
+      400:
+        description: Datos inválidos
+      401:
+        description: No autenticado
+    """
+    user = get_current_user()
+    if not user:
+        return jsonify({"error": "No autenticado."}), 401
+
+    data = request.get_json(silent=True) or {}
+    try:
+        request_student_reschedule(user, appointment_id, data)
+        return jsonify({"message": "Solicitud de reprogramación enviada correctamente."}), 200
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception as error:
+        return jsonify({"error": _safe_error_message("No fue posible solicitar la reprogramación", error)}), 500
+
+
+@appointments_bp.route("/<int:appointment_id>/approve-reschedule", methods=["POST"])
+@require_auth
+def approve_reschedule_route(appointment_id):
+    """
+    Aprueba y aplica una solicitud de reprogramación pendiente sobre una cita.
+    ---
+    tags:
+      - Citas
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Reprogramación aprobada y aplicada
+      400:
+        description: Cita o propuesta inválida
+      401:
+        description: No autenticado
+    """
+    try:
+        approve_student_reschedule(appointment_id)
+        return jsonify({"message": "Reprogramación aprobada y aplicada correctamente."}), 200
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception as error:
+        return jsonify({"error": _safe_error_message("No fue posible aprobar la reprogramación", error)}), 500
+
+
+@appointments_bp.route("/<int:appointment_id>/reject-reschedule", methods=["POST"])
+@require_auth
+def reject_reschedule_route(appointment_id):
+    """
+    Rechaza una solicitud de reprogramación pendiente sobre una cita.
+    ---
+    tags:
+      - Citas
+    parameters:
+      - name: appointment_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Reprogramación rechazada
+      400:
+        description: Cita inválida
+      401:
+        description: No autenticado
+    """
+    try:
+        result = reject_student_reschedule(appointment_id)
+        return jsonify(result), 200
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except Exception as error:
+        return jsonify({"error": _safe_error_message("No fue posible rechazar la reprogramación", error)}), 500

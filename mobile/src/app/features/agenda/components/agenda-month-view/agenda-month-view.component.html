@@ -1,0 +1,131 @@
+<section class="p04-month-wrapper">
+  <!-- Sub-header Blanco: Navegador de Mes + Botón Hoy: DD -->
+  <div class="p04-month-nav-bar">
+    <div class="p04-month-stepper">
+      <button
+        type="button"
+        class="p02-step-btn"
+        (click)="onPrevMonth()"
+        aria-label="Mes anterior"
+      >
+        <ion-icon name="chevron-back-outline"></ion-icon>
+      </button>
+
+      <span class="p04-month-title" (click)="onToday()">
+        {{ formattedMonthYear }}
+      </span>
+
+      <button
+        type="button"
+        class="p02-step-btn"
+        (click)="onNextMonth()"
+        aria-label="Mes siguiente"
+      >
+        <ion-icon name="chevron-forward-outline"></ion-icon>
+      </button>
+    </div>
+
+    <button type="button" class="p02-today-btn" (click)="onToday()">
+      Hoy: {{ todayDayNumber }}
+    </button>
+  </div>
+
+  <!-- Cuadrícula del Calendario Mensual -->
+  <div class="p04-calendar-card">
+    <!-- Iniciales de días de la semana: D L M M J V S -->
+    <div class="p04-weekdays-row">
+      @for (initial of monthWeekdayInitials; track $index) {
+        <span class="p04-weekday-lbl">{{ initial }}</span>
+      }
+    </div>
+
+    <!-- Celdas de días del mes -->
+    <div class="p04-days-grid">
+      @for (cell of monthCalendarCells; track cell.dateStr) {
+        <button
+          type="button"
+          class="p04-day-cell"
+          [class.outside-month]="!cell.isCurrentMonth"
+          [class.weekend-cell]="cell.isWeekend"
+          [class.selected-cell]="cell.isSelected"
+          [class.today-cell]="cell.isToday"
+          (click)="onSelectDate(cell.date)"
+        >
+          <span class="p04-day-num">{{ cell.dayNumber }}</span>
+
+          @if (cell.isSelected) {
+            <span class="p04-selected-count">• {{ cell.eventCount }}</span>
+          } @else if (cell.isCurrentMonth && (cell.hasReserved || cell.hasReschedule)) {
+            <span
+              class="p04-mini-dot"
+              [class.dot-amber]="cell.hasReschedule"
+            ></span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Lista Inferior: Citas del Día Seleccionado -->
+  <div class="p04-day-summary-section">
+    <div class="p04-summary-header">
+      <h3 class="p04-summary-title">Citas {{ formattedSelectedDayTitle }}</h3>
+      <span class="p04-summary-count">
+        {{ selectedDayItems.length }} {{ selectedDayItems.length === 1 ? 'agenda' : 'agendas' }}
+      </span>
+    </div>
+
+    @if (selectedDayItems.length > 0) {
+      <div class="p04-summary-cards">
+        @for (slot of selectedDayItems; track slot.id) {
+          <article
+            class="p04-item-card"
+            [class.card-confirmada]="slot.status === 'Reservado'"
+            [class.card-reprog]="slot.status === 'Reprogramacion pendiente'"
+            [class.card-disponible]="slot.status === 'Disponible'"
+            (click)="onItemClick(slot)"
+          >
+            <div class="p04-item-left">
+              <span
+                class="p04-accent-bar"
+                [class.bar-blue]="slot.status === 'Reservado'"
+                [class.bar-amber]="slot.status === 'Reprogramacion pendiente'"
+                [class.bar-green]="slot.status === 'Disponible'"
+                [class.bar-gray]="slot.status === 'Cancelado' || slot.status === 'Inhabilitado'"
+              ></span>
+
+              <div class="p04-item-texts">
+                <h4 class="p04-item-name">
+                  @if (slot.status === 'Disponible') {
+                    Espacio disponible
+                  } @else {
+                    {{ slot.studentName || 'Alumno registrado' }}
+                  }
+                </h4>
+                <p class="p04-item-sub">
+                  {{ formatTime12h(slot.startTime) }} – {{ formatTime12h(slot.endTime) }} · {{ getCardSubtitle(slot) }}
+                </p>
+              </div>
+            </div>
+
+            @if (slot.status === 'Reservado') {
+              <span class="p04-item-pill pill-confirmada">Confirmada</span>
+            } @else if (slot.status === 'Reprogramacion pendiente') {
+              <span class="p04-item-pill pill-reprog">Reprog.</span>
+            } @else if (slot.status === 'Disponible') {
+              <span class="p04-item-pill pill-disponible">Disponible</span>
+            } @else {
+              <span class="p04-item-pill pill-gray">{{ slot.status }}</span>
+            }
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="p02-empty-day-card">
+        <ion-icon name="calendar-clear-outline"></ion-icon>
+        <h4>Sin agendas registradas</h4>
+        <p>No hay citas ni horarios cargados para este día del mes.</p>
+      </div>
+    }
+  </div>
+</section>

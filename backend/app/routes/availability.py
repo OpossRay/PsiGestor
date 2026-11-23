@@ -1,0 +1,1008 @@
+from flask import Blueprint, jsonify, request
+import traceback
+from app.config import is_production_like, is_strict_auth_enabled
+from app.repositories.availability_repository import RehabilitationConflictError
+from app.services.auth_service import (
+    require_auth,
+    require_role,
+    get_current_user,
+    is_request_using_bearer_auth,
+    validate_csrf_for_cookie_session,
+    viewer_has_full_access,
+    redact_private_fields
+)
+
+from app.services.availability_service import (
+    register_availability,
+    list_availabilities,
+    cancel_appointment,
+    rehabilitate_cancelled_availability,
+    reschedule_appointment,
+    register_disabled_schedule,
+    list_disabled_schedules,
+    check_schedule_conflicts,
+    modify_disabled_schedule,
+    remove_disabled_schedule
+)
+
+
+availability_bp = Blueprint(
+    'availability',
+    __name__
+)
+
+
+def map_schedule_data(data):
+    """
+    Convierte un horario inhabilitado
+    a la estructura esperada por el frontend.
+    """
+
+    if isinstance(data, dict):
+        return {
+            'id': data.get('id'),
+
+            'startDate': str(
+                data.get('start_date')
+                or data.get('startDate', '')
+            ),
+
+            'endDate': str(
+                data.get('end_date')
+                or data.get('endDate', '')
+            ),
+
+            'startTime': str(
+                data.get('start_time')
+                or data.get('startTime', '')
+            ),
+
+            'endTime': str(
+                data.get('end_time')
+                or data.get('endTime', '')
+            ),
+
+            'reason': data.get(
+                'reason',
+                ''
+            ),
+
+            'observation': data.get(
+                'observation',
+                ''
+            ),
+
+            'type': data.get(
+                'type',
+                ''
+            ),
+
+            'status': data.get(
+                'status',
+                'Inhabilitado'
+            )
+        }
+
+    return {
+        'id': data[0],
+
+        'startDate': str(
+            data[1]
+        ),
+
+        'endDate': str(
+            data[2]
+        ),
+
+        'startTime': str(
+            data[3]
+        ),
+
+        'endTime': str(
+            data[4]
+        ),
+
+        'reason': data[5],
+
+        'observation': data[6],
+
+        'type': data[7],
+
+        'status': data[8]
+    }
+
+
+# =========================================================
+# DISPONIBILIDADES
+# =========================================================
+
+@availability_bp.route(
+    '/availabilities',
+    methods=['POST']
+)
+@require_role('psicologo')
+def create_availability():
+    """
+    Crea un nuevo bloque de disponibilidad manual para el psicólogo.
+    ---
+    tags:
+      - Disponibilidades
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          required:
+            - date
+            - startTime
+            - endTime
+            - duration
+            - breakTime
+          properties:
+            date:
+              type: string
+            startTime:
+              type: string
+            endTime:
+              type: string
+            duration:
+              type: integer
+            breakTime:
+              type: integer
+    responses:
+      201:
+        description: Bloque de disponibilidad creado
+      400:
+        description: Conflicto o datos inválidos
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado (requiere rol psicologo)
+    """
+    data = request.get_json()
+
+    try:
+        availability = register_availability(
+            data['date'],
+            data['startTime'],
+            data['endTime'],
+            data['duration'],
+            data['breakTime']
+        )
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+    return jsonify({
+        'id': availability[0],
+        'date': str(
+            availability[1]
+        ),
+        'startTime': str(
+            availability[2]
+        ),
+        'endTime': str(
+            availability[3]
+        ),
+        'duration': availability[4],
+        'breakTime': availability[5],
+        'status': availability[6],
+        'createdAt': str(
+            availability[7]
+        )
+    }), 201
+
+
+@availability_bp.route(
+    '/availabilities',
+    methods=['GET']
+)
+def get_availabilities():
+    """
+    Lista todos los bloques de disponibilidad (oculta datos clínicos/personales si no es psicólogo).
+    ---
+    tags:
+      - Disponibilidades
+    responses:
+      200:
+        description: Lista de bloques de disponibilidad
+    """
+    availabilities = list_availabilities()
+
+    payload = [
+        {
+            'id': availability[0],
+
+            'date': str(
+                availability[1]
+            ),
+
+            'startTime': str(
+                availability[2]
+            ),
+
+            'endTime': str(
+                availability[3]
+            ),
+
+            'duration': availability[4],
+
+            'breakTime': availability[5],
+
+            'status': availability[6],
+
+            'createdAt': str(
+                availability[7]
+            ),
+
+            'studentName':
+                availability[8],
+
+            'studentInitials':
+                availability[9],
+
+            'studentAge':
+                availability[10],
+
+            'studentSemester':
+                availability[11],
+
+            'studentProgram':
+                availability[12],
+
+            'consultationReason':
+                availability[13],
+
+            'modality':
+                availability[14],
+
+            'location':
+                availability[15],
+
+            'folio':
+                availability[16],
+
+            'proposedDate': (
+                str(
+                    availability[17]
+                )
+                if availability[17]
+                else None
+            ),
+
+            'proposedStartTime': (
+                str(
+                    availability[18]
+                )
+                if availability[18]
+                else None
+            ),
+
+            'proposedEndTime': (
+                str(
+                    availability[19]
+                )
+                if availability[19]
+                else None
+            ),
+
+            'cancellationReason':
+                availability[20],
+
+            'cancellationObservation':
+                availability[21],
+
+            'rescheduleRequestedBy': (
+                availability[22]
+                if len(availability) > 22 and availability[22]
+                else 'psicologo'
+            )
+        }
+
+        for availability
+        in availabilities
+    ]
+
+    if not viewer_has_full_access():
+        payload = [
+            item for item in redact_private_fields(payload)
+            if item.get('status') != 'Cancelado'
+        ]
+
+    return jsonify(payload), 200
+
+
+# =========================================================
+# CANCELACIÓN DE CITA
+# =========================================================
+
+@availability_bp.route(
+    '/availabilities/<int(signed=True):id>/cancel',
+    methods=['POST']
+)
+@require_role('psicologo')
+def cancel_availability_route(id):
+    """
+    Cancela una cita desde el bloque de disponibilidad del calendario del psicólogo.
+    ---
+    tags:
+      - Disponibilidades
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            reason:
+              type: string
+            observation:
+              type: string
+    responses:
+      200:
+        description: Cita cancelada con éxito
+      400:
+        description: Error de validación
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado
+      404:
+        description: Bloque no encontrado
+    """
+    data = request.get_json() or {}
+
+    try:
+        updated = cancel_appointment(
+            id,
+            data.get('reason'),
+            data.get('observation')
+        )
+
+        if not updated:
+            return jsonify({
+                'error': 'No encontrado'
+            }), 404
+
+        return jsonify({
+            'message':
+                'Cita cancelada con éxito'
+        }), 200
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+
+# =========================================================
+# REHABILITACIÓN DE HORARIO CANCELADO
+# =========================================================
+
+@availability_bp.route(
+    '/availabilities/<int(signed=True):id>/rehabilitate',
+    methods=['POST']
+)
+@require_role('psicologo')
+def rehabilitate_availability_route(id):
+    """
+    Rehabilita un horario previamente cancelado para que vuelva a estar disponible.
+    ---
+    tags:
+      - Disponibilidades
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Horario rehabilitado
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado
+      404:
+        description: No encontrado
+      409:
+        description: Conflicto al rehabilitar
+    """
+    try:
+        if id < 0:
+            return jsonify({
+                'error': 'El horario cancelado no tiene un bloque asociado para rehabilitar.'
+            }), 404
+
+        user = get_current_user()
+
+        updated = rehabilitate_cancelled_availability(
+            id,
+            user['id'] if user else None
+        )
+
+        if not updated:
+            return jsonify({
+                'error': 'No encontrado'
+            }), 404
+
+        return jsonify({
+            'message': 'Horario rehabilitado y disponible nuevamente.'
+        }), 200
+
+    except RehabilitationConflictError as error:
+        return jsonify({
+            'error': str(error)
+        }), 409
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+
+# =========================================================
+# REPROGRAMACIÓN DE CITA
+# =========================================================
+
+@availability_bp.route(
+    '/availabilities/<int(signed=True):id>/reschedule',
+    methods=['POST']
+)
+@require_auth
+def reschedule_availability_route(id):
+    """
+    Propone la reprogramación de una cita asociada a un bloque de disponibilidad.
+    ---
+    tags:
+      - Disponibilidades
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            date:
+              type: string
+            startTime:
+              type: string
+            endTime:
+              type: string
+            reason:
+              type: string
+    responses:
+      200:
+        description: Reprogramación propuesta con éxito
+      400:
+        description: Datos inválidos
+      401:
+        description: No autenticado
+      404:
+        description: Bloque no encontrado
+    """
+    data = request.get_json() or {}
+
+    try:
+        updated = reschedule_appointment(
+            id,
+            data.get('date'),
+            data.get('startTime'),
+            data.get('endTime'),
+            data.get('reason')
+        )
+
+        if not updated:
+            return jsonify({
+                'error': 'No encontrado'
+            }), 404
+
+        return jsonify({
+            'message':
+                'Reprogramación propuesta con éxito'
+        }), 200
+
+    except ValueError as error:
+        return jsonify({
+            'error': str(error)
+        }), 400
+
+
+# =========================================================
+# HORARIOS INHABILITADOS
+# =========================================================
+
+@availability_bp.route(
+    '/disabled-schedules',
+    methods=['GET', 'POST']
+)
+def handle_disabled_schedules():
+    """
+    Lista los horarios inhabilitados (GET) o registra una nueva inhabilitación (POST, solo psicólogo).
+    ---
+    tags:
+      - Horarios Inhabilitados
+    responses:
+      200:
+        description: Lista de horarios inhabilitados
+      201:
+        description: Horario inhabilitado registrado
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado
+    """
+
+    if request.method == 'POST':
+        csrf_error = validate_csrf_for_cookie_session()
+        if csrf_error is not None:
+            return csrf_error
+
+        current_user = get_current_user()
+        if not current_user:
+            if is_request_using_bearer_auth() or is_strict_auth_enabled():
+                return jsonify({'error': 'No autorizado. Inicia sesión para continuar.'}), 401
+        elif current_user.get('role') != 'psicologo':
+            return jsonify({'error': 'Acceso denegado. Solo el psicólogo puede inhabilitar horarios.'}), 403
+
+        data = request.get_json() or {}
+
+        start_date = (
+            data.get('startDate')
+            or data.get('date')
+            or data.get('fechaInicio')
+        )
+
+        end_date = (
+            data.get('endDate')
+            or data.get('fechaFin')
+            or start_date
+        )
+
+        start_time = (
+            data.get('startTime')
+            or data.get('horaInicio')
+        )
+
+        end_time = (
+            data.get('endTime')
+            or data.get('horaFin')
+        )
+
+        reason = (
+            data.get('reason')
+            or data.get('motivo')
+        )
+
+        observation = (
+            data.get('observation')
+            or data.get('observacion')
+            or ''
+        )
+
+        schedule_type = (
+            data.get('type')
+            or data.get('modalidad')
+            or 'Puntual'
+        )
+
+
+        if (
+            not start_date
+            or str(start_date).strip() == ''
+        ):
+            return jsonify({
+                'error':
+                    'La fecha de inicio es requerida'
+            }), 400
+
+
+        if (
+            not end_date
+            or str(end_date).strip() == ''
+            or schedule_type == 'Puntual'
+            or str(end_date) < str(start_date)
+        ):
+            end_date = start_date
+
+
+        if (
+            not start_time
+            or str(start_time).strip() == ''
+        ):
+            start_time = '00:00:00'
+
+
+        if (
+            not end_time
+            or str(end_time).strip() == ''
+        ):
+            end_time = '23:59:59'
+
+
+        if (
+            not reason
+            or str(reason).strip() == ''
+        ):
+            reason = 'Inhabilitado'
+
+
+        try:
+            record = register_disabled_schedule(
+                start_date,
+                end_date,
+                start_time,
+                end_time,
+                reason,
+                observation,
+                schedule_type
+            )
+
+            return jsonify(
+                map_schedule_data(
+                    record
+                )
+            ), 201
+
+        except Exception as error:
+            print(
+                'Error al guardar '
+                'inhabilitación:',
+                error
+            )
+
+            traceback.print_exc()
+
+            return jsonify({
+                'error': (
+                    'Error interno al guardar en base de datos.'
+                    if is_production_like()
+                    else f'Error interno al guardar en base de datos: {str(error)}'
+                )
+            }), 500
+
+
+    try:
+        schedules = (
+            list_disabled_schedules()
+        )
+
+        mapped = [
+            map_schedule_data(row)
+            for row in schedules
+        ]
+        if not viewer_has_full_access():
+            for item in mapped:
+                item['reason'] = 'No disponible'
+                item['observation'] = ''
+        return jsonify(mapped), 200
+
+    except Exception as error:
+        print(
+            'Error al consultar '
+            'inhabilitaciones:',
+            error
+        )
+
+        traceback.print_exc()
+
+        return jsonify([]), 200
+
+
+# =========================================================
+# CONFLICTOS DE HORARIOS INHABILITADOS
+# =========================================================
+
+@availability_bp.route(
+    '/disabled-schedules/check-conflicts',
+    methods=['POST']
+)
+@require_role('psicologo')
+def check_disabled_conflicts():
+    """
+    Verifica si existen citas o conflictos en un rango antes de inhabilitar un horario.
+    ---
+    tags:
+      - Horarios Inhabilitados
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            startDate:
+              type: string
+            endDate:
+              type: string
+            startTime:
+              type: string
+            endTime:
+              type: string
+    responses:
+      200:
+        description: Resultado de verificación de conflictos
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado
+    """
+    data = request.get_json() or {}
+
+    start_date = (
+        data.get('startDate')
+        or data.get('date')
+    )
+
+    end_date = (
+        data.get('endDate')
+        or start_date
+    )
+
+    start_time = data.get(
+        'startTime'
+    )
+
+    end_time = data.get(
+        'endTime'
+    )
+
+
+    if (
+        not start_date
+        or not start_time
+        or not end_time
+    ):
+        return jsonify({
+            'hasConflict': False,
+            'conflictCount': 0
+        }), 200
+
+
+    conflict_count = (
+        check_schedule_conflicts(
+            start_date,
+            end_date,
+            start_time,
+            end_time
+        )
+    )
+
+
+    return jsonify({
+        'hasConflict':
+            conflict_count > 0,
+
+        'conflictCount':
+            conflict_count
+    }), 200
+
+
+# =========================================================
+# EDITAR / REHABILITAR HORARIO INHABILITADO
+# =========================================================
+
+@availability_bp.route(
+    '/disabled-schedules/<int:schedule_id>',
+    methods=['PUT', 'DELETE']
+)
+@require_role('psicologo')
+def handle_disabled_schedule_by_id(
+    schedule_id
+):
+    """
+    Actualiza (PUT) o rehabilita/elimina (DELETE) un horario inhabilitado por su ID.
+    ---
+    tags:
+      - Horarios Inhabilitados
+    parameters:
+      - name: schedule_id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Horario actualizado o rehabilitado con éxito
+      401:
+        description: No autenticado
+      403:
+        description: Acceso denegado
+      404:
+        description: Registro no encontrado
+    """
+
+    if request.method == 'PUT':
+        data = request.get_json() or {}
+
+        start_date = (
+            data.get('startDate')
+            or data.get('date')
+        )
+
+        end_date = (
+            data.get('endDate')
+            or start_date
+        )
+
+        start_time = data.get(
+            'startTime'
+        )
+
+        end_time = data.get(
+            'endTime'
+        )
+
+        reason = data.get(
+            'reason',
+            'Inhabilitado'
+        )
+
+        observation = data.get(
+            'observation',
+            ''
+        )
+
+        schedule_type = data.get(
+            'type',
+            'Puntual'
+        )
+
+        if (
+            not end_date
+            or str(end_date).strip() == ''
+            or schedule_type == 'Puntual'
+            or str(end_date) < str(start_date)
+        ):
+            end_date = start_date
+
+
+        try:
+            record = (
+                modify_disabled_schedule(
+                    schedule_id,
+                    start_date,
+                    end_date,
+                    start_time,
+                    end_time,
+                    reason,
+                    observation,
+                    schedule_type
+                )
+            )
+
+            if not record:
+                return jsonify({
+                    'error':
+                        'Registro no encontrado'
+                }), 404
+
+            return jsonify(
+                map_schedule_data(
+                    record
+                )
+            ), 200
+
+        except Exception as error:
+            print(
+                'Error al actualizar '
+                'inhabilitación:',
+                error
+            )
+
+            return jsonify({
+                'error': (
+                    'Error interno al actualizar la inhabilitación.'
+                    if is_production_like()
+                    else str(error)
+                )
+            }), 500
+
+
+    if request.method == 'DELETE':
+
+        try:
+            remove_disabled_schedule(
+                schedule_id
+            )
+
+            return jsonify({
+                'message':
+                    'Horario rehabilitado con éxito'
+            }), 200
+
+        except Exception as error:
+            print(
+                'Error al rehabilitar horario:',
+                error
+            )
+
+            return jsonify({
+                'error': (
+                    'Error interno al rehabilitar el horario.'
+                    if is_production_like()
+                    else str(error)
+                )
+            }), 500
+
+@availability_bp.route('/availabilities/<int(signed=True):id>/approve-reschedule', methods=['POST'])
+@require_auth
+def approve_availability_reschedule_route(id):
+    """
+    Aprueba una reprogramación pendiente desde un bloque de disponibilidad.
+    ---
+    tags:
+      - Disponibilidades
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Reprogramación aprobada
+      400:
+        description: Solicitud inválida
+      401:
+        description: No autenticado
+    """
+    try:
+        from app.services.availability_service import approve_availability_reschedule
+        approve_availability_reschedule(id)
+        return jsonify({'message': 'Reprogramación aprobada correctamente.'}), 200
+    except ValueError as error:
+        return jsonify({'error': str(error)}), 400
+    except Exception as error:
+        return jsonify({
+            'error': (
+                'No fue posible aprobar la reprogramación.'
+                if is_production_like()
+                else f'No fue posible aprobar la reprogramación: {error}'
+            )
+        }), 500
+
+
+@availability_bp.route('/availabilities/<int(signed=True):id>/reject-reschedule', methods=['POST'])
+@require_auth
+def reject_availability_reschedule_route(id):
+    """
+    Rechaza una reprogramación pendiente desde un bloque de disponibilidad.
+    ---
+    tags:
+      - Disponibilidades
+    parameters:
+      - name: id
+        in: path
+        type: integer
+        required: true
+    responses:
+      200:
+        description: Reprogramación rechazada
+      400:
+        description: Solicitud inválida
+      401:
+        description: No autenticado
+    """
+    try:
+        from app.services.availability_service import reject_availability_reschedule
+        result = reject_availability_reschedule(id)
+        return jsonify(result if isinstance(result, dict) else {'message': 'Reprogramación rechazada.'}), 200
+    except ValueError as error:
+        return jsonify({'error': str(error)}), 400
+    except Exception as error:
+        return jsonify({
+            'error': (
+                'No fue posible rechazar la reprogramación.'
+                if is_production_like()
+                else f'No fue posible rechazar la reprogramación: {error}'
+            )
+        }), 500
