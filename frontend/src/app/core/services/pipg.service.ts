@@ -3,6 +3,7 @@ import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformServer } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export type PipgAssessmentStatus = 'in_progress' | 'completed';
 
@@ -16,6 +17,8 @@ export interface PipgAssessment {
     status: PipgAssessmentStatus;
     answers: {
         selectedCells: string[];
+        isSynthetic?: boolean;
+        disclaimer?: string;
     };
     directScores: Record<string, number> | null;
     percentileScores: Record<string, number | null> | null;
@@ -38,9 +41,13 @@ export class PipgService {
     private http = inject(HttpClient);
     private platformId = inject(PLATFORM_ID);
 
-    private readonly baseUrl = isPlatformServer(this.platformId)
-        ? 'http://backend:5000/api/pipg'
-        : 'http://localhost:5000/api/pipg';
+    private get baseUrl(): string {
+        if (isPlatformServer(this.platformId)) {
+            return `${environment.ssrApiUrl}/api/pipg`;
+        }
+
+        return `${environment.apiUrl}/api/pipg`;
+    }
 
     getAssessment(): Observable<PipgAssessmentResponse> {
         return this.http.get<PipgAssessmentResponse>(

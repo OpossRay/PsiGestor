@@ -660,7 +660,7 @@ class TestSubphase2BMigrationScenariosInDepth(unittest.TestCase):
         indexes = set()
 
         for version, spec in MIGRATION_SIGNATURES.items():
-            if version.startswith("012_"):
+            if version >= "012_":
                 continue
             for t in spec.get("tables", set()) | spec.get("required_tables", set()):
                 tables.add(t)
@@ -682,7 +682,7 @@ class TestSubphase2BMigrationScenariosInDepth(unittest.TestCase):
 
     @patch("app.init_db._fetch_existing_schema_metadata")
     @patch("app.init_db.ensure_schema_migrations_table")
-    def test_fresh_database_applies_all_13_migrations_in_order(
+    def test_fresh_database_applies_all_14_migrations_in_order(
         self, mock_ensure_table, mock_fetch_meta
     ):
         mock_ensure_table.return_value = {}
@@ -722,10 +722,11 @@ class TestSubphase2BMigrationScenariosInDepth(unittest.TestCase):
         self.assertEqual(len(results), 14)
         adopted = [r for r in results if r.startswith("adopted:")]
         applied = [r for r in results if r.startswith("applied:")]
-        self.assertEqual(len(adopted), 13)
+        self.assertEqual(len(adopted), 12)
         self.assertEqual(applied, [
-    "applied:012_create_auth_refresh_tokens.sql",
-])
+            "applied:012_create_auth_refresh_tokens.sql",
+            "applied:013_create_pipg_assessments.sql",
+        ])
 
     def test_partial_alter_table_or_outdated_constraint_raises_schema_adoption_error(self):
         meta = self._build_full_schema_metadata_for_001_to_011()

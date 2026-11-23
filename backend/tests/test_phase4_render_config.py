@@ -1,8 +1,10 @@
+import json
 import os
 import sys
 from pathlib import Path
 import unittest
 from unittest.mock import MagicMock, patch
+from flask import Flask
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -36,10 +38,9 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
         self.blueprint_prod = yaml.safe_load(RENDER_PROD_YAML_PATH.read_text(encoding="utf-8"))
 
     def test_etapa_a_blueprint_contains_only_single_free_database_and_staging_services(self):
-        dbs = {db["name"]: db for db in self.blueprint_free.get("databases", [])}
-        self.assertEqual(len(dbs), 1, "Etapa A (render.yaml) must contain exactly one database to respect Render Free limits")
-        self.assertIn("psigestor-db-staging", dbs)
-        self.assertEqual(dbs["psigestor-db-staging"]["plan"], "free")
+        # Etapa A (render.yaml) delegates database storage to an independent Neon Free project
+        dbs = self.blueprint_free.get("databases", [])
+        self.assertEqual(len(dbs), 0, "Etapa A (render.yaml) must define zero Render databases to use Neon Free")
 
         services = {svc["name"]: svc for svc in self.blueprint_free.get("services", [])}
         self.assertEqual(len(services), 2, "Etapa A must contain only the 2 staging services")
@@ -54,7 +55,8 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
 
         # Verify database link and backend URL
         api_env = {e["key"]: e for e in services["psigestor-api-staging"]["envVars"]}
-        self.assertEqual(api_env["DATABASE_URL"]["fromDatabase"]["name"], "psigestor-db-staging")
+        self.assertFalse(api_env["DATABASE_URL"].get("sync", True), "DATABASE_URL must be configured with sync: false for Neon")
+        self.assertNotIn("ALLOW_STAGING_SEEDS", api_env, "Orphan ALLOW_STAGING_SEEDS must not be present in render.yaml")
         web_env = {e["key"]: e for e in services["psigestor-web-staging"]["envVars"]}
         self.assertEqual(web_env["BACKEND_URL"]["value"], "https://psigestor-api-staging.onrender.com")
 
@@ -118,7 +120,7 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
         with patch.dict(os.environ, {"APP_ENV": "production"}):
             self.assertFalse(should_load_demo_seeds())
 
-        with patch.dict(os.environ, {"APP_ENV": "staging", "ALLOW_STAGING_SEEDS": "true"}):
+        with patch.dict(os.environ, {"APP_ENV": "staging"}):
             self.assertFalse(should_load_demo_seeds(), "Legacy seeds containing real names/passwords must be blocked in staging")
 
         with patch.dict(os.environ, {"APP_ENV": "development", "RENDER": "true"}):
@@ -163,8 +165,14 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
         }):
             res = seed_academic_demo(mock_conn)
             self.assertEqual(res["status"], "seeded_academic_demo")
-            self.assertEqual(res["students"], 3)
+            self.assertEqual(res["students"], 8)
             self.assertEqual(res["users"], 4)
+            self.assertEqual(res.get("synthetic_pipg_student"), "DEMO2026001")
+            self.assertEqual(len(res["available_registration_matriculas"]), 5)
+            self.assertEqual(
+                res["available_registration_matriculas"],
+                ["DEMO2026010", "DEMO2026011", "DEMO2026012", "DEMO2026013", "DEMO2026014"]
+            )
 
             # Ensure all executed statements use ON CONFLICT DO NOTHING (idempotent, no deletions)
             all_executes = [call[0][0] for call in mock_cursor.execute.call_args_list]
@@ -179,6 +187,7 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
             "students": {},
             "users": {},
             "regular_schedule": [],
+            "pipg_assessments": {},
         }
 
         mock_conn = MagicMock()
@@ -204,6 +213,13 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
                 email = params[0]
                 if email not in db_state["users"]:
                     db_state["users"][email] = params
+            elif "INSERT INTO pipg_assessments" in q:
+                if "DEMO2026001" not in db_state["pipg_assessments"]:
+                    db_state["pipg_assessments"]["DEMO2026001"] = {
+                        "answers": json.loads(params[0]),
+                        "direct_scores": json.loads(params[1]),
+                        "percentile_scores": json.loads(params[2]),
+                    }
 
         mock_cursor.execute.side_effect = fake_execute
 
@@ -216,16 +232,19 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
             # Run 1: Inserts records
             res1 = seed_academic_demo(mock_conn)
             self.assertEqual(res1["status"], "seeded_academic_demo")
-            self.assertEqual(len(db_state["students"]), 3)
+            self.assertEqual(len(db_state["students"]), 8)
             self.assertEqual(len(db_state["users"]), 4)
             self.assertEqual(len(db_state["regular_schedule"]), 1)
+            self.assertEqual(len(db_state["pipg_assessments"]), 1)
+            self.assertTrue(db_state["pipg_assessments"]["DEMO2026001"]["answers"]["isSynthetic"])
 
             # Run 2: Consecutive execution must not duplicate or alter records
             res2 = seed_academic_demo(mock_conn)
             self.assertEqual(res2["status"], "seeded_academic_demo")
-            self.assertEqual(len(db_state["students"]), 3)
+            self.assertEqual(len(db_state["students"]), 8)
             self.assertEqual(len(db_state["users"]), 4)
             self.assertEqual(len(db_state["regular_schedule"]), 1)
+            self.assertEqual(len(db_state["pipg_assessments"]), 1)
 
     @patch("app.init_db.run_seeds")
     @patch("app.init_db.run_migrations", return_value=["applied:012_create_auth_refresh_tokens.sql"])
@@ -275,6 +294,257 @@ class TestPhase4RenderBlueprintAndDockerConfig(unittest.TestCase):
         self.assertEqual(result["status"], "verified")
         self.assertEqual(len(result["applied"]), 14)
         self.assertEqual(result["pending"], [])
+
+
+class TestPhase3BRegistrationAndDemoAccounts(unittest.TestCase):
+    @patch("app.services.auth_service.find_user_by_id")
+    @patch("app.services.auth_service.create_student_user")
+    @patch("app.services.auth_service.find_user_by_student_db_id")
+    @patch("app.services.auth_service.find_student_by_code")
+    @patch("app.services.auth_service.find_user_by_email")
+    def test_registration_with_available_demo_matricula_succeeds_with_alumno_role(
+        self, mock_find_email, mock_find_student, mock_find_user_by_std, mock_create, mock_find_by_id
+    ):
+        from app.services.auth_service import register_student
+
+        mock_find_email.return_value = None
+        mock_find_student.return_value = {
+            "id": 10,
+            "student_id": "DEMO2026010",
+            "name": "Estudiante Disponible Diez",
+            "program": "Ingeniería en Sistemas Computacionales",
+            "semester": 6,
+        }
+        mock_find_user_by_std.return_value = None
+        mock_create.return_value = {
+            "id": 5,
+            "email": "visitante@demo.com",
+            "name": "Visitante Evaluador",
+            "role": "alumno",
+            "student_id": 10,
+            "is_active": True,
+        }
+        mock_find_by_id.return_value = {
+            "id": 5,
+            "email": "visitante@demo.com",
+            "name": "Visitante Evaluador",
+            "role": "alumno",
+            "student_id": 10,
+            "student_code": "DEMO2026010",
+            "program": "Ingeniería en Sistemas Computacionales",
+            "semester": 6,
+            "is_active": True,
+        }
+
+        test_app = Flask(__name__)
+        test_app.secret_key = "test_registration_session_key_secret_2026"
+        with test_app.test_request_context():
+            user = register_student(
+                name="Visitante Evaluador",
+                email="visitante@demo.com",
+                password="SecureEvaluatorPass2026!",
+                student_code="DEMO2026010",
+            )
+
+        self.assertIsNotNone(user)
+        self.assertEqual(user["role"], "alumno")
+        self.assertEqual(user["studentCode"], "DEMO2026010")
+        mock_create.assert_called_once()
+        self.assertEqual(mock_create.call_args[1]["student_id"], 10)
+
+    @patch("app.services.auth_service.find_user_by_student_db_id")
+    @patch("app.services.auth_service.find_student_by_code")
+    @patch("app.services.auth_service.find_user_by_email")
+    def test_registration_rejects_duplicate_matricula(
+        self, mock_find_email, mock_find_student, mock_find_user_by_std
+    ):
+        from app.services.auth_service import register_student
+
+        mock_find_email.return_value = None
+        mock_find_student.return_value = {"id": 10, "student_id": "DEMO2026010"}
+        mock_find_user_by_std.return_value = {"id": 5, "email": "already_taken@demo.com"}
+
+        with self.assertRaises(ValueError) as ctx:
+            register_student(
+                name="Segundo Visitante",
+                email="segundo@demo.com",
+                password="SecurePass2026!",
+                student_code="DEMO2026010",
+            )
+        self.assertIn("ya cuenta con un usuario registrado y activo", str(ctx.exception))
+
+    @patch("app.services.auth_service.find_student_by_code")
+    @patch("app.services.auth_service.find_user_by_email")
+    def test_registration_rejects_unregistered_matricula(
+        self, mock_find_email, mock_find_student
+    ):
+        from app.services.auth_service import register_student
+
+        mock_find_email.return_value = None
+        mock_find_student.return_value = None
+
+        with self.assertRaises(ValueError) as ctx:
+            register_student(
+                name="Intento Invalido",
+                email="invalido@demo.com",
+                password="SecurePass2026!",
+                student_code="UNKNOWN9999",
+            )
+        self.assertIn("no se encuentra en el catálogo oficial de estudiantes", str(ctx.exception))
+
+    @patch("app.init_db.run_migrations")
+    @patch("app.init_db.connect_with_retry")
+    def test_advisory_lock_cleanup_handles_aborted_transaction_safely(
+        self, mock_connect, mock_run_migrations
+    ):
+        from app.init_db import MIGRATION_ADVISORY_LOCK_KEY, init_database
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_conn.info.transaction_status = 3  # INERROR state
+        mock_cursor.fetchone.return_value = (True,)
+        mock_connect.return_value = mock_conn
+
+        mock_run_migrations.side_effect = RuntimeError("Simulated failure during migration")
+
+        with self.assertRaises(RuntimeError):
+            init_database(migrate_only=True)
+
+        # Rollback must be called to reset transaction state before advisory unlock
+        mock_conn.rollback.assert_called()
+        # Advisory unlock must be called
+        unlock_calls = [
+            call for call in mock_cursor.execute.call_args_list
+            if "pg_advisory_unlock" in str(call)
+        ]
+        self.assertTrue(len(unlock_calls) > 0, "pg_advisory_unlock must be executed in finally block")
+        # Connection must be closed
+        mock_conn.close.assert_called_once()
+
+
+class TestPhase3DC2SyntheticPIPGAssessment(unittest.TestCase):
+    @patch("app.init_db.sync_regular_schedule_availabilities")
+    def test_seed_creates_synthetic_assessment_for_demo2026001_with_official_scoring(self, mock_sync):
+        from app.init_db import seed_academic_demo
+        from app.services.pipg_scoring_service import calculate_scores_with_percentiles
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.fetchone.side_effect = [None, (1,)]
+
+        pipg_insert_calls = []
+
+        def track_execute(query, params=None):
+            if "INSERT INTO pipg_assessments" in query:
+                pipg_insert_calls.append((query, params))
+
+        mock_cursor.execute.side_effect = track_execute
+
+        env = {
+            "APP_ENV": "staging",
+            "INITIAL_PSYCHOLOGIST_PASSWORD": "StrongPsychPassword2026!",
+            "DEMO_STUDENT_PASSWORD": "StrongStudentPassword2026!",
+        }
+        with patch.dict(os.environ, env):
+            res = seed_academic_demo(mock_conn)
+
+        self.assertEqual(res["status"], "seeded_academic_demo")
+        self.assertEqual(res.get("synthetic_pipg_student"), "DEMO2026001")
+        self.assertEqual(len(pipg_insert_calls), 1)
+
+        query, params = pipg_insert_calls[0]
+
+        # Verify SQL structure protects inmutability and idempotency
+        self.assertIn("DEMO2026001", query)
+        self.assertIn("NOT EXISTS", query)
+        self.assertIn("'completed'", query)
+        self.assertIn("CURRENT_TIMESTAMP", query)
+
+        # Verify JSON parameters
+        ans_json, ds_json, ps_json = params
+        answers = json.loads(ans_json)
+        direct_scores = json.loads(ds_json)
+        percentile_scores = json.loads(ps_json)
+
+        # Mandatory identification fields
+        self.assertTrue(answers.get("isSynthetic"), "isSynthetic must be True")
+        self.assertEqual(
+            answers.get("disclaimer"),
+            "SYNTHETIC DEMONSTRATION RESULT — NOT VALID FOR DIAGNOSIS"
+        )
+        self.assertEqual(len(answers.get("selectedCells", [])), 76)
+
+        # Mathematically derived from the official scoring service
+        expected_scores = calculate_scores_with_percentiles(answers["selectedCells"])
+        self.assertEqual(direct_scores, expected_scores["direct_scores"])
+        self.assertEqual(percentile_scores, expected_scores["percentile_scores"])
+
+    @patch("app.init_db.sync_regular_schedule_availabilities")
+    def test_seed_never_creates_pipg_assessment_for_other_students(self, mock_sync):
+        from app.init_db import seed_academic_demo
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.fetchone.side_effect = [None, (1,)]
+
+        pipg_queries = []
+
+        def track_execute(query, params=None):
+            if "INSERT INTO pipg_assessments" in query:
+                pipg_queries.append(query)
+
+        mock_cursor.execute.side_effect = track_execute
+
+        env = {
+            "APP_ENV": "staging",
+            "INITIAL_PSYCHOLOGIST_PASSWORD": "StrongPsychPassword2026!",
+            "DEMO_STUDENT_PASSWORD": "StrongStudentPassword2026!",
+        }
+        with patch.dict(os.environ, env):
+            seed_academic_demo(mock_conn)
+
+        self.assertEqual(len(pipg_queries), 1)
+        # DEMO2026001 must be the only targeted student
+        self.assertIn("DEMO2026001", pipg_queries[0])
+        for other_student in ["DEMO2026002", "DEMO2026003", "DEMO2026010", "DEMO2026011", "DEMO2026012", "DEMO2026013", "DEMO2026014"]:
+            self.assertNotIn(other_student, pipg_queries[0])
+
+    @patch("app.init_db.sync_regular_schedule_availabilities")
+    def test_seed_never_updates_or_deletes_pipg_assessments(self, mock_sync):
+        from app.init_db import seed_academic_demo
+
+        mock_conn = MagicMock()
+        mock_cursor = MagicMock()
+        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+        mock_cursor.fetchone.side_effect = [None, (1,)]
+
+        all_queries = []
+
+        def track_execute(query, params=None):
+            all_queries.append(query.strip())
+
+        mock_cursor.execute.side_effect = track_execute
+
+        env = {
+            "APP_ENV": "staging",
+            "INITIAL_PSYCHOLOGIST_PASSWORD": "StrongPsychPassword2026!",
+            "DEMO_STUDENT_PASSWORD": "StrongStudentPassword2026!",
+        }
+        with patch.dict(os.environ, env):
+            seed_academic_demo(mock_conn)
+
+        for q in all_queries:
+            self.assertFalse(
+                q.startswith("UPDATE pipg_assessments"),
+                "Seed must never execute UPDATE on pipg_assessments"
+            )
+            self.assertFalse(
+                q.startswith("DELETE FROM pipg_assessments"),
+                "Seed must never execute DELETE on pipg_assessments"
+            )
 
 
 if __name__ == "__main__":
