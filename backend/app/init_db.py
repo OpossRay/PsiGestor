@@ -1,5 +1,6 @@
 from datetime import datetime
 import hashlib
+import json
 import os
 from pathlib import Path
 import sys
@@ -17,6 +18,10 @@ from app.services.regular_schedule_service import (
 )
 from app.services.availability_generation_service import (
     generate_slots_for_range,
+)
+from app.services.pipg_scoring_service import (
+    _GROUP_DEFINITIONS,
+    calculate_scores_with_percentiles,
 )
 from app.repositories.generated_availability_repository import (
     replace_generated_availabilities,
@@ -677,11 +682,21 @@ def seed_academic_demo(connection) -> dict:
     psych_hash = generate_password_hash(psych_pass)
     student_hash = generate_password_hash(student_pass)
 
-    fictitious_students = [
+    fictitious_students_with_accounts = [
         ("DEMO2026001", "Estudiante Demo Uno", "Ingeniería en Sistemas Computacionales", 6),
         ("DEMO2026002", "Estudiante Demo Dos", "Licenciatura en Administración", 4),
         ("DEMO2026003", "Estudiante Demo Tres", "Ingeniería Mecatrónica", 8),
     ]
+
+    fictitious_students_for_registration = [
+        ("DEMO2026010", "Estudiante Disponible Diez", "Ingeniería en Sistemas Computacionales", 6),
+        ("DEMO2026011", "Estudiante Disponible Once", "Licenciatura en Administración", 4),
+        ("DEMO2026012", "Estudiante Disponible Doce", "Ingeniería Mecatrónica", 2),
+        ("DEMO2026013", "Estudiante Disponible Trece", "Ingeniería Informática", 8),
+        ("DEMO2026014", "Estudiante Disponible Catorce", "Ingeniería en Sistemas Computacionales", 5),
+    ]
+
+    all_fictitious_students = fictitious_students_with_accounts + fictitious_students_for_registration
 
     fictitious_users = [
         ("alumno.demo1@psigestor.demo", student_hash, "Estudiante Demo Uno", "alumno", "DEMO2026001"),
@@ -690,7 +705,7 @@ def seed_academic_demo(connection) -> dict:
     ]
 
     with connection.cursor() as cursor:
-        for s_id, s_name, s_prog, s_sem in fictitious_students:
+        for s_id, s_name, s_prog, s_sem in all_fictitious_students:
             cursor.execute(
                 """
                 INSERT INTO students (student_id, name, program, semester)
@@ -713,11 +728,77 @@ def seed_academic_demo(connection) -> dict:
             cursor.execute(
                 """
                 INSERT INTO users (email, password_hash, name, role, student_id, is_active)
-                VALUES (%s, %s, %s, %s, %s, TRUE)
+                SELECT %s, %s, %s, %s, s.id, TRUE
+                FROM students s
+                WHERE s.student_id = %s
                 ON CONFLICT (email) DO NOTHING;
                 """,
                 (u_email, u_hash, u_name, u_role, u_sid),
             )
+
+        cursor.execute(
+            """
+            INSERT INTO appointments (
+                student_id, student_name, date, start_time, end_time, duration, modality, location, reason, status
+            )
+            SELECT s.id, s.name, CURRENT_DATE + INTERVAL '1 day', '10:00:00'::TIME, '10:50:00'::TIME, 50, 'In person', 'Cubículo 2B', 'Orientación académica inicial', 'Reserved'
+            FROM students s
+            WHERE s.student_id = 'DEMO2026001'
+              AND NOT EXISTS (
+                  SELECT 1 FROM appointments a WHERE a.student_id = s.id AND a.date = CURRENT_DATE + INTERVAL '1 day'
+              );
+            """
+        )
+
+        # Seed synthetic completed P-IPG assessment exclusively for DEMO2026001
+        synthetic_cells = []
+        for _, plus_col, minus_col, start, end in _GROUP_DEFINITIONS:
+            for r in range(start, end + 1, 4):
+                synthetic_cells.append(f"{plus_col}{r}")
+                synthetic_cells.append(f"{minus_col}{r+1}")
+
+        pipg_scores = calculate_scores_with_percentiles(synthetic_cells)
+        pipg_answers = {
+            "selectedCells": synthetic_cells,
+            "isSynthetic": True,
+            "disclaimer": "SYNTHETIC DEMONSTRATION RESULT — NOT VALID FOR DIAGNOSIS",
+        }
+
+        cursor.execute(
+            """
+            INSERT INTO pipg_assessments (
+                student_id,
+                status,
+                answers,
+                direct_scores,
+                percentile_scores,
+                started_at,
+                completed_at,
+                created_at,
+                updated_at
+            )
+            SELECT
+                s.id,
+                'completed',
+                %s::jsonb,
+                %s::jsonb,
+                %s::jsonb,
+                CURRENT_TIMESTAMP - INTERVAL '1 hour',
+                CURRENT_TIMESTAMP,
+                CURRENT_TIMESTAMP - INTERVAL '1 hour',
+                CURRENT_TIMESTAMP
+            FROM students s
+            WHERE s.student_id = 'DEMO2026001'
+              AND NOT EXISTS (
+                  SELECT 1 FROM pipg_assessments a WHERE a.student_id = s.id
+              );
+            """,
+            (
+                json.dumps(pipg_answers),
+                json.dumps(pipg_scores["direct_scores"]),
+                json.dumps(pipg_scores["percentile_scores"]),
+            ),
+        )
 
         cursor.execute("SELECT id FROM regular_schedule LIMIT 1;")
         row = cursor.fetchone()
@@ -758,8 +839,10 @@ def seed_academic_demo(connection) -> dict:
     print("[init_db] Demostración académica: estudiantes y usuarios ficticios aprovisionados, disponibilidades sincronizadas a 90 días.")
     return {
         "status": "seeded_academic_demo",
-        "students": len(fictitious_students),
+        "students": len(all_fictitious_students),
+        "available_registration_matriculas": [s[0] for s in fictitious_students_for_registration],
         "users": len(fictitious_users) + 1,
+        "synthetic_pipg_student": "DEMO2026001",
     }
 
 
@@ -1026,11 +1109,17 @@ def init_database(
     finally:
         if lock_acquired:
             try:
+                # Reset transaction state to idle if a previous statement failed before unlock
+                if hasattr(connection, "info") and getattr(connection.info, "transaction_status", None) == 3:
+                    connection.rollback()
                 with connection.cursor() as cursor:
                     cursor.execute("SELECT pg_advisory_unlock(%s);", (MIGRATION_ADVISORY_LOCK_KEY,))
+                    row = cursor.fetchone()
+                    if row and not row[0]:
+                        print("[init_db] Advertencia: pg_advisory_unlock reportó que el candado consultivo no estaba retenido por esta conexión.")
                 connection.commit()
-            except Exception:
-                pass
+            except Exception as unlock_err:
+                print(f"[init_db] Advertencia liberando advisory lock: {unlock_err}")
         connection.close()
 
 

@@ -62,9 +62,12 @@
               <strong>
                 {{ assessment.studentName || 'Estudiante #' + assessment.studentId }}
               </strong>
+              @if (assessment.answers?.isSynthetic) {
+                <span class="badge-synthetic">SYNTHETIC DEMO</span>
+              }
               <small>
                 {{ assessment.studentCode || 'Evaluación P-IPG' }}
-              </small> <small>Evaluación P-IPG</small>
+              </small>
             </td>
 
             <td>
@@ -112,6 +115,13 @@
       </header>
 
       <div class="modal-content">
+        @if (selected.answers?.isSynthetic) {
+        <div class="synthetic-warning-banner" role="alert">
+          <span class="warning-icon">⚠️</span>
+          <strong>SYNTHETIC DEMONSTRATION RESULT — NOT VALID FOR DIAGNOSIS</strong>
+        </div>
+        }
+
         <div class="detail-info">
           <div>
             <span>Fecha de inicio</span>
