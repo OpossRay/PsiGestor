@@ -76,7 +76,7 @@ services:
     startCommand: node dist/PsiGestor/server/server.mjs
     envVars:
       - key: NODE_VERSION
-        value: "22.14.0"
+        value: "22.22.3"
       - key: NODE_ENV
         value: production
       - key: BACKEND_URL
