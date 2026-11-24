@@ -72,7 +72,7 @@ services:
     branch: develop
     autoDeploy: true
     healthCheckPath: /login
-    buildCommand: npm ci && npx ng build --configuration staging
+    buildCommand: npm ci --include=dev && npx ng build --configuration staging
     startCommand: node dist/PsiGestor/server/server.mjs
     envVars:
       - key: NODE_VERSION
