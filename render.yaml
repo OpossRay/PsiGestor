@@ -29,7 +29,7 @@ services:
     autoDeploy: true
     healthCheckPath: /health
     buildCommand: pip install --no-cache-dir -r requirements.txt
-    startCommand: SKIP_DB_INIT_ON_IMPORT=true gunicorn --chdir backend app.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60
+    startCommand: SKIP_DB_INIT_ON_IMPORT=true gunicorn --chdir backend app.app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 60 --access-logfile -
     envVars:
       - key: PYTHON_VERSION
         value: "3.12.8"
