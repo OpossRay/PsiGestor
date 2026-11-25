@@ -83,3 +83,5 @@ services:
         value: https://psigestor-api-staging.onrender.com
       - key: ALLOWED_HOSTS
         value: psigestor-web-staging.onrender.com,*.onrender.com,localhost,127.0.0.1
+      - key: NG_TRUST_PROXY_HEADERS
+        value: "x-forwarded-for,x-forwarded-proto,x-forwarded-host"

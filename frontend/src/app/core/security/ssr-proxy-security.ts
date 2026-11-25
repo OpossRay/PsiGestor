@@ -17,10 +17,28 @@ export const PASSTHROUGH_RESPONSE_HEADERS = [
   'retry-after',
 ] as const;
 
-export const SSR_PROXY_TIMEOUT_MS = 65000;
+export const DEFAULT_TRUST_PROXY_HEADERS = [
+  'x-forwarded-for',
+  'x-forwarded-proto',
+  'x-forwarded-host',
+] as const;
+
+export const SSR_PROXY_TIMEOUT_MS = 100000;
 
 export function createProxyAbortSignal(timeoutMs: number = SSR_PROXY_TIMEOUT_MS): AbortSignal {
   return AbortSignal.timeout(timeoutMs);
+}
+
+export function resolveTrustProxyHeaders(rawEnvValue: string | undefined): string[] {
+  const rawEnv = (rawEnvValue || '').trim();
+  if (!rawEnv) {
+    return Array.from(DEFAULT_TRUST_PROXY_HEADERS);
+  }
+  const custom = rawEnv
+    .split(',')
+    .map((h) => h.trim().toLowerCase())
+    .filter((h) => h.length > 0 && (h === 'forwarded' || h.startsWith('x-forwarded-')));
+  return custom.length > 0 ? Array.from(new Set(custom)) : Array.from(DEFAULT_TRUST_PROXY_HEADERS);
 }
 
 export function extractSafeRequestHeadersToForward(

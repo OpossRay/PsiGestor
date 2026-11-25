@@ -15,14 +15,22 @@ import {
   extractSetCookieHeadersFromUpstream,
   resolveAllowedHosts,
   resolveConfiguredBackendOrigin,
+  resolveTrustProxyHeaders,
 } from './app/core/security/ssr-proxy-security';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 const configuredBackendUrl = resolveConfiguredBackendOrigin(process.env['BACKEND_URL']);
 
 const app = express();
+
+// Trust first reverse proxy hop (Render edge proxy) for accurate IP and protocol detection
+app.set('trust proxy', 1);
+
 const angularApp = new AngularNodeAppEngine({
   allowedHosts: resolveAllowedHosts(process.env['ALLOWED_HOSTS']),
+  trustProxyHeaders: resolveTrustProxyHeaders(
+    process.env['NG_TRUST_PROXY_HEADERS'] || process.env['TRUST_PROXY_HEADERS'],
+  ),
 });
 
 /**
@@ -68,7 +76,17 @@ app.use('/backend-api', express.raw({ type: '*/*', limit: '2mb' }), async (req: 
 
     const responseBuffer = Buffer.from(await upstreamResponse.arrayBuffer());
     res.send(responseBuffer);
-  } catch {
+  } catch (proxyError: unknown) {
+    const errorMessage = proxyError instanceof Error ? proxyError.message : String(proxyError);
+    const isAbort =
+      proxyError instanceof Error &&
+      (proxyError.name === 'AbortError' || proxyError.name === 'TimeoutError');
+    const safeErrorType = isAbort ? 'TIMEOUT' : 'NETWORK_ERROR';
+
+    console.error(
+      `[SSR Proxy Error] Type: ${safeErrorType} | Method: ${method} | Path: ${req.baseUrl}${req.path} | TargetOrigin: ${configuredBackendUrl.origin} | Detail: ${errorMessage}`
+    );
+
     res.status(502).json({ error: 'Error de comunicación con el servidor backend.' });
   }
 });

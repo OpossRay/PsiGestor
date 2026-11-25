@@ -1,4 +1,5 @@
 import {
+  DEFAULT_TRUST_PROXY_HEADERS,
   FORWARDABLE_REQUEST_HEADERS,
   PASSTHROUGH_RESPONSE_HEADERS,
   SSR_PROXY_TIMEOUT_MS,
@@ -8,12 +9,13 @@ import {
   extractSetCookieHeadersFromUpstream,
   resolveAllowedHosts,
   resolveConfiguredBackendOrigin,
+  resolveTrustProxyHeaders,
 } from './ssr-proxy-security';
 
 describe('SSR Proxy Security & Timeout Helpers', () => {
   describe('Timeout and Signal configuration', () => {
-    it('should define SSR_PROXY_TIMEOUT_MS as 65000 (65 seconds)', () => {
-      expect(SSR_PROXY_TIMEOUT_MS).toBe(65000);
+    it('should define SSR_PROXY_TIMEOUT_MS as 100000 (100 seconds)', () => {
+      expect(SSR_PROXY_TIMEOUT_MS).toBe(100000);
     });
 
     it('should create an AbortSignal instance using createProxyAbortSignal', () => {
@@ -113,6 +115,23 @@ describe('SSR Proxy Security & Timeout Helpers', () => {
       const cookies = extractSetCookieHeadersFromUpstream(headers);
       expect(cookies.length).toBeGreaterThanOrEqual(1);
       expect(cookies[0]).toContain('session=xyz');
+    });
+  });
+
+  describe('resolveTrustProxyHeaders', () => {
+    it('should return default Render proxy headers when undefined or empty', () => {
+      const headers = resolveTrustProxyHeaders(undefined);
+      expect(headers).toEqual(['x-forwarded-for', 'x-forwarded-proto', 'x-forwarded-host']);
+    });
+
+    it('should parse valid custom comma-separated proxy headers', () => {
+      const headers = resolveTrustProxyHeaders('x-forwarded-for, x-forwarded-proto');
+      expect(headers).toEqual(['x-forwarded-for', 'x-forwarded-proto']);
+    });
+
+    it('should filter out headers that do not start with x-forwarded- or forwarded', () => {
+      const headers = resolveTrustProxyHeaders('x-forwarded-for, host, user-agent');
+      expect(headers).toEqual(['x-forwarded-for']);
     });
   });
 });
