@@ -1,0 +1,107 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <header class="modal-header">
+      <div class="header-icon-box primary">
+        <ion-icon name="swap-horizontal-outline"></ion-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="modal-title">Solicitar Reprogramación</h2>
+        <span class="modal-subtitle">Propuesta de nuevo horario</span>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" [disabled]="isSubmitting" aria-label="Cerrar modal">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </header>
+
+    <!-- Body -->
+    <main class="modal-body" *ngIf="appointment">
+      <!-- Current Appointment Card -->
+      <section class="current-apt-card">
+        <div class="meta-row">
+          <span class="meta-label">Horario actual:</span>
+          <strong class="meta-val">{{ formatDate(appointment.date) }} • {{ formatTime(appointment.start_time) }}</strong>
+        </div>
+      </section>
+
+      <!-- Slot Selection Section -->
+      <section class="slots-section">
+        <h3 class="section-title">
+          Selecciona un nuevo horario disponible <span class="required">*</span>
+        </h3>
+
+        <!-- Loading Slots -->
+        <div class="slots-loading" *ngIf="isLoadingSlots">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <span>Consultando agenda disponible...</span>
+        </div>
+
+        <!-- Empty Slots -->
+        <div class="slots-empty" *ngIf="!isLoadingSlots && availableSlots.length === 0">
+          <ion-icon name="information-circle-outline"></ion-icon>
+          <p>No hay otros horarios disponibles en este momento. Intenta más tarde o consulta con tu psicóloga.</p>
+        </div>
+
+        <!-- Slots List -->
+        <div class="slots-list" *ngIf="!isLoadingSlots && availableSlots.length > 0">
+          <button
+            type="button"
+            class="slot-btn"
+            *ngFor="let slot of availableSlots"
+            [class.selected]="selectedSlotId === slot.id"
+            (click)="selectSlot(slot.id)"
+          >
+            <div class="slot-date-pill">
+              <span class="slot-date-text">{{ formatDate(slot.date) }}</span>
+            </div>
+            <div class="slot-time">
+              <span>{{ formatTime(slot.startTime) }} - {{ formatTime(slot.endTime) }}</span>
+            </div>
+            <ion-icon
+              name="checkmark-circle"
+              class="slot-check-icon"
+              *ngIf="selectedSlotId === slot.id"
+            ></ion-icon>
+          </button>
+        </div>
+      </section>
+
+      <!-- Reschedule Reason Form -->
+      <form class="reschedule-form" (ngSubmit)="submitReschedule()">
+        <label for="reschedule-reason" class="form-label">
+          Motivo de la solicitud <span class="required">*</span>
+        </label>
+        <textarea
+          id="reschedule-reason"
+          class="form-textarea"
+          rows="2"
+          [(ngModel)]="reason"
+          name="reason"
+          placeholder="Explica a la psicóloga la razón del cambio de horario..."
+          [disabled]="isSubmitting"
+        ></textarea>
+
+        <!-- Error Banner -->
+        <div class="error-banner" *ngIf="errorMessage">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Actions -->
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="onClose()" [disabled]="isSubmitting">
+            Regresar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary"
+            [disabled]="isSubmitting || !selectedSlotId"
+          >
+            <ion-spinner name="crescent" *ngIf="isSubmitting"></ion-spinner>
+            <span *ngIf="!isSubmitting">Enviar Solicitud</span>
+          </button>
+        </footer>
+      </form>
+    </main>
+  </div>
+</div>

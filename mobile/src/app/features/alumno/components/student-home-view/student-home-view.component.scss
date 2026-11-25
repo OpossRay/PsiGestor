@@ -1,0 +1,875 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.student-home-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 16px 16px 32px 16px;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #0f172a;
+}
+
+/* 1. Hero Banner */
+.home-hero-banner {
+  background: linear-gradient(135deg, #0f2942 0%, #153e66 100%);
+  border-radius: 18px;
+  padding: 20px 18px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  box-shadow: 0 4px 14px rgba(15, 41, 66, 0.15);
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .hero-tag {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    color: #38bdf8;
+    text-transform: uppercase;
+  }
+
+  .hero-greeting {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hero-sub {
+    margin: 0;
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hero-book-btn {
+    flex-shrink: 0;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.35);
+    transition: background 0.15s ease;
+
+    &:active {
+      background: #0369a1;
+    }
+
+    ion-icon {
+      font-size: 16px;
+    }
+  }
+}
+
+/* Banner Destacado: Evaluación Inicial P-IPG */
+.pipg-invitation-card {
+  background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+  border: 1.5px solid #BAE6FD;
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.08);
+
+  .pipg-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .pipg-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #0369A1;
+      text-transform: uppercase;
+
+      ion-icon {
+        font-size: 14px;
+      }
+    }
+
+    .pipg-status-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: #FEF3C7;
+      color: #92400E;
+
+      &.in-progress {
+        background: #DBEAFE;
+        color: #1D4ED8;
+      }
+    }
+  }
+
+  .pipg-card-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0F2942;
+    line-height: 1.25;
+  }
+
+  .pipg-card-desc {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #334155;
+  }
+
+  .btn-pipg-start {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #0284C7;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 4px;
+    box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+    transition: background-color 0.15s ease;
+
+    &:active {
+      background: #0369A1;
+    }
+
+    ion-icon {
+      font-size: 16px;
+    }
+  }
+}
+
+/* Sections */
+.appointments-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  .section-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.01em;
+  }
+
+  .section-subtitle {
+    margin: 0;
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #475569;
+  }
+
+  .count-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+
+    &.badge-active {
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+
+    &.badge-muted {
+      background: #f1f5f9;
+      color: #94a3b8;
+    }
+  }
+
+  .link-btn {
+    background: transparent;
+    border: none;
+    color: #0284c7;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 6px;
+
+    &:active {
+      color: #0369a1;
+    }
+  }
+}
+
+/* Appointments List & Cards */
+.appointments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.appointment-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: transform 0.12s ease;
+
+  &.card-pending {
+    border-color: #fde68a;
+    background: #fffdf5;
+  }
+
+  &.card-history {
+    background: #fcfcfd;
+    border-color: #f1f5f9;
+    opacity: 0.9;
+  }
+
+  /* Top Row */
+  .card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 11.5px;
+    font-weight: 700;
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    &.badge-confirmed {
+      background: #dcfce7;
+      color: #15803d;
+
+      .status-dot {
+        background: #16a34a;
+      }
+    }
+
+    &.badge-pending {
+      background: #fef3c7;
+      color: #b45309;
+
+      .status-dot {
+        background: #d97706;
+      }
+    }
+
+    &.badge-cancelled {
+      background: #f1f5f9;
+      color: #64748b;
+
+      .status-dot {
+        background: #94a3b8;
+      }
+    }
+
+    &.badge-completed {
+      background: #eff6ff;
+      color: #0369a1;
+
+      .status-dot {
+        background: #0284c7;
+      }
+    }
+
+    &.badge-default {
+      background: #f1f5f9;
+      color: #334155;
+
+      .status-dot {
+        background: #64748b;
+      }
+    }
+  }
+
+  .duration-pill {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  /* Datetime Group */
+  .card-datetime-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  .datetime-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .row-icon {
+      font-size: 17px;
+      flex-shrink: 0;
+
+      &.icon-blue {
+        color: #0284c7;
+      }
+
+      &.icon-cyan {
+        color: #0284c7;
+      }
+
+      &.icon-gray {
+        color: #94a3b8;
+      }
+    }
+
+    .datetime-val {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #0f172a;
+
+      &.time-val {
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+      }
+    }
+  }
+
+  /* Meta Box */
+  .card-meta-box {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12px;
+      color: #475569;
+
+      .meta-icon {
+        font-size: 15px;
+        color: #64748b;
+        flex-shrink: 0;
+      }
+
+      .meta-text {
+        font-weight: 500;
+      }
+    }
+  }
+
+  /* Reason Box */
+  .card-reason-box {
+    background: #f1f5f9;
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 11.5px;
+
+    .reason-label {
+      font-weight: 700;
+      color: #475569;
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .reason-text {
+      margin: 0;
+      color: #1e293b;
+      line-height: 1.4;
+    }
+  }
+
+  /* Footer Specialist */
+  .card-footer-specialist {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed #e2e8f0;
+
+    .mini-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: #0f2942;
+      color: #38bdf8;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .specialist-mini-info {
+      display: flex;
+      flex-direction: column;
+
+      .specialist-name {
+        font-size: 12px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .specialist-role {
+        font-size: 10.5px;
+        color: #64748b;
+      }
+    }
+  }
+}
+
+/* State Cards (Empty, Loading, Error) */
+.state-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  padding: 32px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
+
+  .state-icon-box {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+
+    &.empty-icon {
+      background: #f0f9ff;
+      color: #0284c7;
+    }
+
+    &.error-icon {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+    max-width: 320px;
+  }
+
+  .btn-primary-cta {
+    margin-top: 6px;
+    background: #0284c7;
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
+    transition: background 0.15s ease;
+
+    &:active {
+      background: #0369a1;
+    }
+  }
+
+  .btn-retry {
+    margin-top: 6px;
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px 18px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+
+    &:active {
+      background: #e2e8f0;
+    }
+  }
+}
+
+.loading-card {
+  padding: 40px 20px;
+}
+
+/* ==========================================================================
+   Filtros Segmentados (Mis Citas)
+   ========================================================================== */
+.filters-scroll-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-pill {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    padding: 7px 14px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    .filter-count {
+      font-size: 11px;
+      font-weight: 700;
+      background: #f1f5f9;
+      color: #64748b;
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
+    &.active {
+      background: #0f2942;
+      border-color: #0f2942;
+      color: #ffffff;
+
+      .filter-count {
+        background: rgba(56, 189, 248, 0.2);
+        color: #38bdf8;
+      }
+    }
+
+    &:active:not(.active) {
+      background: #f8fafc;
+    }
+  }
+}
+
+/* ==========================================================================
+   Banner de Propuesta / Solicitud de Reprogramación
+   ========================================================================== */
+.reschedule-proposal-card {
+  background: #fefce8;
+  border: 1.5px solid #fef08a;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  &.proposal-received {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+
+    .proposal-header {
+      color: #1d4ed8;
+      .proposal-icon {
+        color: #2563eb;
+      }
+    }
+  }
+
+  .proposal-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: #854d0e;
+
+    .proposal-icon {
+      font-size: 16px;
+      color: #a16207;
+    }
+  }
+
+  .proposal-slot {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    padding: 6px 10px;
+
+    span {
+      font-size: 11px;
+      color: #64748b;
+    }
+
+    strong {
+      font-size: 12.5px;
+      color: #0f172a;
+    }
+  }
+
+  .proposal-reason {
+    margin: 0;
+    font-size: 12px;
+    font-style: italic;
+    color: #475569;
+    line-height: 1.35;
+  }
+
+  .proposal-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+
+    .btn-proposal-accept {
+      flex: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #16a34a;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(22, 163, 74, 0.3);
+
+      ion-icon {
+        font-size: 15px;
+      }
+
+      &:active {
+        background: #15803d;
+      }
+    }
+
+    .btn-proposal-reject {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 15px;
+      }
+
+      &:active {
+        background: #fee2e2;
+      }
+    }
+
+    .btn-proposal-discard {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      color: #64748b;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 7px 12px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+
+      ion-icon {
+        font-size: 14px;
+      }
+
+      &:active {
+        background: #f1f5f9;
+      }
+    }
+  }
+}
+
+/* ==========================================================================
+   Detalle de Cancelación
+   ========================================================================== */
+.cancellation-info-box {
+  background: #fef2f2;
+  border-left: 3px solid #ef4444;
+  border-radius: 8px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  .cancel-info-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: #b91c1c;
+
+    ion-icon {
+      font-size: 14px;
+    }
+  }
+
+  .cancel-reason {
+    margin: 0;
+    font-size: 12px;
+    color: #450a0a;
+    line-height: 1.35;
+  }
+
+  .cancel-date {
+    font-size: 10.5px;
+    color: #991b1b;
+  }
+}
+
+/* ==========================================================================
+   Botonera de Acciones de la Tarjeta (Reprogramar / Cancelar)
+   ========================================================================== */
+.card-actions-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  margin-top: 2px;
+
+  .btn-card-action {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    ion-icon {
+      font-size: 16px;
+    }
+
+    &.btn-action-reschedule {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #0369a1;
+
+      &:active {
+        background: #e0f2fe;
+      }
+    }
+
+    &.btn-action-cancel {
+      background: #ffffff;
+      border: 1px solid #fecaca;
+      color: #dc2626;
+
+      &:active {
+        background: #fee2e2;
+      }
+    }
+  }
+}
+
+.appointment-card.card-cancelled {
+  border-color: #fee2e2;
+  background: #fffafa;
+}
+

@@ -55,11 +55,14 @@
 
           @if (cell.isSelected) {
             <span class="p04-selected-count">• {{ cell.eventCount }}</span>
-          } @else if (cell.isCurrentMonth && (cell.hasReserved || cell.hasReschedule)) {
-            <span
-              class="p04-mini-dot"
-              [class.dot-amber]="cell.hasReschedule"
-            ></span>
+          } @else if (cell.isCurrentMonth) {
+            @if (cell.hasReschedule) {
+              <span class="p04-mini-dot dot-amber"></span>
+            } @else if (cell.hasReserved) {
+              <span class="p04-mini-dot dot-blue"></span>
+            } @else if (cell.hasAvailable) {
+              <span class="p04-mini-dot dot-green"></span>
+            }
           }
         </button>
       }

@@ -1,0 +1,172 @@
+@if (isOpen && assessment) {
+  <div class="eval-modal-backdrop" (click)="onClose()">
+    <div
+      class="eval-modal-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="eval-detail-title"
+      (click)="$event.stopPropagation()"
+    >
+      <!-- Cabecera del Detalle -->
+      <header class="eval-modal-header">
+        <button
+          type="button"
+          class="btn-back-header"
+          (click)="onClose()"
+          aria-label="Regresar a la lista de evaluaciones"
+        >
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          <span>Volver</span>
+        </button>
+
+        <span class="header-center-title" id="eval-detail-title">
+          Resultados P-IPG
+        </span>
+
+        <button
+          type="button"
+          class="btn-close-header"
+          (click)="onClose()"
+          aria-label="Cerrar modal"
+        >
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <!-- Contenido Scrolleable -->
+      <div class="eval-modal-body">
+        <!-- Banner de Demostración Sintética -->
+        @if (assessment.answers.isSynthetic) {
+          <div class="synthetic-warning-box" role="alert">
+            <ion-icon name="warning-outline" class="warning-icon"></ion-icon>
+            <div class="warning-text">
+              <strong>DEMOSTRACIÓN SINTÉTICA</strong>
+              <p>Resultado de prueba generado con respuestas simuladas. No válido para diagnóstico clínico real.</p>
+            </div>
+          </div>
+        }
+
+        <!-- Tarjeta del Alumno -->
+        <section class="student-profile-card">
+          <div class="student-avatar-box">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+
+          <div class="student-details">
+            <span class="student-tag">EXPEDIENTE DEL ESTUDIANTE</span>
+            <h2 class="student-name">
+              {{ assessment.studentName || 'Estudiante #' + assessment.studentId }}
+            </h2>
+
+            <div class="student-meta-row">
+              <span class="meta-pill">
+                Matrícula: <strong>{{ assessment.studentCode || '—' }}</strong>
+              </span>
+
+              @if (assessment.program) {
+                <span class="meta-pill">
+                  {{ assessment.program }}
+                </span>
+              }
+
+              @if (assessment.semester) {
+                <span class="meta-pill">
+                  Semestre {{ assessment.semester }}
+                </span>
+              }
+            </div>
+          </div>
+        </section>
+
+        <!-- Tarjeta de Fechas -->
+        <section class="dates-summary-card">
+          <div class="date-item">
+            <div class="date-icon-wrap">
+              <ion-icon name="time-outline"></ion-icon>
+            </div>
+            <div class="date-info">
+              <span class="date-label">Fecha de inicio:</span>
+              <strong class="date-val">{{ formatDate(assessment.startedAt) }}</strong>
+            </div>
+          </div>
+
+          <div class="date-separator"></div>
+
+          <div class="date-item">
+            <div class="date-icon-wrap icon-success">
+              <ion-icon name="checkmark-circle"></ion-icon>
+            </div>
+            <div class="date-info">
+              <span class="date-label">Fecha de finalización:</span>
+              <strong class="date-val">{{ formatDate(assessment.completedAt) }}</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- Gráfica de Barras Horizontales P-IPG -->
+        <section class="chart-section">
+          <div class="section-badge-header">
+            <ion-icon name="clipboard-outline"></ion-icon>
+            <h3>Gráfica de Resultados P-IPG</h3>
+          </div>
+
+          <app-pipg-chart
+            [directScores]="assessment.directScores"
+            [percentileScores]="assessment.percentileScores"
+          ></app-pipg-chart>
+        </section>
+
+        <!-- Tarjetas Numéricas Resumen (Directas y Percentiles) -->
+        <section class="scores-summary-section">
+          <!-- Puntuaciones Directas -->
+          <div class="scores-block">
+            <h4 class="block-title">Puntuaciones directas (PD)</h4>
+            @if (getDirectScoreEntries(assessment.directScores).length > 0) {
+              <div class="score-chips-grid">
+                @for (item of getDirectScoreEntries(assessment.directScores); track item.key) {
+                  <div class="chip-card" [class.chip-ae]="item.key === 'AE'">
+                    <span class="chip-key">{{ item.key }}</span>
+                    <strong class="chip-val">{{ item.value }}</strong>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-scores">No hay puntuaciones directas registradas.</p>
+            }
+          </div>
+
+          <!-- Puntuaciones Percentiles -->
+          <div class="scores-block">
+            <h4 class="block-title">Puntuaciones percentiles (PC · Cuadro C-14)</h4>
+            @if (getPercentileScoreEntries(assessment.percentileScores).length > 0) {
+              <div class="score-chips-grid">
+                @for (item of getPercentileScoreEntries(assessment.percentileScores); track item.key) {
+                  <div class="chip-card">
+                    <span class="chip-key">{{ item.key }}</span>
+                    <strong class="chip-val">
+                      {{ item.value !== null ? item.value : 'N/D' }}
+                    </strong>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="empty-scores">No hay puntuaciones percentiles registradas.</p>
+            }
+          </div>
+        </section>
+
+        <p class="eval-disclaimer-note">
+          Las puntuaciones se presentan fielmente conforme a los resultados calculados por el motor de evaluación oficial de PsiGestor (Cuadro C-14 de Gordon).
+        </p>
+
+        <!-- Botón para Regresar -->
+        <div class="bottom-actions">
+          <button type="button" class="btn-return-list" (click)="onClose()">
+            <ion-icon name="arrow-back-outline"></ion-icon>
+            <span>Regresar a la lista de evaluaciones</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

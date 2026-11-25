@@ -138,6 +138,14 @@
           </div>
         </div>
 
+        <!-- Gráfica de Perfil Percentil P-IPG -->
+        <div class="pipg-chart-embed-wrapper">
+          <app-pipg-chart
+            [directScores]="selected.directScores"
+            [percentileScores]="selected.percentileScores"
+          />
+        </div>
+
         <h3>Puntuaciones directas</h3>
 
         @if (getScoreEntries(selected.directScores).length > 0) {

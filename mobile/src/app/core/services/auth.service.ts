@@ -12,6 +12,7 @@ import {
   shareReplay,
 } from 'rxjs';
 import { AuthResponse, MeResponse, RefreshResponse, User } from '../models/auth.model';
+import { PipgState } from '../models/pipg.model';
 import {
   SecureStorageUnavailableError,
   SecureTokenStorageService,
@@ -26,6 +27,7 @@ export class AuthService {
   private tokenStorage = inject(SecureTokenStorageService);
 
   currentUser = signal<User | null>(null);
+  pipgState = signal<PipgState | null>(null);
   isLoading = signal<boolean>(false);
   sessionRestoreError = signal<string | null>(null);
   securePersistenceAvailable = signal<boolean>(true);
@@ -51,6 +53,7 @@ export class AuthService {
         if (res.authenticated && res.user) {
           this.sessionRestoreError.set(null);
           this.currentUser.set(res.user);
+          this.pipgState.set(res.pipg ?? null);
           return of(res.user);
         }
         return this.attemptSilentRefresh();
@@ -164,6 +167,7 @@ export class AuthService {
                 tap(() => {
                   this.sessionRestoreError.set(null);
                   this.currentUser.set(null);
+                  this.pipgState.set(null);
                 }),
                 map(() => res)
               )
@@ -173,6 +177,7 @@ export class AuthService {
                 tap(() => {
                   this.sessionRestoreError.set(null);
                   this.currentUser.set(null);
+                  this.pipgState.set(null);
                 }),
                 map(() => ({ message: 'Sesión cerrada localmente.' }))
               )
@@ -231,5 +236,29 @@ export class AuthService {
 
   isPsicologo(): boolean {
     return this.currentUser()?.role === 'psicologo';
+  }
+
+  hasCompletedPipg(): boolean {
+    const state = this.pipgState();
+    return state?.status === 'completed' || state?.completed === true;
+  }
+
+  isPipgPending(): boolean {
+    return this.isAlumno() && !this.hasCompletedPipg();
+  }
+
+  setPipgState(state: PipgState | null): void {
+    this.pipgState.set(state);
+  }
+
+  refreshPipgStatus(): Observable<PipgState | null> {
+    return this.http.get<MeResponse>(`${this.baseUrl}/me`).pipe(
+      map((res) => {
+        const state = res.authenticated && res.pipg ? res.pipg : null;
+        this.pipgState.set(state);
+        return state;
+      }),
+      catchError(() => of(null))
+    );
   }
 }

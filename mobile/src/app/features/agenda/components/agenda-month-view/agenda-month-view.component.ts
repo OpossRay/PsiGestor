@@ -16,6 +16,7 @@ export interface MonthCalendarCell {
   eventCount: number;
   hasReschedule: boolean;
   hasReserved: boolean;
+  hasAvailable: boolean;
 }
 
 @Component({
@@ -57,7 +58,8 @@ export class AgendaMonthViewComponent {
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
-    return `${months[this.selectedDate.getMonth()]} ${this.selectedDate.getFullYear()}`;
+    const safeDate = this.selectedDate instanceof Date ? this.selectedDate : new Date();
+    return `${months[safeDate.getMonth()]} ${safeDate.getFullYear()}`;
   }
 
   get formattedSelectedDayTitle(): string {
@@ -66,26 +68,43 @@ export class AgendaMonthViewComponent {
       'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
       'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
     ];
-    const dayName = weekdays[this.selectedDate.getDay()];
-    const dayNum = this.selectedDate.getDate();
-    const monthName = months[this.selectedDate.getMonth()];
+    const safeDate = this.selectedDate instanceof Date ? this.selectedDate : new Date();
+    const dayName = weekdays[safeDate.getDay()];
+    const dayNum = safeDate.getDate();
+    const monthName = months[safeDate.getMonth()];
     return `${dayName} ${dayNum} ${monthName}`;
   }
 
-  get monthCalendarCells(): MonthCalendarCell[] {
-    const year = this.selectedDate.getFullYear();
-    const month = this.selectedDate.getMonth();
-    const firstDayOfMonth = new Date(year, month, 1);
-    const startOffset = firstDayOfMonth.getDay(); // 0 (Dom) a 6 (Sáb)
-    const startDate = new Date(year, month, 1 - startOffset);
+  isSlotInPast(slot: Availability): boolean {
+    if (!slot || !slot.date) return false;
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const todayStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
-    const lastDayOfMonth = new Date(year, month + 1, 0);
+    if (slot.date < todayStr) return true;
+    if (slot.date === todayStr && slot.startTime) {
+      const currentTimeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      return slot.startTime.substring(0, 5) < currentTimeStr;
+    }
+    return false;
+  }
+
+  get monthCalendarCells(): MonthCalendarCell[] {
+    const safeDate = this.selectedDate instanceof Date ? this.selectedDate : new Date();
+    const year = safeDate.getFullYear();
+    const month = safeDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1, 12, 0, 0);
+    const startOffset = firstDayOfMonth.getDay(); // 0 (Dom) a 6 (Sáb)
+    const startDate = new Date(year, month, 1 - startOffset, 12, 0, 0);
+
+    const lastDayOfMonth = new Date(year, month + 1, 0, 12, 0, 0);
     const totalDaysNeeded = startOffset + lastDayOfMonth.getDate();
     const totalCells = totalDaysNeeded > 35 ? 42 : 35;
 
-    const selectedStr = this.formatDateStr(this.selectedDate);
+    const selectedStr = this.formatDateStr(safeDate);
     const todayStr = this.formatDateStr(new Date());
 
+    const allAvails = this.availabilities || [];
     const cells: MonthCalendarCell[] = [];
 
     for (let i = 0; i < totalCells; i++) {
@@ -94,11 +113,15 @@ export class AgendaMonthViewComponent {
       const dateStr = this.formatDateStr(cellDate);
       const dayOfWeek = cellDate.getDay();
 
-      const daySlots = this.availabilities.filter(a => a.date === dateStr);
+      const daySlots = allAvails.filter(a => a.date === dateStr);
       const activeAppointments = daySlots.filter(
         a => a.status === 'Reservado' || a.status === 'Reprogramacion pendiente'
       );
-      const countForBadge = activeAppointments.length > 0 ? activeAppointments.length : daySlots.length;
+      const availableSlots = daySlots.filter(
+        a => a.status === 'Disponible' && !this.isSlotInPast(a)
+      );
+
+      const countForBadge = activeAppointments.length > 0 ? activeAppointments.length : availableSlots.length;
 
       cells.push({
         date: cellDate,
@@ -110,7 +133,8 @@ export class AgendaMonthViewComponent {
         isToday: dateStr === todayStr,
         eventCount: countForBadge,
         hasReschedule: daySlots.some(a => a.status === 'Reprogramacion pendiente'),
-        hasReserved: daySlots.some(a => a.status === 'Reservado')
+        hasReserved: daySlots.some(a => a.status === 'Reservado'),
+        hasAvailable: availableSlots.length > 0
       });
     }
 
@@ -118,19 +142,11 @@ export class AgendaMonthViewComponent {
   }
 
   get selectedDayItems(): Availability[] {
-    const dateStr = this.formatDateStr(this.selectedDate);
-    const allDaySlots = this.availabilities
+    const safeDate = this.selectedDate instanceof Date ? this.selectedDate : new Date();
+    const dateStr = this.formatDateStr(safeDate);
+    return (this.availabilities || [])
       .filter(i => i.date === dateStr)
-      .sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    const appointmentsOnly = allDaySlots.filter(
-      i => i.status === 'Reservado' || i.status === 'Reprogramacion pendiente' || i.status === 'Cancelado'
-    );
-
-    if (appointmentsOnly.length > 0) {
-      return appointmentsOnly;
-    }
-    return allDaySlots;
+      .sort((a, b) => (a.startTime || '').localeCompare(b.startTime || ''));
   }
 
   formatTime12h(time24?: string): string {

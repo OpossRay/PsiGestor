@@ -285,12 +285,16 @@ tbody tr:hover {
 
 .details-modal {
   width: 100%;
-  max-width: 760px;
-  max-height: 85vh;
+  max-width: 840px;
+  max-height: 88vh;
   overflow-y: auto;
   background: #fff;
   border-radius: 14px;
   box-shadow: 0 20px 60px rgb(0 0 0 / 20%);
+}
+
+.pipg-chart-embed-wrapper {
+  margin: 20px 0 28px;
 }
 
 .modal-header {

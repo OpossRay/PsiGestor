@@ -53,6 +53,21 @@ export class Dashboard implements OnInit {
     return this.authService.currentUser();
   }
 
+  get isPipgPending(): boolean {
+    return !this.authService.hasCompletedPipg();
+  }
+
+  onBookClick(event: Event): void {
+    if (this.isPipgPending) {
+      event.preventDefault();
+      this.showToast(
+        'Para poder solicitar una cita, primero debes completar tu evaluación inicial P-IPG.',
+        'warning'
+      );
+      this.router.navigate(['/estudiante/pipg']);
+    }
+  }
+
   get pendingAppointments(): Appointment[] {
     return this.appointments.filter(
       (apt) =>

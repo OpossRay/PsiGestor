@@ -77,6 +77,10 @@ export class Availability implements OnInit {
     return this.authService.currentUser();
   }
 
+  get isPipgPending(): boolean {
+    return !this.authService.hasCompletedPipg();
+  }
+
   ngOnInit(): void {
     if (!this.authService.currentUser()) {
       this.authService.checkSession().subscribe();
@@ -84,6 +88,11 @@ export class Availability implements OnInit {
   }
 
   onPatientScheduleSelected(event: any): void {
+    if (this.isPipgPending) {
+      this.showToast('Para agendar una cita, primero debes completar tu evaluación inicial P-IPG.');
+      return;
+    }
+
     const avail = event?.availability;
     const slot = event?.slot;
 

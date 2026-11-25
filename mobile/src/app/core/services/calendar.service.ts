@@ -194,4 +194,73 @@ export class CalendarService {
       tap(() => this.notifyScheduleChanged())
     );
   }
+
+  // --- RESERVA Y CONSULTA DE CITAS DEL ALUMNO AUTENTICADO ---
+
+  getStudentMyAppointments(): Observable<{ appointments: Appointment[] }> {
+    return this.http.get<{ appointments: Appointment[] }>(
+      `${this.baseUrl}/appointments/my`
+    );
+  }
+
+  bookStudentAppointment(data: {
+    date: string;
+    start_time: string;
+    end_time: string;
+    duration: number;
+    modality: 'Presencial' | 'En línea' | 'In person' | 'Online' | string;
+    location?: string;
+    meeting_url?: string;
+    reason: string;
+  }): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/appointments/book`,
+      data
+    ).pipe(
+      tap(() => this.notifyScheduleChanged())
+    );
+  }
+
+  cancelStudentAppointment(appointmentId: number, reason: string): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/appointments/${appointmentId}/cancel`,
+      { reason }
+    ).pipe(
+      tap(() => this.notifyScheduleChanged())
+    );
+  }
+
+  requestStudentReschedule(
+    appointmentId: number,
+    proposedAvailabilityId: number,
+    reason: string
+  ): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/appointments/${appointmentId}/reschedule-request`,
+      {
+        proposed_availability_id: proposedAvailabilityId,
+        reason
+      }
+    ).pipe(
+      tap(() => this.notifyScheduleChanged())
+    );
+  }
+
+  approveStudentReschedule(appointmentId: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/appointments/${appointmentId}/approve-reschedule`,
+      {}
+    ).pipe(
+      tap(() => this.notifyScheduleChanged())
+    );
+  }
+
+  rejectStudentReschedule(appointmentId: number): Observable<any> {
+    return this.http.post<any>(
+      `${this.baseUrl}/appointments/${appointmentId}/reject-reschedule`,
+      {}
+    ).pipe(
+      tap(() => this.notifyScheduleChanged())
+    );
+  }
 }

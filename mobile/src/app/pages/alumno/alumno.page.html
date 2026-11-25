@@ -7,6 +7,19 @@
        PESTAÑA AGENDAR (VISTAS DEL ALUMNO)
        ============================================================ -->
   @if (activeTab === 'agendar') {
+    @if (isPipgPending) {
+      <div class="pipg-mobile-alert-banner" role="alert">
+        <div class="pipg-alert-icon">⚠️</div>
+        <div class="pipg-alert-text">
+          <strong>Evaluación P-IPG requerida</strong>
+          <p>Para agendar citas psicológicas, primero debes responder tu evaluación diagnóstica.</p>
+        </div>
+        <button type="button" class="btn-pipg-mobile-action" (click)="onStartPipg()">
+          Comenzar
+        </button>
+      </div>
+    }
+
     <!-- VISTA A-02: VISTA DÍA -->
     @if (calendarViewMode === 'dia') {
       <app-alumno-agenda-view
@@ -41,33 +54,120 @@
         (continue)="onContinueBooking($event)"
       ></app-alumno-agenda-week-view>
     }
+
+    <!-- VISTA A-02c: VISTA MES -->
+    @if (calendarViewMode === 'mes') {
+      <div class="alumno-month-container">
+        <!-- CABECERA INSTITUCIONAL CON SELECTOR (Día | Semana | Mes) -->
+        <header class="a02-header-dark">
+          <div class="a02-specialist-card">
+            <div class="a02-specialist-avatar">{{ specialistAvatar }}</div>
+            <div class="a02-specialist-info">
+              <span class="a02-specialist-tag">ESPECIALISTA ASIGNADA</span>
+              <h2 class="a02-specialist-name">{{ specialistName }}</h2>
+              <p class="a02-specialist-subtitle">{{ specialistRole }} · {{ specialistCubicle }}</p>
+            </div>
+            <div class="a02-online-indicator" title="En línea">
+              <span class="a02-green-dot"></span>
+            </div>
+          </div>
+
+          <!-- Selector Segmentado (Día | Semana | Mes) -->
+          <div class="a02-segmented-wrap" role="tablist">
+            <button
+              type="button"
+              class="a02-seg-btn"
+              [class.active]="isViewMode('dia')"
+              (click)="onViewModeChange('dia')"
+              role="tab"
+              [attr.aria-selected]="isViewMode('dia')"
+            >
+              Día
+            </button>
+            <button
+              type="button"
+              class="a02-seg-btn"
+              [class.active]="isViewMode('semana')"
+              (click)="onViewModeChange('semana')"
+              role="tab"
+              [attr.aria-selected]="isViewMode('semana')"
+            >
+              Semana
+            </button>
+            <button
+              type="button"
+              class="a02-seg-btn"
+              [class.active]="isViewMode('mes')"
+              (click)="onViewModeChange('mes')"
+              role="tab"
+              [attr.aria-selected]="isViewMode('mes')"
+            >
+              Mes
+            </button>
+          </div>
+        </header>
+
+        <!-- Componente de Calendario Mensual -->
+        <app-agenda-month-view
+          [selectedDate]="selectedDate"
+          [availabilities]="availabilities"
+          (monthChange)="onMonthChange($event)"
+          (todayClick)="onTodayClick()"
+          (dateSelect)="onDateChange($event)"
+          (slotClick)="onSlotSelect($event)"
+          (bookSlot)="onSlotSelect($event)"
+        ></app-agenda-month-view>
+      </div>
+    }
   }
 
   <!-- ============================================================
        VISTA INICIO ALUMNO
        ============================================================ -->
   @if (activeTab === 'inicio') {
-    <div class="alumno-empty-panel">
-      <div class="panel-card">
-        <h2>Panel de Alumno</h2>
-        <p>Bienvenido a PsiGestor. Ve a la pestaña <strong>Agendar</strong> para reservar una sesión con tu especialista.</p>
-        <button type="button" class="panel-btn" (click)="onTabChange('agendar')">
-          Ver Horarios Disponibles
-        </button>
-      </div>
-    </div>
+    <app-student-home-view
+      [appointments]="studentAppointments"
+      [studentName]="authService.currentUser()?.name || 'Estudiante'"
+      [studentEmail]="authService.currentUser()?.email || ''"
+      [specialistName]="specialistName"
+      [specialistRole]="specialistRole"
+      [specialistCubicle]="specialistCubicle"
+      [isLoading]="isLoadingAppointments"
+      [errorMessage]="appointmentsError"
+      [isFullHistory]="false"
+      [pipgPending]="isPipgPending"
+      [pipgStatus]="pipgStatus"
+      (bookAppointment)="onTabChange('agendar')"
+      (retryLoad)="loadStudentAppointments()"
+      (startPipg)="onStartPipg()"
+      (rescheduleAppointment)="openRescheduleModal($event)"
+      (cancelAppointment)="openCancelModal($event)"
+      (acceptReschedule)="onAcceptReschedule($event)"
+      (rejectReschedule)="onRejectReschedule($event)"
+    ></app-student-home-view>
   }
 
   <!-- ============================================================
        VISTA MIS CITAS ALUMNO
        ============================================================ -->
   @if (activeTab === 'mis-citas') {
-    <div class="alumno-empty-panel">
-      <div class="panel-card">
-        <h2>Mis Citas</h2>
-        <p>Aquí podrás consultar tus citas confirmadas y solicitar reprogramaciones.</p>
-      </div>
-    </div>
+    <app-student-home-view
+      [appointments]="studentAppointments"
+      [studentName]="authService.currentUser()?.name || 'Estudiante'"
+      [studentEmail]="authService.currentUser()?.email || ''"
+      [specialistName]="specialistName"
+      [specialistRole]="specialistRole"
+      [specialistCubicle]="specialistCubicle"
+      [isLoading]="isLoadingAppointments"
+      [errorMessage]="appointmentsError"
+      [isFullHistory]="true"
+      (bookAppointment)="onTabChange('agendar')"
+      (retryLoad)="loadStudentAppointments()"
+      (rescheduleAppointment)="openRescheduleModal($event)"
+      (cancelAppointment)="openCancelModal($event)"
+      (acceptReschedule)="onAcceptReschedule($event)"
+      (rejectReschedule)="onRejectReschedule($event)"
+    ></app-student-home-view>
   }
 
   <!-- ============================================================
@@ -87,6 +187,33 @@
     </div>
   }
 </ion-content>
+
+<!-- MODAL DE CONFIRMACIÓN Y AGENDAMIENTO PARA ALUMNO -->
+<app-student-booking-modal
+  [isOpen]="isBookingModalOpen"
+  [slot]="selectedSlotForBooking"
+  [specialistName]="specialistName"
+  [specialistRole]="specialistRole"
+  [specialistCubicle]="specialistCubicle"
+  (closeModal)="closeBookingModal()"
+  (appointmentBooked)="onAppointmentBooked()"
+></app-student-booking-modal>
+
+<!-- MODAL DE CANCELACIÓN DE CITA PARA ALUMNO -->
+<app-student-cancel-modal
+  [isOpen]="isCancelModalOpen"
+  [appointment]="selectedAppointmentForCancel"
+  (closeModal)="closeCancelModal()"
+  (appointmentCancelled)="onAppointmentCancelled()"
+></app-student-cancel-modal>
+
+<!-- MODAL DE REPROGRAMACIÓN DE CITA PARA ALUMNO -->
+<app-student-reschedule-modal
+  [isOpen]="isRescheduleModalOpen"
+  [appointment]="selectedAppointmentForReschedule"
+  (closeModal)="closeRescheduleModal()"
+  (rescheduleRequested)="onRescheduleRequested()"
+></app-student-reschedule-modal>
 
 <!-- BARRA DE NAVEGACIÓN INFERIOR ALUMNO (INICIO, AGENDAR, MIS CITAS, PERFIL) -->
 <app-student-bottom-nav

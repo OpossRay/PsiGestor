@@ -1,7 +1,13 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
 /* P-04 AGENDA · VISTA MES (CALENDARIO MENSUAL Y CITAS DEL DÍA) */
 .p04-month-wrapper {
   display: flex;
   flex-direction: column;
+  width: 100%;
 }
 
 .p04-month-nav-bar {
@@ -159,14 +165,22 @@
   }
 
   .p04-mini-dot {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
     border-radius: 50%;
     background: #0284c7;
     margin-top: 2px;
 
     &.dot-amber {
       background: #d97706;
+    }
+
+    &.dot-blue {
+      background: #0284c7;
+    }
+
+    &.dot-green {
+      background: #16a34a;
     }
   }
 }

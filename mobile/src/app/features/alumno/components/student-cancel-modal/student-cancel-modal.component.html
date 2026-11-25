@@ -1,0 +1,97 @@
+<div class="modal-backdrop" *ngIf="isOpen" (click)="onClose()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <header class="modal-header">
+      <div class="header-icon-box danger">
+        <ion-icon name="trash-outline"></ion-icon>
+      </div>
+      <div class="header-text">
+        <h2 class="modal-title">Cancelar Cita</h2>
+        <span class="modal-subtitle">Liberación de horario</span>
+      </div>
+      <button type="button" class="close-btn" (click)="onClose()" [disabled]="isSubmitting" aria-label="Cerrar modal">
+        <ion-icon name="close-outline"></ion-icon>
+      </button>
+    </header>
+
+    <!-- Body -->
+    <main class="modal-body" *ngIf="appointment">
+      <!-- Appointment Summary Card -->
+      <section class="apt-summary-card">
+        <div class="meta-item">
+          <ion-icon name="calendar-outline" class="meta-icon"></ion-icon>
+          <div class="meta-content">
+            <span class="meta-label">Fecha agendada</span>
+            <span class="meta-val">{{ formatDate(appointment.date) }}</span>
+          </div>
+        </div>
+
+        <div class="meta-item">
+          <ion-icon name="time-outline" class="meta-icon"></ion-icon>
+          <div class="meta-content">
+            <span class="meta-label">Horario</span>
+            <span class="meta-val">{{ formatTime(appointment.start_time) }} - {{ formatTime(appointment.end_time) }}</span>
+          </div>
+        </div>
+
+        <div class="meta-item" *ngIf="appointment.reason">
+          <span class="meta-label">Motivo original:</span>
+          <p class="meta-desc">{{ appointment.reason }}</p>
+        </div>
+      </section>
+
+      <!-- Warning Box -->
+      <div class="warning-callout">
+        <ion-icon name="warning-outline"></ion-icon>
+        <p>
+          Al cancelar tu cita, el horario quedará inmediatamente disponible para otros estudiantes.
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+
+      <!-- Cancellation Form -->
+      <form class="cancel-form" (ngSubmit)="submitCancellation()">
+        <label for="cancel-reason" class="form-label">
+          Motivo de la cancelación <span class="required">*</span>
+        </label>
+        <textarea
+          id="cancel-reason"
+          class="form-textarea"
+          rows="3"
+          [(ngModel)]="reason"
+          name="reason"
+          placeholder="Escribe el motivo por el cual no podrás asistir a tu cita..."
+          [disabled]="isSubmitting"
+        ></textarea>
+
+        <!-- Confirmation Checkbox -->
+        <label class="confirmation-checkbox">
+          <input
+            type="checkbox"
+            [(ngModel)]="isConfirmed"
+            name="isConfirmed"
+            [disabled]="isSubmitting"
+          />
+          <span>Entiendo y confirmo que deseo cancelar definitivamente esta cita.</span>
+        </label>
+
+        <!-- Error Banner -->
+        <div class="error-banner" *ngIf="errorMessage">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Actions -->
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-outline" (click)="onClose()" [disabled]="isSubmitting">
+            Regresar
+          </button>
+          <button type="submit" class="btn btn-danger" [disabled]="isSubmitting">
+            <ion-spinner name="crescent" *ngIf="isSubmitting"></ion-spinner>
+            <span *ngIf="!isSubmitting">Confirmar Cancelación</span>
+          </button>
+        </footer>
+      </form>
+    </main>
+  </div>
+</div>

@@ -25,9 +25,22 @@
         </span>
       </div>
     </div>
-
-    
   </div>
+
+  @if (isPipgPending) {
+    <div class="availability-pipg-warning" role="alert">
+      <div class="warning-left">
+        <span class="warning-icon">⚠️</span>
+        <div class="warning-text">
+          <strong>Evaluación P-IPG requerida</strong>
+          <p>Para agendar una cita psicológica institucional, primero debes completar tu evaluación inicial P-IPG.</p>
+        </div>
+      </div>
+      <a routerLink="/estudiante/pipg" class="btn-warning-pipg">
+        Completar evaluación ahora
+      </a>
+    </div>
+  }
 
 
   @if (toastMessage) {

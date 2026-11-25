@@ -13,8 +13,6 @@ import {
   IonCardContent,
   IonItem,
   IonInput,
-  IonSelect,
-  IonSelectOption,
   IonButton,
   IonIcon,
   IonSpinner
@@ -25,11 +23,15 @@ import {
   lockClosedOutline,
   mailOutline,
   idCardOutline,
-  schoolOutline,
   checkmarkCircleOutline,
-  arrowBackOutline
+  arrowBackOutline,
+  eyeOutline,
+  eyeOffOutline,
+  alertCircleOutline
 } from 'ionicons/icons';
 import { AuthService } from '../../core/services/auth.service';
+
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 @Component({
   selector: 'app-register',
@@ -50,8 +52,6 @@ import { AuthService } from '../../core/services/auth.service';
     IonCardContent,
     IonItem,
     IonInput,
-    IonSelect,
-    IonSelectOption,
     IonButton,
     IonIcon,
     IonSpinner
@@ -63,24 +63,16 @@ export class RegisterPage {
 
   name = '';
   studentCode = '';
-  program = '';
-  semester: number | null = null;
   email = '';
   password = '';
   confirmPassword = '';
 
+  showPassword = false;
+  showConfirmPassword = false;
+
   errorMessage = '';
   successMessage = '';
   isLoading = false;
-
-  readonly academicPrograms = [
-    'Ingeniería en Sistemas Computacionales',
-    'Ingeniería Mecatrónica',
-    'Ingeniería Industrial',
-    'Ingeniería en Administración',
-    'Ingeniería en Innovación Agrícola',
-    'Licenciatura en Turismo'
-  ];
 
   constructor() {
     addIcons({
@@ -88,23 +80,51 @@ export class RegisterPage {
       lockClosedOutline,
       mailOutline,
       idCardOutline,
-      schoolOutline,
       checkmarkCircleOutline,
-      arrowBackOutline
+      arrowBackOutline,
+      eyeOutline,
+      eyeOffOutline,
+      alertCircleOutline
     });
   }
 
+  togglePassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPassword(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
   onSubmit(): void {
+    if (this.isLoading) {
+      return;
+    }
+
     this.errorMessage = '';
     this.successMessage = '';
 
-    if (!this.name.trim() || !this.studentCode.trim() || !this.email.trim() || !this.password.trim()) {
+    const trimmedName = this.name.trim();
+    const trimmedCode = this.studentCode.trim().toUpperCase();
+    const trimmedEmail = this.email.trim();
+
+    if (!trimmedName || !trimmedCode || !trimmedEmail || !this.password) {
       this.errorMessage = 'Completa todos los campos obligatorios.';
+      return;
+    }
+
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      this.errorMessage = 'El correo electrónico no tiene un formato válido.';
       return;
     }
 
     if (this.password.length < 6) {
       this.errorMessage = 'La contraseña debe tener al menos 6 caracteres.';
+      return;
+    }
+
+    if (!this.confirmPassword) {
+      this.errorMessage = 'Por favor confirma tu contraseña.';
       return;
     }
 
@@ -115,23 +135,21 @@ export class RegisterPage {
 
     this.isLoading = true;
     this.authService.registerStudent({
-      name: this.name.trim(),
-      studentCode: this.studentCode.trim().toUpperCase(),
-      email: this.email.trim(),
-      password: this.password,
-      program: this.program || undefined,
-      semester: this.semester ? Number(this.semester) : undefined
+      name: trimmedName,
+      studentCode: trimmedCode,
+      email: trimmedEmail,
+      password: this.password
     }).subscribe({
-      next: () => {
+      next: (res) => {
         this.isLoading = false;
-        this.successMessage = '¡Registro completado! Tu matrícula ha sido validada. Redirigiendo al login...';
+        this.successMessage = res?.message || '¡Registro completado con éxito! Redirigiendo al login...';
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 1800);
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.error?.error || 'No se pudo completar el registro.';
+        this.errorMessage = err?.error?.error || 'No se pudo completar el registro.';
       }
     });
   }

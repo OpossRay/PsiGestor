@@ -1,0 +1,131 @@
+<div class="pipg-chart-container">
+  <!-- Escala Numérica de Referencia Percentil (0 a 100) -->
+  <div class="chart-scale-header" aria-hidden="true">
+    <div class="scale-label-box">
+      <span class="scale-label">Dimensión / Escala</span>
+    </div>
+    <div class="scale-ticks-track">
+      <span class="scale-tick tick-0">0</span>
+      <span class="scale-tick tick-25">25</span>
+      <span class="scale-tick tick-50">50</span>
+      <span class="scale-tick tick-75">75</span>
+      <span class="scale-tick tick-100">100</span>
+    </div>
+  </div>
+
+  <!-- Secciones del Instrumento P-IPG -->
+  @for (section of sections; track section.title) {
+    <section class="instrument-section" [class.section-autoestima]="section.isAutoestima">
+      <!-- Encabezado de Sección -->
+      <div class="section-title-bar">
+        <div class="section-indicator-dot"></div>
+        <div class="section-text-wrap">
+          <h3 class="section-main-title">{{ section.title }}</h3>
+          <p class="section-sub-title">{{ section.subtitle }}</p>
+        </div>
+      </div>
+
+      <!-- Lista de Dimensiones / Barras -->
+      <div class="dimensions-list">
+        @for (dim of section.dimensions; track dim.key) {
+          <article class="dimension-row" [class.dim-autoestima]="section.isAutoestima">
+            <!-- Información de la Dimensión -->
+            <div class="dimension-info">
+              <div class="dimension-name-group">
+                <span class="dim-code-badge">{{ dim.key }}</span>
+                <strong class="dim-name-text">{{ dim.name }}</strong>
+              </div>
+
+              <div class="dim-scores-badges">
+                <span class="score-pill pd-pill" title="Puntuación Directa">
+                  PD: <strong>{{ dim.directScore }}</strong>
+                </span>
+
+                @if (dim.isPercentileAvailable) {
+                  <span class="score-pill pc-pill" title="Puntuación Percentil">
+                    PC: <strong>{{ dim.percentile }}</strong>
+                  </span>
+
+                  <span class="level-tag" [ngClass]="dim.levelClass">
+                    {{ dim.levelText }}
+                  </span>
+                } @else if (section.isAutoestima) {
+                  <span class="level-tag level-direct-only">
+                    Directa (A+R+E+S)
+                  </span>
+                } @else {
+                  <span class="level-tag level-none">
+                    Sin percentil C-14
+                  </span>
+                }
+              </div>
+            </div>
+
+            <p class="dim-desc-text">{{ dim.description }}</p>
+
+            <!-- Barra Horizontal Percentil -->
+            @if (dim.isPercentileAvailable) {
+              <div class="bar-track-wrapper">
+                <div class="bar-track-grid">
+                  <span class="grid-line line-25"></span>
+                  <span class="grid-line line-50"></span>
+                  <span class="grid-line line-75"></span>
+                </div>
+
+                <div
+                  class="bar-fill"
+                  [ngClass]="dim.levelClass"
+                  [style.width.%]="getBarWidth(dim.percentile)"
+                  role="progressbar"
+                  [attr.aria-valuenow]="dim.percentile"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                >
+                  <span class="bar-inner-label" [class.external-label]="dim.percentile !== null && dim.percentile < 18">
+                    {{ dim.percentile }}
+                  </span>
+                </div>
+              </div>
+            } @else if (section.isAutoestima) {
+              <!-- Representación Visual Específica para Autoestima (Puntuación Directa) -->
+              <div class="autoestima-direct-display">
+                <div class="autoestima-accent-bar"></div>
+                <div class="autoestima-details">
+                  <span class="autoestima-label">Puntuación directa global acumulada:</span>
+                  <strong class="autoestima-val">{{ dim.directScore }} puntos</strong>
+                  <small class="autoestima-note">
+                    Norma C-14 de Gordon no incluye baremo percentil oficial para Autoestima. Se reporta su valor directo exacto.
+                  </small>
+                </div>
+              </div>
+            } @else {
+              <!-- Percentil no disponible en el Cuadro C-14 -->
+              <div class="no-percentile-notice">
+                <span>Puntuación directa: <strong>{{ dim.directScore }}</strong> · Sin valor percentil en el baremo C-14</span>
+              </div>
+            }
+          </article>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- Leyenda de Niveles Percentiles -->
+  <footer class="chart-legend-card">
+    <span class="legend-title">Rangos Percentiles de Interpretación:</span>
+    <div class="legend-items">
+      <div class="legend-item">
+        <span class="legend-swatch swatch-low"></span>
+        <span class="legend-text">Bajo (&lt; 25)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch swatch-average"></span>
+        <span class="legend-text">Promedio (25 – 74)</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-swatch swatch-high"></span>
+        <span class="legend-text">Alto (≥ 75)</span>
+      </div>
+    </div>
+  </footer>
+</div>

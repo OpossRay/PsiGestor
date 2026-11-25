@@ -23,6 +23,11 @@ export const routes: Routes = [
     canActivate: [authGuard, roleGuard(['alumno'])]
   },
   {
+    path: 'pipg-test',
+    loadComponent: () => import('./features/alumno/pipg/pages/pipg-test/pipg-test.page').then(m => m.PipgTestPage),
+    canActivate: [authGuard, roleGuard(['alumno'])]
+  },
+  {
     path: 'tabs',
     redirectTo: 'alumno',
     pathMatch: 'full'

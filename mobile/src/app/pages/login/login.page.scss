@@ -227,6 +227,29 @@
   }
 }
 
+/* Enlace a registro de alumnos */
+.register-prompt-wrapper {
+  margin-top: 16px;
+  text-align: center;
+}
+
+.register-prompt-text {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+
+  .register-link {
+    font-weight: 600;
+    color: #0284c7;
+    text-decoration: none;
+    margin-left: 4px;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
 /* Banner de error */
 .error-banner {
   width: 100%;

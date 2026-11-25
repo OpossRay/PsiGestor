@@ -1,0 +1,581 @@
+<div class="student-home-container">
+  <!-- 1. Banner de Bienvenida -->
+  <header class="home-hero-banner">
+    <div class="hero-left">
+      <span class="hero-tag">PORTAL DEL ESTUDIANTE</span>
+      <h1 class="hero-greeting">¡Hola, {{ studentName }}! 👋</h1>
+      <p class="hero-sub">{{ specialistName }} · {{ specialistRole }}</p>
+    </div>
+
+    <button type="button" class="hero-book-btn" (click)="onBookClick()" aria-label="Agendar nueva cita">
+      <ion-icon name="calendar-outline"></ion-icon>
+      <span>Agendar</span>
+    </button>
+  </header>
+
+  <!-- Banner Destacado: Evaluación Inicial P-IPG (Gordon) -->
+  @if (!isFullHistory && pipgPending) {
+    <section class="pipg-invitation-card" aria-label="Evaluación Inicial P-IPG">
+      <div class="pipg-card-top">
+        <div class="pipg-card-badge">
+          <ion-icon name="clipboard-outline"></ion-icon>
+          <span>EVALUACIÓN INICIAL</span>
+        </div>
+        <span class="pipg-status-pill" [class.in-progress]="pipgStatus === 'in_progress'">
+          {{ pipgStatus === 'in_progress' ? 'En progreso' : 'Pendiente' }}
+        </span>
+      </div>
+
+      <h2 class="pipg-card-title">Cuestionario P-IPG (Gordon)</h2>
+      <p class="pipg-card-desc">
+        Como parte de tu expediente en PsiGestor, es necesario responder el Perfil e
+        Inventario de Personalidad de Gordon. Consta de 38 grupos breves y tus respuestas
+        se guardan de forma automática.
+      </p>
+
+      <button type="button" class="btn-pipg-start" (click)="startPipg.emit()">
+        <span>{{ pipgStatus === 'in_progress' ? 'Continuar evaluación' : 'Realizar evaluación' }}</span>
+        <ion-icon name="arrow-forward-outline"></ion-icon>
+      </button>
+    </section>
+  }
+
+  <!-- 2. Estado de Carga -->
+  @if (isLoading) {
+    <div class="state-card loading-card">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Cargando información de tus citas...</p>
+    </div>
+  }
+
+  <!-- 3. Estado de Error -->
+  @else if (errorMessage) {
+    <div class="state-card error-card">
+      <div class="state-icon-box error-icon">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h3>Error de conexión</h3>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="btn-retry" (click)="onRetryClick()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        <span>Reintentar</span>
+      </button>
+    </div>
+  }
+
+  <!-- 4. Contenido Principal: Mis Citas (Vista Completa con Filtros) -->
+  @else if (isFullHistory) {
+    <section class="appointments-section">
+      <div class="section-header-row">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Mis Citas</h2>
+          <span class="count-badge badge-active">
+            {{ appointments.length }} {{ appointments.length === 1 ? 'total' : 'totales' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Filtros Segmentados por Pestaña -->
+      <div class="filters-scroll-wrap" role="tablist" aria-label="Filtros de citas">
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeFilter === 'all'"
+          (click)="setFilter('all')"
+          role="tab"
+          [attr.aria-selected]="activeFilter === 'all'"
+        >
+          <span>Todas</span>
+          <span class="filter-count">{{ appointments.length }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeFilter === 'upcoming'"
+          (click)="setFilter('upcoming')"
+          role="tab"
+          [attr.aria-selected]="activeFilter === 'upcoming'"
+        >
+          <span>Próximas</span>
+          <span class="filter-count">{{ upcomingAppointments.length }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeFilter === 'requests'"
+          (click)="setFilter('requests')"
+          role="tab"
+          [attr.aria-selected]="activeFilter === 'requests'"
+        >
+          <span>Solicitudes</span>
+          <span class="filter-count">{{ pendingRescheduleAppointments.length }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeFilter === 'history'"
+          (click)="setFilter('history')"
+          role="tab"
+          [attr.aria-selected]="activeFilter === 'history'"
+        >
+          <span>Historial</span>
+          <span class="filter-count">{{ historyAppointments.length }}</span>
+        </button>
+
+        <button
+          type="button"
+          class="filter-pill"
+          [class.active]="activeFilter === 'cancelled'"
+          (click)="setFilter('cancelled')"
+          role="tab"
+          [attr.aria-selected]="activeFilter === 'cancelled'"
+        >
+          <span>Canceladas</span>
+          <span class="filter-count">{{ cancelledAppointments.length }}</span>
+        </button>
+      </div>
+
+      <!-- LISTA DE CITAS FILTRADAS -->
+      @if (filteredAppointments.length > 0) {
+        <div class="appointments-list">
+          @for (apt of filteredAppointments; track apt.id) {
+            <article
+              class="appointment-card"
+              [class.card-pending]="isPendingReschedule(apt)"
+              [class.card-cancelled]="isCancelled(apt)"
+              [class.card-history]="isPast(apt) && !isCancelled(apt)"
+            >
+              <!-- Fila Superior: Estado y Duración -->
+              <div class="card-top-row">
+                <span class="status-pill" [ngClass]="getStatusBadge(apt.status).cssClass">
+                  <span class="status-dot"></span>
+                  {{ getStatusBadge(apt.status).label }}
+                </span>
+
+                <span class="duration-pill">{{ apt.duration || 45 }} min</span>
+              </div>
+
+              <!-- Fecha y Horario destacados -->
+              <div class="card-datetime-group">
+                <div class="datetime-row date-row">
+                  <ion-icon name="calendar-outline" class="row-icon icon-blue"></ion-icon>
+                  <strong class="datetime-val">{{ formatDate(apt.date) }}</strong>
+                </div>
+
+                <div class="datetime-row time-row">
+                  <ion-icon name="time-outline" class="row-icon icon-cyan"></ion-icon>
+                  <span class="datetime-val time-val">{{ formatTimeRange(apt.start_time, apt.end_time) }}</span>
+                </div>
+              </div>
+
+              <!-- Banner de Reprogramación Pendiente -->
+              @if (isPendingReschedule(apt)) {
+                <div
+                  class="reschedule-proposal-card"
+                  [class.proposal-received]="apt.reschedule_requested_by === 'psicologo'"
+                >
+                  <div class="proposal-header">
+                    <ion-icon name="swap-horizontal-outline" class="proposal-icon"></ion-icon>
+                    <strong>
+                      {{
+                        apt.reschedule_requested_by === 'psicologo'
+                          ? 'Propuesta de la psicóloga:'
+                          : 'Tu solicitud de reprogramación:'
+                      }}
+                    </strong>
+                  </div>
+
+                  @if (apt.proposed_date) {
+                    <div class="proposal-slot">
+                      <span>Nuevo horario propuesto:</span>
+                      <strong>
+                        {{ formatDate(apt.proposed_date) }} · {{ formatTimeRange(apt.proposed_start_time, apt.proposed_end_time) }}
+                      </strong>
+                    </div>
+                  }
+
+                  @if (apt.reschedule_reason) {
+                    <p class="proposal-reason">
+                      «{{ apt.reschedule_reason }}»
+                    </p>
+                  }
+
+                  <!-- Acciones de propuesta de reprogramación -->
+                  <div class="proposal-actions">
+                    @if (apt.reschedule_requested_by === 'psicologo') {
+                      <button
+                        type="button"
+                        class="btn-proposal-accept"
+                        (click)="onAcceptRescheduleClick(apt)"
+                      >
+                        <ion-icon name="checkmark-circle"></ion-icon>
+                        <span>Aceptar propuesta</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-proposal-reject"
+                        (click)="onRejectRescheduleClick(apt)"
+                      >
+                        <ion-icon name="close-circle-outline"></ion-icon>
+                        <span>Rechazar</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-proposal-discard"
+                        (click)="onRejectRescheduleClick(apt)"
+                      >
+                        <ion-icon name="trash-outline"></ion-icon>
+                        <span>Descartar solicitud</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Detalle de Cancelación -->
+              @if (isCancelled(apt)) {
+                <div class="cancellation-info-box">
+                  <div class="cancel-info-header">
+                    <ion-icon name="alert-circle-outline"></ion-icon>
+                    <span>Cita Cancelada</span>
+                  </div>
+                  @if (apt.cancellation_reason) {
+                    <p class="cancel-reason">
+                      <strong>Motivo:</strong> {{ apt.cancellation_reason }}
+                    </p>
+                  }
+                  @if (apt.cancelled_at) {
+                    <span class="cancel-date">
+                      Registrada el {{ formatDate(apt.cancelled_at.substring(0, 10)) }}
+                    </span>
+                  }
+                </div>
+              }
+
+              <!-- Modalidad y Ubicación -->
+              <div class="card-meta-box">
+                <div class="meta-item">
+                  <ion-icon [name]="getModalityDisplay(apt.modality).icon" class="meta-icon"></ion-icon>
+                  <span class="meta-text">{{ getModalityDisplay(apt.modality).label }}</span>
+                </div>
+
+                @if (apt.location) {
+                  <div class="meta-item">
+                    <ion-icon name="location-outline" class="meta-icon"></ion-icon>
+                    <span class="meta-text">{{ apt.location }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Motivo de Consulta original -->
+              @if (apt.reason) {
+                <div class="card-reason-box">
+                  <span class="reason-label">Motivo de consulta:</span>
+                  <p class="reason-text">{{ apt.reason }}</p>
+                </div>
+              }
+
+              <!-- Especialista asignada -->
+              <div class="card-footer-specialist">
+                <div class="mini-avatar">MR</div>
+                <div class="specialist-mini-info">
+                  <span class="specialist-name">{{ specialistName }}</span>
+                  <span class="specialist-role">{{ specialistCubicle }}</span>
+                </div>
+              </div>
+
+              <!-- Acciones de Gestión de Cita (Cancelar / Reprogramar) -->
+              @if (canCancelOrReschedule(apt)) {
+                <div class="card-actions-row">
+                  <button
+                    type="button"
+                    class="btn-card-action btn-action-reschedule"
+                    (click)="onRescheduleClick(apt)"
+                    aria-label="Solicitar reprogramación"
+                  >
+                    <ion-icon name="swap-horizontal-outline"></ion-icon>
+                    <span>Reprogramar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-card-action btn-action-cancel"
+                    (click)="onCancelClick(apt)"
+                    aria-label="Cancelar cita"
+                  >
+                    <ion-icon name="trash-outline"></ion-icon>
+                    <span>Cancelar</span>
+                  </button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="state-card empty-card">
+          <div class="state-icon-box empty-icon">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <h3>No hay citas en esta sección</h3>
+          <p>
+            No se encontraron citas que coincidan con el filtro seleccionado.
+          </p>
+          <button type="button" class="btn-primary-cta" (click)="onBookClick()">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Agendar nueva cita</span>
+          </button>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- 5. Contenido Principal: Dashboard de Inicio (Citas Activas + Historial Breve) -->
+  @else {
+    <!-- SECCIÓN: CITAS PROGRAMADAS / ACTIVAS -->
+    <section class="appointments-section">
+      <div class="section-header-row">
+        <div class="section-title-wrap">
+          <h2 class="section-title">Citas Programadas</h2>
+          <span class="count-badge" [class.badge-active]="activeAppointments.length > 0">
+            {{ activeAppointments.length }} {{ activeAppointments.length === 1 ? 'activa' : 'activas' }}
+          </span>
+        </div>
+
+        @if (activeAppointments.length > 0) {
+          <button type="button" class="link-btn" (click)="onBookClick()">
+            + Nueva cita
+          </button>
+        }
+      </div>
+
+      <!-- LISTA DE CITAS ACTIVAS -->
+      @if (activeAppointments.length > 0) {
+        <div class="appointments-list">
+          @for (apt of activeAppointments; track apt.id) {
+            <article class="appointment-card" [class.card-pending]="isPendingReschedule(apt)">
+              <!-- Fila Superior: Estado y Duración -->
+              <div class="card-top-row">
+                <span class="status-pill" [ngClass]="getStatusBadge(apt.status).cssClass">
+                  <span class="status-dot"></span>
+                  {{ getStatusBadge(apt.status).label }}
+                </span>
+
+                <span class="duration-pill">{{ apt.duration || 45 }} min</span>
+              </div>
+
+              <!-- Fecha y Horario destacados -->
+              <div class="card-datetime-group">
+                <div class="datetime-row date-row">
+                  <ion-icon name="calendar-outline" class="row-icon icon-blue"></ion-icon>
+                  <strong class="datetime-val">{{ formatDate(apt.date) }}</strong>
+                </div>
+
+                <div class="datetime-row time-row">
+                  <ion-icon name="time-outline" class="row-icon icon-cyan"></ion-icon>
+                  <span class="datetime-val time-val">{{ formatTimeRange(apt.start_time, apt.end_time) }}</span>
+                </div>
+              </div>
+
+              <!-- Banner de Reprogramación Pendiente -->
+              @if (isPendingReschedule(apt)) {
+                <div
+                  class="reschedule-proposal-card"
+                  [class.proposal-received]="apt.reschedule_requested_by === 'psicologo'"
+                >
+                  <div class="proposal-header">
+                    <ion-icon name="swap-horizontal-outline" class="proposal-icon"></ion-icon>
+                    <strong>
+                      {{
+                        apt.reschedule_requested_by === 'psicologo'
+                          ? 'Propuesta de la psicóloga:'
+                          : 'Tu solicitud de reprogramación:'
+                      }}
+                    </strong>
+                  </div>
+
+                  @if (apt.proposed_date) {
+                    <div class="proposal-slot">
+                      <span>Nuevo horario propuesto:</span>
+                      <strong>
+                        {{ formatDate(apt.proposed_date) }} · {{ formatTimeRange(apt.proposed_start_time, apt.proposed_end_time) }}
+                      </strong>
+                    </div>
+                  }
+
+                  @if (apt.reschedule_reason) {
+                    <p class="proposal-reason">
+                      «{{ apt.reschedule_reason }}»
+                    </p>
+                  }
+
+                  <!-- Acciones de propuesta de reprogramación -->
+                  <div class="proposal-actions">
+                    @if (apt.reschedule_requested_by === 'psicologo') {
+                      <button
+                        type="button"
+                        class="btn-proposal-accept"
+                        (click)="onAcceptRescheduleClick(apt)"
+                      >
+                        <ion-icon name="checkmark-circle"></ion-icon>
+                        <span>Aceptar propuesta</span>
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-proposal-reject"
+                        (click)="onRejectRescheduleClick(apt)"
+                      >
+                        <ion-icon name="close-circle-outline"></ion-icon>
+                        <span>Rechazar</span>
+                      </button>
+                    } @else {
+                      <button
+                        type="button"
+                        class="btn-proposal-discard"
+                        (click)="onRejectRescheduleClick(apt)"
+                      >
+                        <ion-icon name="trash-outline"></ion-icon>
+                        <span>Descartar solicitud</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Modalidad y Ubicación -->
+              <div class="card-meta-box">
+                <div class="meta-item">
+                  <ion-icon [name]="getModalityDisplay(apt.modality).icon" class="meta-icon"></ion-icon>
+                  <span class="meta-text">{{ getModalityDisplay(apt.modality).label }}</span>
+                </div>
+
+                @if (apt.location) {
+                  <div class="meta-item">
+                    <ion-icon name="location-outline" class="meta-icon"></ion-icon>
+                    <span class="meta-text">{{ apt.location }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Motivo de Consulta -->
+              @if (apt.reason) {
+                <div class="card-reason-box">
+                  <span class="reason-label">Motivo de consulta:</span>
+                  <p class="reason-text">{{ apt.reason }}</p>
+                </div>
+              }
+
+              <!-- Especialista asignada -->
+              <div class="card-footer-specialist">
+                <div class="mini-avatar">MR</div>
+                <div class="specialist-mini-info">
+                  <span class="specialist-name">{{ specialistName }}</span>
+                  <span class="specialist-role">{{ specialistCubicle }}</span>
+                </div>
+              </div>
+
+              <!-- Acciones de Gestión de Cita (Cancelar / Reprogramar) -->
+              @if (canCancelOrReschedule(apt)) {
+                <div class="card-actions-row">
+                  <button
+                    type="button"
+                    class="btn-card-action btn-action-reschedule"
+                    (click)="onRescheduleClick(apt)"
+                    aria-label="Solicitar reprogramación"
+                  >
+                    <ion-icon name="swap-horizontal-outline"></ion-icon>
+                    <span>Reprogramar</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn-card-action btn-action-cancel"
+                    (click)="onCancelClick(apt)"
+                    aria-label="Cancelar cita"
+                  >
+                    <ion-icon name="trash-outline"></ion-icon>
+                    <span>Cancelar</span>
+                  </button>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+
+      <!-- ESTADO VACÍO (SIN CITAS ACTIVAS) -->
+      @else {
+        <div class="state-card empty-card">
+          <div class="state-icon-box empty-icon">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <h3>Sin citas programadas</h3>
+          <p>
+            No tienes citas solicitadas en este momento. Consulta los horarios disponibles y agenda tu sesión con tu especialista.
+          </p>
+          <button type="button" class="btn-primary-cta" (click)="onBookClick()">
+            <ion-icon name="calendar-outline"></ion-icon>
+            <span>Ver Horarios Disponibles</span>
+          </button>
+        </div>
+      }
+    </section>
+
+    <!-- SECCIÓN: HISTORIAL DE CITAS PASADAS O CANCELADAS -->
+    @if (pastAppointments.length > 0) {
+      <section class="appointments-section history-section">
+        <div class="section-header-row">
+          <div class="section-title-wrap">
+            <h3 class="section-subtitle">Historial de Citas</h3>
+            <span class="count-badge badge-muted">{{ pastAppointments.length }}</span>
+          </div>
+        </div>
+
+        <div class="appointments-list">
+          @for (apt of pastAppointments; track apt.id) {
+            <article class="appointment-card card-history" [class.card-cancelled]="isCancelled(apt)">
+              <div class="card-top-row">
+                <span class="status-pill" [ngClass]="getStatusBadge(apt.status).cssClass">
+                  <span class="status-dot"></span>
+                  {{ getStatusBadge(apt.status).label }}
+                </span>
+                <span class="duration-pill">{{ apt.duration || 45 }} min</span>
+              </div>
+
+              <div class="card-datetime-group">
+                <div class="datetime-row date-row">
+                  <ion-icon name="calendar-outline" class="row-icon icon-gray"></ion-icon>
+                  <span class="datetime-val">{{ formatDate(apt.date) }}</span>
+                </div>
+
+                <div class="datetime-row time-row">
+                  <ion-icon name="time-outline" class="row-icon icon-gray"></ion-icon>
+                  <span class="datetime-val time-val">{{ formatTimeRange(apt.start_time, apt.end_time) }}</span>
+                </div>
+              </div>
+
+              <!-- Detalle de Cancelación en Historial -->
+              @if (isCancelled(apt) && apt.cancellation_reason) {
+                <div class="cancellation-info-box">
+                  <p class="cancel-reason">
+                    <strong>Motivo de cancelación:</strong> {{ apt.cancellation_reason }}
+                  </p>
+                </div>
+              }
+
+              <div class="card-meta-box">
+                <div class="meta-item">
+                  <ion-icon [name]="getModalityDisplay(apt.modality).icon" class="meta-icon"></ion-icon>
+                  <span class="meta-text">{{ getModalityDisplay(apt.modality).label }}</span>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      </section>
+    }
+  }
+</div>

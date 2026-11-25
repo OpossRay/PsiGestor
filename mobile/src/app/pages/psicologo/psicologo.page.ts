@@ -77,8 +77,10 @@ import { HabitualScheduleViewComponent, HabitualDay } from '../../features/dispo
 import { InhabilitarHorarioModalComponent, DisableFormPayload } from '../../features/disponibilidad/components/inhabilitar-horario-modal/inhabilitar-horario-modal.component';
 import { ConflictModalComponent } from '../../features/disponibilidad/components/conflict-modal/conflict-modal.component';
 import { RescheduleSuccessModalComponent } from '../../features/citas/components/reschedule-success-modal/reschedule-success-modal.component';
-
-
+import { PipgService } from '../../core/services/pipg.service';
+import { PipgAssessment } from '../../core/models/pipg.model';
+import { EvaluacionesListViewComponent } from '../../features/evaluaciones/components/evaluaciones-list-view/evaluaciones-list-view.component';
+import { EvaluacionDetailModalComponent } from '../../features/evaluaciones/components/evaluacion-detail-modal/evaluacion-detail-modal.component';
 
 @Component({
   selector: 'app-psicologo',
@@ -106,18 +108,28 @@ import { RescheduleSuccessModalComponent } from '../../features/citas/components
     HabitualScheduleViewComponent,
     InhabilitarHorarioModalComponent,
     ConflictModalComponent,
-    RescheduleSuccessModalComponent
+    RescheduleSuccessModalComponent,
+    EvaluacionesListViewComponent,
+    EvaluacionDetailModalComponent
   ]
 })
 export class PsicologoPage implements OnInit {
   authService = inject(AuthService);
   private calendarService = inject(CalendarService);
+  private pipgService = inject(PipgService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
   private toastCtrl = inject(ToastController);
 
   // Pestaña activa en el panel del psicólogo (P-02 Agenda · Vista Día por defecto al iniciar sesión)
-  activeTab: 'inicio' | 'agenda' | 'gestion-citas' | 'disponibilidad' | 'estudiantes' | 'mas' = 'agenda';
+  activeTab: 'inicio' | 'agenda' | 'gestion-citas' | 'evaluaciones' | 'disponibilidad' | 'estudiantes' | 'mas' = 'agenda';
+
+  // Evaluaciones P-IPG (Gordon)
+  completedAssessments: PipgAssessment[] = [];
+  isLoadingAssessments = false;
+  assessmentsError: string | null = null;
+  selectedAssessmentForDetail: PipgAssessment | null = null;
+  isAssessmentDetailOpen = false;
 
   // Modo de vista de Mi Agenda (P-02 Día | P-03 Semana | P-04 Mes)
   calendarViewMode: 'dia' | 'semana' | 'mes' = 'dia';
@@ -306,11 +318,46 @@ export class PsicologoPage implements OnInit {
     return 'Lic. Mariana Rojas V.';
   }
 
-  setTab(tab: 'inicio' | 'agenda' | 'gestion-citas' | 'disponibilidad' | 'estudiantes' | 'mas'): void {
+  setTab(tab: 'inicio' | 'agenda' | 'gestion-citas' | 'evaluaciones' | 'disponibilidad' | 'estudiantes' | 'mas'): void {
     this.activeTab = tab;
     if (tab === 'agenda') {
       this.statusFilter = 'all';
+    } else if (tab === 'evaluaciones') {
+      this.loadCompletedAssessments();
     }
+    this.cdr.detectChanges();
+  }
+
+  loadCompletedAssessments(showLoading = true): void {
+    if (showLoading) {
+      this.isLoadingAssessments = true;
+    }
+    this.assessmentsError = null;
+    this.cdr.detectChanges();
+
+    this.pipgService.getResults().subscribe({
+      next: (res) => {
+        this.completedAssessments = res?.assessments || [];
+        this.isLoadingAssessments = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        this.isLoadingAssessments = false;
+        this.assessmentsError = err.error?.error || 'No fue posible cargar las evaluaciones en este momento.';
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  openAssessmentDetail(assessment: PipgAssessment): void {
+    this.selectedAssessmentForDetail = assessment;
+    this.isAssessmentDetailOpen = true;
+    this.cdr.detectChanges();
+  }
+
+  closeAssessmentDetail(): void {
+    this.isAssessmentDetailOpen = false;
+    this.selectedAssessmentForDetail = null;
     this.cdr.detectChanges();
   }
 
@@ -338,6 +385,8 @@ export class PsicologoPage implements OnInit {
       this.openGestionCitas('todos');
     } else if (moduleName === 'estudiantes') {
       this.setTab('estudiantes');
+    } else if (moduleName === 'expedientes' || moduleName === 'evaluaciones') {
+      this.setTab('evaluaciones');
     } else {
       this.openAgenda('all');
     }
@@ -958,6 +1007,8 @@ export class PsicologoPage implements OnInit {
   onBottomNavTabChange(tab: BottomNavTab): void {
     if (tab === 'gestion-citas') {
       this.openGestionCitas();
+    } else if (tab === 'evaluaciones') {
+      this.setTab('evaluaciones');
     } else {
       this.setTab(tab);
     }

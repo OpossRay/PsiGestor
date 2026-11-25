@@ -1,0 +1,175 @@
+<div class="eval-list-container">
+  <!-- Cabecera de la Sección -->
+  <header class="eval-topbar">
+    <div class="topbar-left">
+      <button
+        type="button"
+        class="topbar-icon-btn"
+        (click)="onBackClick()"
+        aria-label="Regresar"
+      >
+        <ion-icon name="arrow-back-outline"></ion-icon>
+      </button>
+
+      <div class="topbar-title-wrap">
+        <span class="topbar-eyebrow">PSICOPEDAGOGÍA · PRUEBAS</span>
+        <h1 class="topbar-title">Evaluaciones P-IPG</h1>
+      </div>
+    </div>
+
+    <button
+      type="button"
+      class="topbar-icon-btn refresh-btn"
+      (click)="onRefreshClick()"
+      [disabled]="isLoading"
+      aria-label="Actualizar evaluaciones"
+    >
+      <ion-icon name="refresh-outline" [class.spinning]="isLoading"></ion-icon>
+    </button>
+  </header>
+
+  <!-- Tarjeta Resumen y Buscador -->
+  <div class="eval-controls-card">
+    <div class="summary-stat-row">
+      <div class="stat-icon-wrap">
+        <ion-icon name="clipboard-outline"></ion-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-label">Evaluaciones completadas</span>
+        <strong class="stat-count">{{ assessments.length }}</strong>
+      </div>
+    </div>
+
+    <!-- Barra de Búsqueda -->
+    <div class="search-input-box">
+      <ion-icon name="search-outline" class="search-glass-icon"></ion-icon>
+      <input
+        type="text"
+        class="search-text-field"
+        placeholder="Buscar por nombre o matrícula..."
+        [(ngModel)]="searchQuery"
+        aria-label="Buscar alumno por nombre o matrícula"
+      />
+      @if (searchQuery) {
+        <button
+          type="button"
+          class="btn-clear-search"
+          (click)="clearSearch()"
+          aria-label="Limpiar búsqueda"
+        >
+          <ion-icon name="close-circle"></ion-icon>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Estado de Carga -->
+  @if (isLoading) {
+    <div class="state-card loading-card">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <p>Cargando evaluaciones de los estudiantes...</p>
+    </div>
+  }
+
+  <!-- Estado de Error -->
+  @else if (errorMessage) {
+    <div class="state-card error-card">
+      <div class="state-icon-box error-icon">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+      </div>
+      <h3>Error de conexión</h3>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="btn-retry" (click)="onRefreshClick()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        <span>Reintentar</span>
+      </button>
+    </div>
+  }
+
+  <!-- Lista de Evaluaciones -->
+  @else if (filteredAssessments.length > 0) {
+    <div class="eval-cards-list">
+      @for (item of filteredAssessments; track item.id) {
+        <article
+          class="eval-card-item"
+          (click)="onSelect(item)"
+          role="button"
+          tabindex="0"
+          [attr.aria-label]="'Ver resultados de ' + (item.studentName || 'Estudiante')"
+        >
+          <div class="eval-card-avatar">
+            <ion-icon name="person-outline"></ion-icon>
+          </div>
+
+          <div class="eval-card-info">
+            <div class="eval-card-student-row">
+              <h3 class="student-name">
+                {{ item.studentName || 'Estudiante #' + item.studentId }}
+              </h3>
+
+              @if (item.answers.isSynthetic) {
+                <span class="badge-synthetic">SYNTHETIC</span>
+              }
+            </div>
+
+            <div class="eval-card-meta-row">
+              <span class="meta-code">
+                Matrícula: <strong>{{ item.studentCode || '—' }}</strong>
+              </span>
+
+              <span class="meta-date">
+                <ion-icon name="calendar-outline"></ion-icon>
+                {{ formatDate(item.completedAt) }}
+              </span>
+            </div>
+
+            <div class="eval-card-footer-tags">
+              <span class="badge-status-completed">Completada</span>
+
+              @if (item.directScores && item.directScores['AE']) {
+                <span class="badge-ae-score">
+                  Autoestima: <strong>{{ item.directScores['AE'] }}</strong>
+                </span>
+              }
+            </div>
+          </div>
+
+          <div class="eval-card-action">
+            <ion-icon name="chevron-forward-outline"></ion-icon>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  <!-- Estado Vacío por Búsqueda Sin Resultados -->
+  @else if (searchQuery && assessments.length > 0) {
+    <div class="state-card empty-card">
+      <div class="state-icon-box empty-icon">
+        <ion-icon name="search-outline"></ion-icon>
+      </div>
+      <h3>Sin resultados</h3>
+      <p>No se encontraron evaluaciones que coincidan con «<strong>{{ searchQuery }}</strong>».</p>
+      <button type="button" class="btn-clear-cta" (click)="clearSearch()">
+        <span>Limpiar búsqueda</span>
+      </button>
+    </div>
+  }
+
+  <!-- Estado Vacío General (Sin Evaluaciones en el Sistema) -->
+  @else {
+    <div class="state-card empty-card">
+      <div class="state-icon-box empty-icon">
+        <ion-icon name="document-text-outline"></ion-icon>
+      </div>
+      <h3>Aún no hay evaluaciones</h3>
+      <p>
+        Cuando los estudiantes completen su cuestionario P-IPG (Gordon), sus evaluaciones y gráficas aparecerán en esta sección.
+      </p>
+      <button type="button" class="btn-refresh-empty" (click)="onRefreshClick()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        <span>Actualizar lista</span>
+      </button>
+    </div>
+  }
+</div>

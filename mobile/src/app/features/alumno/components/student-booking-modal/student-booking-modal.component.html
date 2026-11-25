@@ -1,0 +1,184 @@
+<ion-modal [isOpen]="isOpen" (didDismiss)="onClose()" class="student-booking-modal">
+  <ng-template>
+    <div class="modal-root">
+      <!-- Barra superior / Header -->
+      <header class="modal-header">
+        <div class="header-left">
+          <div class="header-icon-box">
+            <ion-icon name="calendar-outline"></ion-icon>
+          </div>
+          <div class="header-titles">
+            <h2 class="modal-title">Confirmar y Agendar Cita</h2>
+            <p class="modal-subtitle">Verifica los datos antes de confirmar tu reserva</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="btn-close"
+          (click)="onClose()"
+          [disabled]="isSubmitting"
+          aria-label="Cerrar modal"
+        >
+          <ion-icon name="close-outline"></ion-icon>
+        </button>
+      </header>
+
+      <!-- Contenido scrolleable -->
+      <ion-content class="modal-content">
+        <div class="modal-body">
+          <!-- Tarjeta Resumen del Horario Seleccionado -->
+          <div class="summary-card">
+            <div class="summary-row-top">
+              <span class="summary-badge">HORARIO SELECCIONADO</span>
+              <span class="summary-duration">{{ slot?.duration || 45 }} min</span>
+            </div>
+
+            <div class="summary-date-row">
+              <ion-icon name="calendar-outline" class="summary-icon"></ion-icon>
+              <strong class="summary-date-text">{{ formattedDate }}</strong>
+            </div>
+
+            <div class="summary-time-row">
+              <ion-icon name="time-outline" class="summary-icon"></ion-icon>
+              <span class="summary-time-text">{{ formattedTimeRange }}</span>
+            </div>
+          </div>
+
+          <!-- Especialista Asignada -->
+          <div class="specialist-info-box">
+            <div class="specialist-avatar">MR</div>
+            <div class="specialist-texts">
+              <span class="specialist-tag">ESPECIALISTA ASIGNADA</span>
+              <h4 class="specialist-name">{{ specialistName }}</h4>
+              <p class="specialist-role">{{ specialistRole }} · {{ specialistCubicle }}</p>
+            </div>
+          </div>
+
+          <!-- Alumno autenticado -->
+          <div class="student-info-box">
+            <div class="student-avatar">
+              <ion-icon name="person-outline"></ion-icon>
+            </div>
+            <div class="student-texts">
+              <span class="student-tag">SOLICITADO POR TI</span>
+              <h4 class="student-name">{{ currentUser?.name || 'Estudiante' }}</h4>
+              <p class="student-meta">{{ currentUser?.email }}</p>
+            </div>
+          </div>
+
+          <!-- Selector de Modalidad -->
+          <div class="form-section">
+            <label class="form-label">Modalidad de atención <span class="req">*</span></label>
+            <div class="modality-grid">
+              <button
+                type="button"
+                class="modality-card"
+                [class.selected]="modality === 'Presencial'"
+                (click)="setModality('Presencial')"
+              >
+                <div class="modality-icon-circle">
+                  <ion-icon name="business-outline"></ion-icon>
+                </div>
+                <div class="modality-texts">
+                  <strong>Presencial</strong>
+                  <span>En cubículo asignado</span>
+                </div>
+                <div class="radio-indicator">
+                  @if (modality === 'Presencial') {
+                    <span class="radio-inner"></span>
+                  }
+                </div>
+              </button>
+
+              <button
+                type="button"
+                class="modality-card"
+                [class.selected]="modality === 'En línea'"
+                (click)="setModality('En línea')"
+              >
+                <div class="modality-icon-circle">
+                  <ion-icon name="videocam-outline"></ion-icon>
+                </div>
+                <div class="modality-texts">
+                  <strong>En línea</strong>
+                  <span>Por Google Meet</span>
+                </div>
+                <div class="radio-indicator">
+                  @if (modality === 'En línea') {
+                    <span class="radio-inner"></span>
+                  }
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <!-- Ubicación / Detalles de conexión -->
+          <div class="location-banner">
+            <ion-icon [name]="modality === 'Presencial' ? 'business-outline' : 'videocam-outline'"></ion-icon>
+            <span>{{ location }}</span>
+          </div>
+
+          <!-- Motivo de consulta -->
+          <div class="form-section">
+            <div class="label-row">
+              <label class="form-label" for="consultation-reason">
+                Motivo de la consulta <span class="req">*</span>
+              </label>
+              <span class="char-counter">{{ reason.trim().length }}/200</span>
+            </div>
+
+            <textarea
+              id="consultation-reason"
+              class="form-textarea"
+              rows="3"
+              maxlength="200"
+              placeholder="Describe brevemente el motivo por el cual solicitas la cita (académico, orientación, personal)..."
+              [(ngModel)]="reason"
+              [disabled]="isSubmitting"
+            ></textarea>
+
+            <span class="input-helper">
+              Mínimo 5 caracteres. Esta información es confidencial y solo la consultará tu especialista.
+            </span>
+          </div>
+
+          <!-- Mensaje de error si la validación falla -->
+          @if (errorMessage) {
+            <div class="error-banner">
+              <ion-icon name="alert-circle-outline"></ion-icon>
+              <span>{{ errorMessage }}</span>
+            </div>
+          }
+        </div>
+      </ion-content>
+
+      <!-- Barra de Acciones Inferior -->
+      <footer class="modal-footer">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="onClose()"
+          [disabled]="isSubmitting"
+        >
+          Cancelar
+        </button>
+
+        <button
+          type="button"
+          class="btn-confirm"
+          (click)="confirmBooking()"
+          [disabled]="isSubmitting"
+        >
+          @if (isSubmitting) {
+            <ion-spinner name="crescent" class="btn-spinner"></ion-spinner>
+            <span>Confirmando...</span>
+          } @else {
+            <ion-icon name="checkmark-circle"></ion-icon>
+            <span>Confirmar Cita</span>
+          }
+        </button>
+      </footer>
+    </div>
+  </ng-template>
+</ion-modal>

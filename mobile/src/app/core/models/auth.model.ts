@@ -1,3 +1,5 @@
+import { PipgState } from './pipg.model';
+
 export interface User {
   id: number;
   email: string;
@@ -31,4 +33,6 @@ export interface RefreshResponse {
 export interface MeResponse {
   authenticated: boolean;
   user: User | null;
+  pipg?: PipgState | null;
 }
+

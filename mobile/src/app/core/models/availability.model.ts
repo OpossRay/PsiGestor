@@ -65,16 +65,19 @@ export interface Appointment {
   start_time: string;
   end_time: string;
   duration: number;
-  modality: 'In person' | 'Online';
+  modality: 'In person' | 'Online' | 'Presencial' | 'En línea' | string;
   location: string | null;
   meeting_url: string | null;
   reason: string;
   status: string;
   created_at: string;
   reschedule_requested_by?: 'psicologo' | 'alumno' | null;
-  proposed_date?: string;
-  proposed_start_time?: string;
-  proposed_end_time?: string;
-  reschedule_reason?: string;
-  cancellation_reason?: string;
+  proposed_date?: string | null;
+  proposed_start_time?: string | null;
+  proposed_end_time?: string | null;
+  proposed_availability_id?: number | null;
+  reschedule_reason?: string | null;
+  cancellation_reason?: string | null;
+  cancelled_at?: string | null;
+  rescheduled_at?: string | null;
 }

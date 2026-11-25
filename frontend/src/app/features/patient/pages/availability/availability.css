@@ -90,6 +90,67 @@
   font-weight: 500;
 }
 
+/* Banner de advertencia PIPG */
+.availability-pipg-warning {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 14px 20px;
+  margin: 12px 24px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 2px 6px rgba(217, 119, 6, 0.08);
+  flex-wrap: wrap;
+}
+
+.availability-pipg-warning .warning-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.availability-pipg-warning .warning-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.availability-pipg-warning .warning-text strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #92400e;
+  margin-bottom: 2px;
+}
+
+.availability-pipg-warning .warning-text p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #78350f;
+}
+
+.btn-warning-pipg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #d97706;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.btn-warning-pipg:hover {
+  background: #b45309;
+}
+
 .student-chip {
   display: flex;
   align-items: center;

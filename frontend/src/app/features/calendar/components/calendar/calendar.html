@@ -1671,14 +1671,28 @@
 
             @if (patientSlotData.status === 'Disponible' && !patientSlotData.isExpired) {
               <div class="patient-detail-actions">
-                <button
-                  type="button"
-                  class="booking-submit-button"
-                  style="width: 100%; padding: 12px 16px; border-radius: 10px; font-weight: 700; cursor: pointer;"
-                  (click)="openPatientBookingForm()"
-                >
-                  Agendar cita
-                </button>
+                @if (!authService.hasCompletedPipg()) {
+                  <div style="background: #fffbeb; border: 1px solid #fcd34d; border-radius: 10px; padding: 12px; text-align: center; width: 100%; box-sizing: border-box;">
+                    <p style="margin: 0 0 10px; font-size: 12px; color: #92400e; font-weight: 600; line-height: 1.4;">
+                      ⚠️ Para solicitar esta cita, primero debes completar tu evaluación inicial P-IPG.
+                    </p>
+                    <a
+                      routerLink="/estudiante/pipg"
+                      style="display: inline-block; background: #d97706; color: #fff; font-size: 12px; font-weight: 700; padding: 8px 14px; border-radius: 6px; text-decoration: none;"
+                    >
+                      Completar evaluación P-IPG
+                    </a>
+                  </div>
+                } @else {
+                  <button
+                    type="button"
+                    class="booking-submit-button"
+                    style="width: 100%; padding: 12px 16px; border-radius: 10px; font-weight: 700; cursor: pointer;"
+                    (click)="openPatientBookingForm()"
+                  >
+                    Agendar cita
+                  </button>
+                }
               </div>
             }
           </div>

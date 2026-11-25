@@ -1,0 +1,384 @@
+<div class="pipg-page">
+  <!-- Top Header Bar -->
+  <header class="pipg-header">
+    <button
+      type="button"
+      class="icon-btn back-btn"
+      (click)="onBack()"
+      aria-label="Volver"
+    >
+      <ion-icon name="chevron-back-outline"></ion-icon>
+    </button>
+    <div class="header-center">
+      <span class="header-eyebrow">EVALUACIÓN PSICOLÓGICA</span>
+      <h1 class="header-title">Cuestionario P-IPG</h1>
+    </div>
+    <div class="header-spacer"></div>
+  </header>
+
+  <!-- Loading State -->
+  <main class="pipg-body" *ngIf="isLoading">
+    <div class="loading-state">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <h2>Cargando evaluación...</h2>
+      <p>Recuperando tu estado y respuestas guardadas.</p>
+    </div>
+  </main>
+
+  <!-- Error State (Initial Load Failed) -->
+  <main class="pipg-body" *ngIf="!isLoading && errorMessage && step === 'instructions' && !questions.length">
+    <div class="error-card">
+      <ion-icon name="alert-circle-outline" class="error-icon"></ion-icon>
+      <h2>No fue posible cargar el cuestionario</h2>
+      <p>{{ errorMessage }}</p>
+      <button type="button" class="btn btn-primary" (click)="loadAssessment()">
+        <ion-icon name="refresh-outline"></ion-icon>
+        Reintentar
+      </button>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- STEP 1: INSTRUCCIONES                                                     -->
+  <!-- ========================================================================= -->
+  <main class="pipg-body" *ngIf="!isLoading && step === 'instructions'">
+    <div class="instructions-card">
+      <div class="instructions-hero">
+        <div class="hero-badge">
+          <ion-icon name="clipboard-outline"></ion-icon>
+          <span>Perfil e Inventario de Personalidad (Gordon)</span>
+        </div>
+        <h2>Instrucciones para la evaluación</h2>
+        <p class="hero-desc">
+          El cuestionario P-IPG permite conocer rasgos fundamentales de tu estilo de
+          personalidad, toma de decisiones y relaciones interpersonales. Es un
+          instrumento clave para tu expediente en PsiGestor.
+        </p>
+      </div>
+
+      <div class="rules-list">
+        <div class="rule-item">
+          <div class="rule-icon plus-icon">+</div>
+          <div class="rule-content">
+            <h3>Más se parece a mí (+)</h3>
+            <p>De cada grupo de 4 frases, elige la opción que mejor describe tu forma de ser.</p>
+          </div>
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-icon minus-icon">−</div>
+          <div class="rule-content">
+            <h3>Menos se parece a mí (−)</h3>
+            <p>Del mismo grupo, elige la opción que menos se parece a tu comportamiento habitual.</p>
+          </div>
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-icon info-icon">
+            <ion-icon name="information-circle-outline"></ion-icon>
+          </div>
+          <div class="rule-content">
+            <h3>Exactamente dos opciones por grupo</h3>
+            <p>En cada uno de los 38 grupos debes marcar una opción (+) y otra opción (−) distintas.</p>
+          </div>
+        </div>
+
+        <div class="rule-item">
+          <div class="rule-icon save-icon">
+            <ion-icon name="cloud-done-outline"></ion-icon>
+          </div>
+          <div class="rule-content">
+            <h3>Guardado automático y reanudación</h3>
+            <p>Tus avances se guardan tras cada selección. Puedes pausar y continuar cuando desees.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Resumption Status Banner if already in progress -->
+      <div class="progress-notice" *ngIf="answeredGroupsCount > 0">
+        <div class="progress-notice-header">
+          <span class="notice-badge">Avance guardado</span>
+          <strong>{{ answeredGroupsCount }} de {{ questions.length }} grupos contestados ({{ progressPercentage }}%)</strong>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" [style.width.%]="progressPercentage"></div>
+        </div>
+      </div>
+
+      <div class="instructions-actions">
+        <button
+          type="button"
+          class="btn btn-primary btn-block btn-lg"
+          (click)="startOrContinueTest()"
+        >
+          <ion-icon [name]="answeredGroupsCount > 0 ? 'arrow-forward-outline' : 'document-text-outline'"></ion-icon>
+          {{ answeredGroupsCount > 0 ? 'Continuar evaluación' : 'Comenzar cuestionario' }}
+        </button>
+
+        <button type="button" class="btn btn-ghost btn-block" (click)="onBack()">
+          Volver al Inicio
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- STEP 2: RESPONDER PREGUNTAS                                               -->
+  <!-- ========================================================================= -->
+  <main class="pipg-body answering-body" *ngIf="!isLoading && step === 'answering' && currentQuestion as question">
+    <!-- Sticky Progress Tracker -->
+    <div class="progress-tracker">
+      <div class="tracker-top">
+        <div class="tracker-group-pill">
+          <span class="pill-number">Grupo {{ currentQuestionIndex + 1 }}</span>
+          <span class="pill-total">de {{ questions.length }}</span>
+        </div>
+
+        <div class="tracker-sync-status">
+          <span *ngIf="saveStatus === 'saving'" class="sync-badge saving">
+            <ion-spinner name="dots"></ion-spinner> Guardando
+          </span>
+          <span *ngIf="saveStatus === 'saved'" class="sync-badge saved">
+            <ion-icon name="cloud-done-outline"></ion-icon> Guardado
+          </span>
+          <span *ngIf="saveStatus === 'dirty'" class="sync-badge dirty">
+            <ion-icon name="cloud-upload-outline"></ion-icon> Pendiente
+          </span>
+          <span *ngIf="saveStatus === 'error'" class="sync-badge error">
+            <ion-icon name="alert-circle-outline"></ion-icon> Error al guardar
+          </span>
+        </div>
+
+        <button type="button" class="overview-btn" (click)="goToReview()" title="Ver resumen">
+          <ion-icon name="grid-outline"></ion-icon>
+          <span>{{ answeredGroupsCount }}/{{ questions.length }}</span>
+        </button>
+      </div>
+
+      <div class="progress-bar-container">
+        <div class="progress-bar-fill" [style.width.%]="progressPercentage"></div>
+      </div>
+    </div>
+
+    <!-- Active Question Card -->
+    <section class="question-card">
+      <div class="question-header">
+        <span class="part-pill">{{ getPartName(question.part) }}</span>
+        <h2 class="question-title">¿Cuál descripción se parece más y cuál menos a ti?</h2>
+        <p class="question-subtitle">
+          Elige una en <strong>(+) Más</strong> y otra en <strong>(−) Menos</strong>
+        </p>
+      </div>
+
+      <!-- Options List -->
+      <div class="options-list">
+        <article
+          class="option-row"
+          *ngFor="let option of question.options"
+          [class.is-plus]="isSelected(question.id, option.id, 'plus')"
+          [class.is-minus]="isSelected(question.id, option.id, 'minus')"
+        >
+          <div class="option-text-wrapper">
+            <p class="option-text">{{ option.text }}</p>
+          </div>
+
+          <div class="option-selectors">
+            <button
+              type="button"
+              class="selector-btn plus-btn"
+              [class.active]="isSelected(question.id, option.id, 'plus')"
+              [disabled]="isSelected(question.id, option.id, 'minus') || isSubmitting"
+              (click)="selectOption(question, option, 'plus')"
+              aria-label="Más se parece a mí"
+            >
+              <span class="sign">+</span>
+              <span class="label">Más</span>
+            </button>
+
+            <button
+              type="button"
+              class="selector-btn minus-btn"
+              [class.active]="isSelected(question.id, option.id, 'minus')"
+              [disabled]="isSelected(question.id, option.id, 'plus') || isSubmitting"
+              (click)="selectOption(question, option, 'minus')"
+              aria-label="Menos se parece a mí"
+            >
+              <span class="sign">−</span>
+              <span class="label">Menos</span>
+            </button>
+          </div>
+        </article>
+      </div>
+
+      <!-- Validation Warning -->
+      <div class="validation-banner" *ngIf="showValidation">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>Debes seleccionar exactamente una opción (+) Más y una (−) Menos diferentes para avanzar.</span>
+      </div>
+
+      <!-- Error message -->
+      <div class="error-banner" *ngIf="errorMessage">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Navigation Footer Controls -->
+      <footer class="question-nav-footer">
+        <button
+          type="button"
+          class="btn btn-outline"
+          [disabled]="currentQuestionIndex === 0 || isSubmitting"
+          (click)="previousQuestion()"
+        >
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Anterior
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary"
+          (click)="nextQuestion()"
+          [disabled]="isSubmitting"
+        >
+          {{ currentQuestionIndex === questions.length - 1 ? 'Revisar respuestas' : 'Siguiente' }}
+          <ion-icon name="arrow-forward-outline"></ion-icon>
+        </button>
+      </footer>
+    </section>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- STEP 3: REVISIÓN DE RESPUESTAS                                            -->
+  <!-- ========================================================================= -->
+  <main class="pipg-body" *ngIf="!isLoading && step === 'review'">
+    <div class="review-card">
+      <div class="review-header">
+        <button type="button" class="btn-link" (click)="step = 'answering'">
+          <ion-icon name="arrow-back-outline"></ion-icon>
+          Volver a las preguntas
+        </button>
+        <h2>Revisión de la evaluación</h2>
+        <p>Verifica que hayas respondido los 38 grupos antes de finalizar.</p>
+
+        <div class="review-stat-pill" [class.is-complete]="isAllAnswered">
+          <ion-icon [name]="isAllAnswered ? 'checkmark-circle' : 'alert-circle-outline'"></ion-icon>
+          <span>{{ answeredGroupsCount }} de {{ questions.length }} grupos contestados</span>
+        </div>
+      </div>
+
+      <div class="incomplete-warning" *ngIf="!isAllAnswered">
+        <ion-icon name="alert-circle-outline"></ion-icon>
+        <span>
+          Aún tienes {{ questions.length - answeredGroupsCount }} grupos incompletos.
+          Toca cualquier grupo incompleto para completarlo.
+        </span>
+      </div>
+
+      <!-- Groups Grid -->
+      <div class="groups-grid">
+        <button
+          type="button"
+          class="grid-item"
+          *ngFor="let q of questions; let idx = index"
+          [class.complete]="isGroupComplete(q.id)"
+          [class.current]="idx === currentQuestionIndex"
+          (click)="jumpToQuestion(idx)"
+        >
+          <span class="group-num">{{ q.id }}</span>
+          <ion-icon
+            [name]="isGroupComplete(q.id) ? 'checkmark-outline' : 'alert-circle-outline'"
+            class="status-icon"
+          ></ion-icon>
+        </button>
+      </div>
+
+      <!-- Final Actions -->
+      <div class="review-actions">
+        <div class="error-banner" *ngIf="errorMessage">
+          <ion-icon name="alert-circle-outline"></ion-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-primary btn-block btn-lg"
+          [disabled]="!isAllAnswered || isSubmitting"
+          (click)="openConfirmModal()"
+        >
+          <ion-spinner *ngIf="isSubmitting" name="crescent"></ion-spinner>
+          <ion-icon *ngIf="!isSubmitting" name="checkmark-circle"></ion-icon>
+          Finalizar y Enviar Evaluación
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline btn-block"
+          (click)="step = 'answering'"
+          [disabled]="isSubmitting"
+        >
+          Continuar respondiendo
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========================================================================= -->
+  <!-- STEP 4: EVALUACIÓN COMPLETADA                                             -->
+  <!-- ========================================================================= -->
+  <main class="pipg-body" *ngIf="!isLoading && step === 'completed'">
+    <div class="completed-card">
+      <div class="success-icon-badge">
+        <ion-icon name="checkmark-circle"></ion-icon>
+      </div>
+
+      <h2>¡Evaluación P-IPG Completada!</h2>
+      <p class="success-desc">
+        Tus respuestas han sido procesadas y guardadas exitosamente en tu expediente psicológico.
+        La psicóloga asignada podrá consultar los resultados de tu evaluación.
+      </p>
+
+      <div class="completed-details">
+        <div class="detail-row">
+          <span class="label">Instrumento:</span>
+          <span class="val">Perfil e Inventario de Personalidad (Gordon)</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Estado:</span>
+          <span class="val badge-completed">Completada e Inmutable</span>
+        </div>
+        <div class="detail-row" *ngIf="completedDate">
+          <span class="label">Fecha:</span>
+          <span class="val">{{ completedDate | date:'medium' }}</span>
+        </div>
+      </div>
+
+      <div class="completed-actions">
+        <button type="button" class="btn btn-primary btn-block btn-lg" (click)="onBack()">
+          Ir al Inicio
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Confirmation Modal -->
+  <div class="confirm-modal-backdrop" *ngIf="showConfirmModal" (click)="closeConfirmModal()">
+    <div class="confirm-modal-box" (click)="$event.stopPropagation()">
+      <div class="modal-icon">
+        <ion-icon name="help-circle-outline"></ion-icon>
+      </div>
+      <h3>¿Confirmar envío definitivo?</h3>
+      <p>
+        Una vez enviada, la evaluación queda registrada como <strong>completada</strong>
+        y no podrás modificar ninguna de tus respuestas.
+      </p>
+      <div class="modal-buttons">
+        <button type="button" class="btn btn-ghost" (click)="closeConfirmModal()">
+          Cancelar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="confirmSubmit()">
+          Confirmar y Enviar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2,11 +2,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PipgService, PipgAssessment } from '../../../../../core/services/pipg.service';
+import { PipgChartComponent } from '../../components/pipg-chart/pipg-chart.component';
 
 @Component({
   selector: 'app-pipg-results',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, PipgChartComponent],
   templateUrl: './pipg-results.component.html',
   styleUrl: './pipg-results.component.css'
 })

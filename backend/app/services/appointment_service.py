@@ -14,6 +14,21 @@ from app.repositories.appointment_repository import (
 LOCAL_TIMEZONE = ZoneInfo("America/Merida")
 
 
+class PipgRequiredError(PermissionError):
+    """Excepción lanzada cuando un alumno intenta agendar cita sin haber completado la evaluación P-IPG."""
+
+    def __init__(
+        self,
+        message=(
+            "Para poder solicitar una cita, primero debes completar tu evaluación inicial P-IPG. "
+            "Esta evaluación permite iniciar tu proceso de atención psicopedagógica."
+        ),
+    ):
+        super().__init__(message)
+        self.message = message
+        self.code = "PIPG_REQUIRED"
+
+
 def register_appointment(data, user=None):
     required_fields = (
         "date",
@@ -44,6 +59,14 @@ def register_appointment(data, user=None):
         user_id = user.get("id")
         if not student_id:
             raise ValueError("Tu usuario no tiene un perfil de estudiante vinculado.")
+
+        # Si quien solicita la cita es un alumno, validar que haya completado la evaluación P-IPG
+        if user.get("role") == "alumno":
+            from app.repositories.pipg_repository import get_assessment_by_student
+
+            assessment = get_assessment_by_student(int(student_id))
+            if not assessment or assessment.get("status") != "completed":
+                raise PipgRequiredError()
     else:
         student_id = data.get("student_id") or data.get("studentId")
         student_name = data.get("student_name")

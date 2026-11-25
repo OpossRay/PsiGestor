@@ -41,11 +41,15 @@ export const routes: Routes = [
         .then((m) => m.PipgTestComponent)
   },
   {
+    path: 'estudiante/pipg',
+    pathMatch: 'full',
+    redirectTo: 'pipg-test'
+  },
+  {
     path: 'portal-alumno',
     canActivate: [
       authGuard,
-      roleGuard(['alumno']),
-      pipgRequiredGuard
+      roleGuard(['alumno'])
     ],
     loadComponent: () =>
       import('./features/patient/pages/dashboard/dashboard')
@@ -60,8 +64,7 @@ export const routes: Routes = [
     path: 'patient/availability',
     canActivate: [
       authGuard,
-      roleGuard(['alumno']),
-      pipgRequiredGuard
+      roleGuard(['alumno'])
     ],
     loadComponent: () =>
       import('./features/patient/pages/availability/availability')
@@ -71,8 +74,7 @@ export const routes: Routes = [
     path: 'patient/appointments',
     canActivate: [
       authGuard,
-      roleGuard(['alumno']),
-      pipgRequiredGuard
+      roleGuard(['alumno'])
     ],
     loadComponent: () =>
       import('./features/patient/pages/appointments/appointments')

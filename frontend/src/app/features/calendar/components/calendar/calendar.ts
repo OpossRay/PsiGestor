@@ -1713,6 +1713,11 @@ onModalityChange(modality: 'In person' | 'Online'): void {
       return;
     }
 
+    if (this.mode === 'patient' && !this.authService.hasCompletedPipg()) {
+      this.showToast('Para agendar una cita, primero debes completar tu evaluación inicial P-IPG.', 'warning');
+      return;
+    }
+
     if (this.isSlotExpired(this.patientSlotData.date, this.patientSlotData.startTime)) {
       this.patientSlotData.isExpired = true;
       this.patientSlotData.status = 'Horario vencido';
@@ -4369,7 +4374,7 @@ onModalityChange(modality: 'In person' | 'Online'): void {
     private changeDetectorRef:
       ChangeDetectorRef,
 
-    private authService:
+    public authService:
       AuthService,
 
     private router:

@@ -16,18 +16,24 @@
       <p>Ingresa tu matrícula para validar tu expediente en el sistema escolar.</p>
     </div>
 
+    <!-- Nota informativa de vinculación automática -->
+    <div class="catalog-info-box">
+      <span class="info-icon">ℹ️</span>
+      <p>Tu carrera y semestre se vincularán automáticamente desde el catálogo oficial mediante tu matrícula escolar.</p>
+    </div>
+
     <ion-card class="register-card">
       <ion-card-content>
 
         @if (errorMessage) {
-          <div class="alert-box error">
+          <div class="alert-box error" role="alert">
             <span class="icon">⚠️</span>
             <span>{{ errorMessage }}</span>
           </div>
         }
 
         @if (successMessage) {
-          <div class="alert-box success">
+          <div class="alert-box success" role="status">
             <span class="icon">✅</span>
             <span>{{ successMessage }}</span>
           </div>
@@ -45,6 +51,7 @@
               [(ngModel)]="name"
               name="name"
               required
+              autocomplete="name"
             ></ion-input>
           </ion-item>
 
@@ -54,40 +61,11 @@
             <ion-input
               label="Matrícula escolar oficial"
               labelPlacement="floating"
-              placeholder="Ej. TEST2026002"
+              placeholder="Ej. DEMO2026010"
               [(ngModel)]="studentCode"
               name="studentCode"
               required
-            ></ion-input>
-          </ion-item>
-
-          <!-- Carrera -->
-          <ion-item lines="inset" class="form-item">
-            <ion-icon name="school-outline" slot="start" color="medium"></ion-icon>
-            <ion-select
-              label="Carrera / Programa"
-              labelPlacement="floating"
-              placeholder="Selecciona tu carrera"
-              [(ngModel)]="program"
-              name="program"
-            >
-              @for (prog of academicPrograms; track prog) {
-                <ion-select-option [value]="prog">{{ prog }}</ion-select-option>
-              }
-            </ion-select>
-          </ion-item>
-
-          <!-- Semestre -->
-          <ion-item lines="inset" class="form-item">
-            <ion-input
-              label="Semestre actual (1 al 12)"
-              labelPlacement="floating"
-              type="number"
-              min="1"
-              max="12"
-              placeholder="Ej. 4"
-              [(ngModel)]="semester"
-              name="semester"
+              autocapitalize="characters"
             ></ion-input>
           </ion-item>
 
@@ -102,33 +80,56 @@
               [(ngModel)]="email"
               name="email"
               required
+              autocomplete="email"
             ></ion-input>
           </ion-item>
 
           <!-- Contraseña -->
-          <ion-item lines="inset" class="form-item">
+          <ion-item lines="inset" class="form-item password-item">
             <ion-icon name="lock-closed-outline" slot="start" color="medium"></ion-icon>
             <ion-input
               label="Contraseña (mínimo 6 caracteres)"
               labelPlacement="floating"
-              type="password"
+              [type]="showPassword ? 'text' : 'password'"
               [(ngModel)]="password"
               name="password"
               required
+              autocomplete="new-password"
             ></ion-input>
+            <ion-button
+              fill="clear"
+              slot="end"
+              type="button"
+              class="eye-btn"
+              (click)="togglePassword()"
+              aria-label="Mostrar u ocultar contraseña"
+            >
+              <ion-icon [name]="showPassword ? 'eye-off-outline' : 'eye-outline'" slot="icon-only" color="medium"></ion-icon>
+            </ion-button>
           </ion-item>
 
           <!-- Confirmar Contraseña -->
-          <ion-item lines="inset" class="form-item">
+          <ion-item lines="inset" class="form-item password-item">
             <ion-icon name="lock-closed-outline" slot="start" color="medium"></ion-icon>
             <ion-input
               label="Confirmar contraseña"
               labelPlacement="floating"
-              type="password"
+              [type]="showConfirmPassword ? 'text' : 'password'"
               [(ngModel)]="confirmPassword"
               name="confirmPassword"
               required
+              autocomplete="new-password"
             ></ion-input>
+            <ion-button
+              fill="clear"
+              slot="end"
+              type="button"
+              class="eye-btn"
+              (click)="toggleConfirmPassword()"
+              aria-label="Mostrar u ocultar confirmación de contraseña"
+            >
+              <ion-icon [name]="showConfirmPassword ? 'eye-off-outline' : 'eye-outline'" slot="icon-only" color="medium"></ion-icon>
+            </ion-button>
           </ion-item>
 
           <!-- Botón de Registro -->

@@ -632,6 +632,44 @@ def run_migrations(connection, migrations_dir: Path) -> list[str]:
     return executed_or_adopted
 
 
+FICTITIOUS_STUDENTS_WITH_ACCOUNTS = [
+    ("DEMO2026001", "Estudiante Demo Uno", "Ingeniería en Sistemas Computacionales", 6),
+    ("DEMO2026002", "Estudiante Demo Dos", "Licenciatura en Administración", 4),
+    ("DEMO2026003", "Estudiante Demo Tres", "Ingeniería Mecatrónica", 8),
+]
+
+FICTITIOUS_STUDENTS_FOR_REGISTRATION = [
+    ("DEMO2026010", "Estudiante Disponible Diez", "Ingeniería en Sistemas Computacionales", 6),
+    ("DEMO2026011", "Estudiante Disponible Once", "Licenciatura en Administración", 4),
+    ("DEMO2026012", "Estudiante Disponible Doce", "Ingeniería Mecatrónica", 2),
+    ("DEMO2026013", "Estudiante Disponible Trece", "Ingeniería Informática", 8),
+    ("DEMO2026014", "Estudiante Disponible Catorce", "Ingeniería en Sistemas Computacionales", 5),
+]
+
+ALL_FICTITIOUS_STUDENTS = (
+    FICTITIOUS_STUDENTS_WITH_ACCOUNTS + FICTITIOUS_STUDENTS_FOR_REGISTRATION
+)
+
+
+def seed_fictitious_students_catalog(cursor) -> int:
+    """
+    Inserts 100% fictitious students into the catalog table 'students'.
+    Idempotent (ON CONFLICT (student_id) DO NOTHING).
+    Does NOT create user accounts, appointments, PIPG assessments, schedules, or availabilities.
+    Returns the count of fictitious student records processed.
+    """
+    for s_id, s_name, s_prog, s_sem in ALL_FICTITIOUS_STUDENTS:
+        cursor.execute(
+            """
+            INSERT INTO students (student_id, name, program, semester)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (student_id) DO NOTHING;
+            """,
+            (s_id, s_name, s_prog, s_sem),
+        )
+    return len(ALL_FICTITIOUS_STUDENTS)
+
+
 def should_load_demo_seeds() -> bool:
     """
     Historical seeds (database/seeds/*.sql) contain real student names and
@@ -682,22 +720,6 @@ def seed_academic_demo(connection) -> dict:
     psych_hash = generate_password_hash(psych_pass)
     student_hash = generate_password_hash(student_pass)
 
-    fictitious_students_with_accounts = [
-        ("DEMO2026001", "Estudiante Demo Uno", "Ingeniería en Sistemas Computacionales", 6),
-        ("DEMO2026002", "Estudiante Demo Dos", "Licenciatura en Administración", 4),
-        ("DEMO2026003", "Estudiante Demo Tres", "Ingeniería Mecatrónica", 8),
-    ]
-
-    fictitious_students_for_registration = [
-        ("DEMO2026010", "Estudiante Disponible Diez", "Ingeniería en Sistemas Computacionales", 6),
-        ("DEMO2026011", "Estudiante Disponible Once", "Licenciatura en Administración", 4),
-        ("DEMO2026012", "Estudiante Disponible Doce", "Ingeniería Mecatrónica", 2),
-        ("DEMO2026013", "Estudiante Disponible Trece", "Ingeniería Informática", 8),
-        ("DEMO2026014", "Estudiante Disponible Catorce", "Ingeniería en Sistemas Computacionales", 5),
-    ]
-
-    all_fictitious_students = fictitious_students_with_accounts + fictitious_students_for_registration
-
     fictitious_users = [
         ("alumno.demo1@psigestor.demo", student_hash, "Estudiante Demo Uno", "alumno", "DEMO2026001"),
         ("alumno.demo2@psigestor.demo", student_hash, "Estudiante Demo Dos", "alumno", "DEMO2026002"),
@@ -705,15 +727,7 @@ def seed_academic_demo(connection) -> dict:
     ]
 
     with connection.cursor() as cursor:
-        for s_id, s_name, s_prog, s_sem in all_fictitious_students:
-            cursor.execute(
-                """
-                INSERT INTO students (student_id, name, program, semester)
-                VALUES (%s, %s, %s, %s)
-                ON CONFLICT (student_id) DO NOTHING;
-                """,
-                (s_id, s_name, s_prog, s_sem),
-            )
+        seed_fictitious_students_catalog(cursor)
 
         cursor.execute(
             """
@@ -839,8 +853,8 @@ def seed_academic_demo(connection) -> dict:
     print("[init_db] Demostración académica: estudiantes y usuarios ficticios aprovisionados, disponibilidades sincronizadas a 90 días.")
     return {
         "status": "seeded_academic_demo",
-        "students": len(all_fictitious_students),
-        "available_registration_matriculas": [s[0] for s in fictitious_students_for_registration],
+        "students": len(ALL_FICTITIOUS_STUDENTS),
+        "available_registration_matriculas": [s[0] for s in FICTITIOUS_STUDENTS_FOR_REGISTRATION],
         "users": len(fictitious_users) + 1,
         "synthetic_pipg_student": "DEMO2026001",
     }
@@ -1027,13 +1041,16 @@ def init_database(
     migrate_only: bool = False,
     verify_only: bool = False,
     seed_academic_demo_flag: bool = False,
+    seed_students_catalog_flag: bool = False,
 ) -> dict:
-    if reset and (migrate_only or verify_only or seed_academic_demo_flag):
-        raise ValueError("No se puede combinar --reset con --migrate-only, --verify-only o --seed-academic-demo.")
-    if verify_only and (migrate_only or seed_academic_demo_flag):
-        raise ValueError("No se puede combinar --verify-only con --migrate-only o --seed-academic-demo.")
-    if migrate_only and seed_academic_demo_flag:
-        raise ValueError("No se puede combinar --migrate-only con --seed-academic-demo.")
+    if reset and (migrate_only or verify_only or seed_academic_demo_flag or seed_students_catalog_flag):
+        raise ValueError("No se puede combinar --reset con --migrate-only, --verify-only, --seed-academic-demo o --seed-students-catalog.")
+    if verify_only and (migrate_only or seed_academic_demo_flag or seed_students_catalog_flag):
+        raise ValueError("No se puede combinar --verify-only con --migrate-only, --seed-academic-demo o --seed-students-catalog.")
+    if migrate_only and (seed_academic_demo_flag or seed_students_catalog_flag):
+        raise ValueError("No se puede combinar --migrate-only con --seed-academic-demo o --seed-students-catalog.")
+    if seed_academic_demo_flag and seed_students_catalog_flag:
+        raise ValueError("No se puede combinar --seed-academic-demo con --seed-students-catalog.")
 
     validate_reset_allowed(reset)
 
@@ -1063,6 +1080,70 @@ def init_database(
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_lock(%s);", (MIGRATION_ADVISORY_LOCK_KEY,))
             lock_acquired = True
+
+        if seed_students_catalog_flag:
+            psych_email = (os.getenv("INITIAL_PSYCHOLOGIST_EMAIL") or "").strip().lower()
+            psych_pass = os.getenv("INITIAL_PSYCHOLOGIST_PASSWORD") or ""
+            if not psych_email or not psych_pass:
+                raise MigrationError(
+                    "CRITICAL: INITIAL_PSYCHOLOGIST_EMAIL e INITIAL_PSYCHOLOGIST_PASSWORD son obligatorios "
+                    "para aprovisionar el entorno limpio con --seed-students-catalog."
+                )
+            if len(psych_pass) < 10 or psych_pass.strip().lower() in FORBIDDEN_DEMO_PASSWORDS:
+                raise MigrationError(
+                    "CRITICAL: INITIAL_PSYCHOLOGIST_PASSWORD tiene menos de 10 caracteres "
+                    "o utiliza una contraseña insegura/prohibida."
+                )
+
+            expected_baseline_counts = {
+                "users": 0,
+                "students": 0,
+                "appointments": 0,
+                "pipg_assessments": 0,
+                "regular_schedule": 0,
+                "regular_schedule_days": 0,
+                "availabilities": 0,
+                "disabled_schedules": 0,
+                "auth_refresh_tokens": 0,
+                "auth_rate_limits": 0,
+                "schema_migrations": 14,
+            }
+
+            with connection.cursor() as cursor:
+                discrepancies = []
+                for tbl, expected_count in expected_baseline_counts.items():
+                    cursor.execute(f"SELECT COUNT(*) FROM {tbl};")
+                    actual_count = cursor.fetchone()[0]
+                    if actual_count != expected_count:
+                        discrepancies.append(
+                            f"'{tbl}' tiene {actual_count} registros (se esperaban {expected_count})"
+                        )
+
+                if discrepancies:
+                    raise MigrationError(
+                        "CRITICAL: La base de datos no cumple con el estado inicial esperado para "
+                        "--seed-students-catalog. Discrepancias encontradas: "
+                        + "; ".join(discrepancies)
+                        + ". Se aborta la operación y se ejecuta rollback sin realizar modificaciones."
+                    )
+
+                seeded_count = seed_fictitious_students_catalog(cursor)
+                psych_created = bootstrap_initial_psychologist_if_configured(cursor)
+                if not psych_created:
+                    raise MigrationError(
+                        "CRITICAL: No se pudo aprovisionar la cuenta inicial de psicóloga. "
+                        "Se aborta la operación y se realiza rollback para evitar estado parcial."
+                    )
+                connection.commit()
+
+            print(f"[init_db] Catálogo oficial aprovisionado con {seeded_count} estudiantes ficticios.")
+            print(f"[init_db] Cuenta inicial de psicóloga creada exitosamente para: {psych_email}")
+            return {
+                "status": "students_catalog_seeded",
+                "students_seeded": seeded_count,
+                "psychologist_created": True,
+                "psychologist_email": psych_email,
+            }
 
         executed = run_migrations(connection, migrations_dir)
 
@@ -1128,17 +1209,21 @@ if __name__ == "__main__":
     migrate_only_flag = "--migrate-only" in sys.argv
     verify_only_flag = "--verify-only" in sys.argv
     seed_academic_demo_flag = "--seed-academic-demo" in sys.argv
+    seed_students_catalog_flag = "--seed-students-catalog" in sys.argv
 
     init_database(
         reset=reset_flag,
         migrate_only=migrate_only_flag,
         verify_only=verify_only_flag,
         seed_academic_demo_flag=seed_academic_demo_flag,
+        seed_students_catalog_flag=seed_students_catalog_flag,
     )
     if verify_only_flag:
         print("[init_db] Auditoría de migraciones (--verify-only) completada sin cambios.")
     elif migrate_only_flag:
         print("[init_db] Migraciones de esquema (--migrate-only) aplicadas correctamente.")
+    elif seed_students_catalog_flag:
+        print("[init_db] Catálogo oficial de estudiantes y cuenta inicial de psicóloga aprovisionados exitosamente.")
     elif seed_academic_demo_flag:
         print("[init_db] Base de datos aprovisionada exclusivamente con datos ficticios para la demostración académica.")
     elif reset_flag:

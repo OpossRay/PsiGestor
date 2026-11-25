@@ -162,7 +162,14 @@
             <line x1="12" y1="8" x2="12" y2="12"></line>
             <line x1="12" y1="16" x2="12.01" y2="16"></line>
           </svg>
-          <span>{{ errorMessage }}</span>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <span>{{ errorMessage }}</span>
+            @if (isPipgRequired) {
+              <a routerLink="/estudiante/pipg" (click)="onCancelClick()" style="color: #991b1b; font-weight: 700; text-decoration: underline; font-size: 13px;">
+                Completar evaluación P-IPG ahora →
+              </a>
+            }
+          </div>
         </div>
       }
 

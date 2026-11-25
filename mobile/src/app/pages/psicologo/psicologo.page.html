@@ -67,11 +67,11 @@
           <span class="module-label">Citas</span>
         </button>
 
-        <button type="button" class="module-card" (click)="onQuickModuleClick('expedientes')">
+        <button type="button" class="module-card" (click)="onQuickModuleClick('evaluaciones')">
           <div class="module-icon-box">
-            <ion-icon name="folder-outline"></ion-icon>
+            <ion-icon name="clipboard-outline"></ion-icon>
           </div>
-          <span class="module-label">Expedientes</span>
+          <span class="module-label">Evaluaciones</span>
         </button>
 
         <button type="button" class="module-card" (click)="onQuickModuleClick('sesiones')">
@@ -228,6 +228,20 @@
   }
 
   <!-- ============================================================
+       VISTA 4: EVALUACIONES P-IPG (GORDON)
+       ============================================================ -->
+  @if (activeTab === 'evaluaciones') {
+    <app-evaluaciones-list-view
+      [assessments]="completedAssessments"
+      [isLoading]="isLoadingAssessments"
+      [errorMessage]="assessmentsError"
+      (selectAssessment)="openAssessmentDetail($event)"
+      (refresh)="loadCompletedAssessments()"
+      (back)="setTab('agenda')"
+    ></app-evaluaciones-list-view>
+  }
+
+  <!-- ============================================================
        VISTA P-06: DISPONIBILIDAD HABITUAL (HU-M02)
        ============================================================ -->
   @if (activeTab === 'disponibilidad') {
@@ -276,6 +290,14 @@
           <div class="more-item-left">
             <ion-icon name="notifications-outline"></ion-icon>
             <span>Alertas y notificaciones</span>
+          </div>
+          <ion-icon name="chevron-forward-outline" class="more-chevron"></ion-icon>
+        </button>
+
+        <button type="button" class="more-menu-item" (click)="setTab('evaluaciones')">
+          <div class="more-item-left">
+            <ion-icon name="clipboard-outline"></ion-icon>
+            <span>Evaluaciones P-IPG (Gordon)</span>
           </div>
           <ion-icon name="chevron-forward-outline" class="more-chevron"></ion-icon>
         </button>
@@ -396,6 +418,15 @@
     (closeModal)="closeModal('rescheduleSuccess')"
     (goToAgenda)="goToAgendaFromSuccess()"
   ></app-reschedule-success-modal>
+
+  <!-- ============================================================
+       MODAL: DETALLE Y GRÁFICA DE EVALUACIÓN P-IPG (GORDON)
+       ============================================================ -->
+  <app-evaluacion-detail-modal
+    [isOpen]="isAssessmentDetailOpen"
+    [assessment]="selectedAssessmentForDetail"
+    (closeModal)="closeAssessmentDetail()"
+  ></app-evaluacion-detail-modal>
 </ion-content>
 
 <!-- ============================================================

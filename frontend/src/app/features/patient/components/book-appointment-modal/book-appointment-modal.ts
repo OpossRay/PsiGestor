@@ -1,13 +1,14 @@
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 import { CalendarService } from '../../../calendar/services/calendar.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-book-appointment-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: './book-appointment-modal.html',
   styleUrl: './book-appointment-modal.css'
 })
@@ -32,10 +33,12 @@ export class BookAppointmentModal implements OnChanges {
   location: string = 'Cubículo 2B - Departamento de Orientación y Psicología';
   isLoading = false;
   errorMessage = '';
+  isPipgRequired = false;
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['slotData']) {
       this.errorMessage = '';
+      this.isPipgRequired = false;
     }
   }
 
@@ -101,11 +104,18 @@ export class BookAppointmentModal implements OnChanges {
       next: (response) => {
         this.isLoading = false;
         this.reason = '';
+        this.isPipgRequired = false;
         this.appointmentBooked.emit(response);
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err?.error?.error || 'No fue posible registrar la cita. Verifica que el horario continúe disponible.';
+        if (err?.error?.code === 'PIPG_REQUIRED' || err?.status === 403) {
+          this.isPipgRequired = true;
+          this.errorMessage = err?.error?.error || 'Para poder solicitar una cita, primero debes completar tu evaluación inicial P-IPG.';
+        } else {
+          this.isPipgRequired = false;
+          this.errorMessage = err?.error?.error || 'No fue posible registrar la cita. Verifica que el horario continúe disponible.';
+        }
       }
     });
   }

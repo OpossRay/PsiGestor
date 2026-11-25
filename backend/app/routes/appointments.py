@@ -9,6 +9,7 @@ from app.services.appointment_service import (
     request_student_reschedule,
     approve_student_reschedule,
     reject_student_reschedule,
+    PipgRequiredError,
 )
 from app.services.auth_service import (
     get_current_user,
@@ -116,6 +117,12 @@ def create_appointment_route():
                 "created_at": appointment[12].isoformat(),
             },
         }), 201
+
+    except PipgRequiredError as error:
+        return jsonify({
+            "error": str(error),
+            "code": "PIPG_REQUIRED",
+        }), 403
 
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
@@ -261,6 +268,11 @@ def book_student_appointment_route():
                 "created_at": appointment[12].isoformat(),
             }
         }), 201
+    except PipgRequiredError as error:
+        return jsonify({
+            "error": str(error),
+            "code": "PIPG_REQUIRED",
+        }), 403
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
     except Exception as error:
