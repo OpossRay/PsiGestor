@@ -686,7 +686,9 @@
             } @else if (
               item.availability.status === 'Reservado' ||
               item.availability.status === 'Reprogramacion pendiente' ||
-              item.availability.status === 'Cancelado'
+              item.availability.status === 'Cancelado' ||
+              item.availability.status === 'Atendida' ||
+              item.availability.status === 'No asistio'
             ) {
 
               <button
@@ -701,6 +703,12 @@
                 "
                 [class.day-cancelled-card]="
                   item.availability.status === 'Cancelado'
+                "
+                [class.day-attended-card]="
+                  item.availability.status === 'Atendida'
+                "
+                [class.day-no-show-card]="
+                  item.availability.status === 'No asistio'
                 "
                 [class.day-availability-card-selected]="
                   selectedAvailabilityId ===
@@ -724,6 +732,12 @@
                   "
                   [class.day-cancelled-icon]="
                     item.availability.status === 'Cancelado'
+                  "
+                  [class.day-attended-icon]="
+                    item.availability.status === 'Atendida'
+                  "
+                  [class.day-no-show-icon]="
+                    item.availability.status === 'No asistio'
                   "
                 >
                   @if (mode === 'patient') {
@@ -766,6 +780,12 @@
                       [class.day-cancelled-badge]="
                         item.availability.status === 'Cancelado'
                       "
+                      [class.day-attended-badge]="
+                        item.availability.status === 'Atendida'
+                      "
+                      [class.day-no-show-badge]="
+                        item.availability.status === 'No asistio'
+                      "
                     >
 
                       <span
@@ -775,9 +795,10 @@
                           Ocupado
                         } @else {
                           {{
-                            item.availability.status ===
-                              'Reprogramacion pendiente'
+                            item.availability.status === 'Reprogramacion pendiente'
                               ? 'Reprogramación pendiente'
+                              : item.availability.status === 'No asistio'
+                              ? 'No asistió'
                               : item.availability.status
                           }}
                         }
@@ -1197,6 +1218,15 @@
                         booked.status ===
                           'Cancelado'
                       "
+
+                      [class.week-attended-card]="
+                        booked.status === 'Atendida'
+                      "
+
+                      [class.week-no-show-card]="
+                        booked.status === 'No asistio'
+                      "
+
                       [class.week-availability-card-selected]="
                         selectedAvailabilityId ===
                           booked.id
@@ -1228,19 +1258,18 @@
                       </span>
 
                       <span class="week-availability-status">
-
-                              @if (mode === 'patient') {
-
-                                Ocupado
-
-                              } @else {
-
-                                {{
-                                  booked.status === 'Reprogramacion pendiente' ? 'Reprog. pendiente'
-                                    : booked.status
-                                }}
-
-                              }
+                        
+                        @if (mode === 'patient') {
+                          Ocupado
+                        } @else {
+                          {{
+                            booked.status === 'Reprogramacion pendiente'
+                              ? 'Reprog. pendiente'
+                              : booked.status === 'No asistio'
+                                ? 'No asistió'
+                                : booked.status
+                          }}
+                        }
 
                       </span>
 
@@ -1456,6 +1485,8 @@
                       [class.day-reserved-icon]="mode === 'patient' || item.availability.status === 'Reservado'"
                       [class.day-reschedule-icon]="mode === 'psychologist' && item.availability.status === 'Reprogramacion pendiente'"
                       [class.day-cancelled-icon]="mode === 'psychologist' && item.availability.status === 'Cancelado'"
+                      [class.day-attended-icon]="mode === 'psychologist' && item.availability.status === 'Atendida'"
+                      [class.day-no-show-icon]="mode === 'psychologist' && item.availability.status === 'No asistio'"
                     >
                       @if (mode === 'patient') {
                         <span aria-hidden="true">•</span>
@@ -1473,17 +1504,23 @@
                           [class.day-reserved-badge]="mode === 'patient' || item.availability.status === 'Reservado'"
                           [class.day-reschedule-badge]="mode === 'psychologist' && item.availability.status === 'Reprogramacion pendiente'"
                           [class.day-cancelled-badge]="mode === 'psychologist' && item.availability.status === 'Cancelado'"
+                          [class.day-attended-badge]="mode === 'psychologist' && item.availability.status === 'Atendida'"
+                          [class.day-no-show-badge]="mode === 'psychologist' && item.availability.status === 'No asistio'"
                         >
                           <span class="day-availability-dot"></span>
-                          @if (mode === 'patient') {
-                            Ocupado
-                          } @else {
-                            {{
-                              item.availability.status === 'Reprogramacion pendiente'
-                                ? 'Reprogramación pendiente'
+                          
+                        @if (mode === 'patient') {
+                          Ocupado
+                        } @else {
+                          {{
+                            item.availability.status === 'Reprogramacion pendiente'
+                              ? 'Reprogramación pendiente'
+                              : item.availability.status === 'No asistio'
+                                ? 'No asistió'
                                 : item.availability.status
-                            }}
-                          }
+                          }}
+                        }
+
                         </span>
                       </div>
                       <span class="day-availability-duration">
@@ -1934,6 +1971,9 @@
               openCancelModal()
             "
 
+            (closeAppointment)="openClosureModal()"
+
+
             (disable)="
               openDisableModalFromPanel($event)
             "
@@ -1946,6 +1986,7 @@
               openManageSchedule()
             "
           />
+
 
         }
 
@@ -2005,6 +2046,26 @@
   />
 
 }
+
+
+<!-- ========================================= -->
+<!-- HU #53 - REGISTRO Y CIERRE DE CITAS      -->
+<!-- ========================================= -->
+
+@if (
+  mode === 'psychologist' &&
+  isClosureOpen &&
+  closureSummary
+) {
+  <app-appointment-closure
+    [appointment]="closureSummary"
+    [saving]="isClosingAppointment"
+    [serverError]="closureError"
+    (dismiss)="closeClosureModal()"
+    (submitClosure)="submitAppointmentClosure($event)"
+  />
+}
+
 
 <!-- ========================================= -->
 <!-- MODAL DE CONFIRMACIÓN ESTILIZADO          -->

@@ -260,3 +260,69 @@
 .btn-rehabilitate:hover {
   background: #15803d;
 }
+
+
+/* ============================================================
+   HU #53 — REGISTRO DE ASISTENCIA Y CIERRE
+   ============================================================ */
+
+/* Estado: Atendida */
+.status-badge.status-attended {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.status-badge.status-attended .dot {
+  background-color: #16a34a;
+}
+
+/* Estado: No asistió */
+.status-badge.status-no-show {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.status-no-show .dot {
+  background-color: #dc2626;
+}
+
+/* Resumen del cierre */
+.closure-card {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.closure-notes-label {
+  margin-top: 16px;
+}
+
+.closure-notes {
+  margin-top: 6px;
+  padding: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  color: #334155;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Botón de registro de asistencia */
+.btn-closure {
+  background-color: #0056d2;
+  color: #ffffff;
+  border: 1px solid #0056d2;
+}
+
+.btn-closure:hover {
+  background-color: #0043a5;
+  border-color: #0043a5;
+}
+
+.btn-closure:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 2px;
+}
+

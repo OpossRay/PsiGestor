@@ -30,7 +30,9 @@ export interface Availability {
   | 'Reservado'
   | 'Reprogramacion pendiente'
   | 'Inhabilitado'
-  | 'Cancelado';
+  | 'Cancelado'
+  | 'Atendida'
+  | 'No asistio';
   createdAt?: string;
   studentName?: string;
   studentInitials?: string;
@@ -48,4 +50,10 @@ export interface Availability {
   cancellationReason?: string;
   cancellationObservation?: string;
   rescheduleRequestedBy?: 'psicologo' | 'alumno';
+
+  appointmentId?: number;
+  attendanceResult?: 'Attended' | 'NoShow' | null;
+  closureNotes?: string | null;
+  closedAt?: string | null;
+
 }

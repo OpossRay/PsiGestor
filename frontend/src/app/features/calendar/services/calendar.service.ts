@@ -35,6 +35,11 @@ export interface Appointment {
   proposed_end_time?: string | null;
   proposed_availability_id?: number | null;
   reschedule_requested_by?: 'psicologo' | 'alumno' | null;
+  attendance_result?: 'Attended' | 'NoShow' | null;
+  closure_notes?: string | null;
+  closed_at?: string | null;
+  closed_by?: number | null;
+
 }
 
 export interface DisableSchedulePayload {
@@ -210,7 +215,7 @@ export class CalendarService {
     if (date) {
       return this.http.get<{ appointments: Appointment[] }>(
         url,
-        { params: { date } }
+        { params: { date }, withCredentials: true }
       );
     }
 

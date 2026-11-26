@@ -2,15 +2,28 @@
   
   <!-- ENCABEZADO -->
   <div class="header">
-    <div
-      class="status-badge"
-      [class.status-cancelled]="displayAppointment.status === 'Cancelado'"
-      [class.status-disabled]="displayAppointment.status === 'Inhabilitado'"
-      [class.status-break]="displayAppointment.status === 'Descanso habitual'"
-    >
-      <span class="dot"></span>
-      {{ displayAppointment.status }}
-    </div>
+    
+  <div
+    class="status-badge"
+    [class.status-cancelled]="displayAppointment.status === 'Cancelado'"
+    [class.status-disabled]="displayAppointment.status === 'Inhabilitado'"
+    [class.status-break]="displayAppointment.status === 'Descanso habitual'"
+    [class.status-attended]="
+      isClosed && closureResultLabel === 'Atendida'
+    "
+    [class.status-no-show]="
+      isClosed && closureResultLabel === 'No asistió'
+    "
+  >
+    <span class="dot"></span>
+
+    {{
+      isClosed
+        ? closureResultLabel
+        : displayAppointment.status
+    }}
+  </div>
+
     <button class="icon-btn" (click)="close.emit()" title="Cerrar">
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -300,6 +313,59 @@
       </div>
     </div>
 
+
+    <!-- HU #53 — Información del cierre (solo lectura) -->
+
+    <div
+      class="card closure-card"
+      *ngIf="isClosed"
+    >
+      <div class="card-content">
+
+        <span class="label">
+          Registro de asistencia
+        </span>
+
+        <strong class="main-text">
+          {{ closureResultLabel }}
+        </strong>
+
+        <span class="sub-text">
+          Esta cita ha sido cerrada.
+        </span>
+
+        <ng-container *ngIf="displayAppointment.closureNotes">
+
+          <span class="label closure-notes-label">
+            Observaciones
+          </span>
+
+          <div class="closure-notes">
+            {{ displayAppointment.closureNotes }}
+          </div>
+
+        </ng-container>
+
+      </div>
+    </div>
+
+    <!-- HU #53 — Registrar asistencia -->
+
+    <div
+      class="actions"
+      *ngIf="canCloseAppointment"
+    >
+      <button
+        type="button"
+        class="btn btn-closure"
+        (click)="closeAppointment.emit()"
+      >
+        <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+        Registrar asistencia y cerrar cita
+      </button>
+    </div>
+
+
     <div class="actions" *ngIf="canRehabilitate">
       <button
         type="button"
@@ -324,7 +390,7 @@
 
     <div
       class="actions"
-      *ngIf="displayAppointment.status !== 'Cancelado'"
+      *ngIf="canManageAppointment"
     >
       <button
         type="button"
@@ -377,7 +443,7 @@
 
     <p
       class="footer-note"
-      *ngIf="displayAppointment.status !== 'Cancelado'"
+      *ngIf="canManageAppointment"
     >
       Al reprogramar, la cita pasará a
       'Reprogramación pendiente' hasta confirmación

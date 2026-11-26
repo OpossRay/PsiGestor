@@ -1,5 +1,6 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from datetime import date as date_type
+from app.repositories.appointment_closure_repository import close_appointment_db
 from app.services.appointment_service import (
     register_appointment,
     book_student_appointment,
@@ -77,7 +78,7 @@ def list_appointments_route():
             return jsonify({
                 "error": "La fecha debe tener el formato YYYY-MM-DD."
             }), 400
-
+      
     try:
         appointments = get_appointments(date_value)
 
@@ -106,16 +107,24 @@ def list_appointments_route():
                 appointment["proposed_end_time"] = (
                     appointment["proposed_end_time"].strftime("%H:%M")
                 )
+            if appointment.get("closed_at"):
+                appointment["closed_at"] = appointment["closed_at"].isoformat()
 
         if not viewer_has_full_access():
             appointments = redact_private_fields(appointments)
 
+       
         return jsonify({"appointments": appointments}), 200
 
     except Exception:
+        current_app.logger.exception(
+            "Error al consultar GET /appointments"
+        )
+
         return jsonify({
             "error": "No fue posible consultar las citas."
         }), 500
+
 
 
 # =============================================================================
@@ -248,3 +257,39 @@ def reject_reschedule_route(appointment_id):
         return jsonify({"error": str(error)}), 400
     except Exception as error:
         return jsonify({"error": f"No fue posible rechazar la reprogramación: {error}"}), 500
+
+
+@appointments_bp.route('/<int:appointment_id>/close', methods=['POST'])
+def close_appointment_route(appointment_id):
+    user = get_current_user()
+    if user is None:
+        return jsonify({"error": "Debes iniciar sesión."}), 401
+    if user.get("role") != "psicologo":
+        return jsonify({"error": "Solo la psicóloga puede cerrar citas."}), 403
+
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"error": "Envía un JSON válido."}), 400
+
+    result = data.get("attendance_result")
+    notes = data.get("closure_notes", "")
+    if result not in ("Attended", "NoShow"):
+        return jsonify({"error": "Selecciona Atendida o No asistió."}), 400
+    if not isinstance(notes, str):
+        return jsonify({"error": "Las observaciones deben ser texto."}), 400
+    notes = notes.strip()
+    if len(notes) > 600:
+        return jsonify({"error": "Las observaciones no pueden superar 600 caracteres."}), 400
+
+    try:
+        appointment = close_appointment_db(appointment_id, result, notes, user["id"])
+        return jsonify({
+            "message": "La cita se cerró correctamente.",
+            "appointment": appointment
+        }), 200
+    except LookupError as err:
+        return jsonify({"error": str(err)}), 404
+    except (ValueError, RuntimeError) as err:
+        return jsonify({"error": str(err)}), 409
+    except Exception:
+        return jsonify({"error": "No fue posible cerrar la cita."}), 500

@@ -168,9 +168,11 @@ def viewer_has_full_access():
     mientras STRICT_AUTH esté desactivado (modo desarrollo).
     """
     user = get_current_user()
-    if user:
-        return user["role"] == "psicologo"
-    return os.getenv("STRICT_AUTH", "false").lower() != "true"
+
+    return bool(
+        user is not None
+        and user .get("role") == "psicologo"
+    )
 
 
 PRIVATE_APPOINTMENT_FIELDS = (
@@ -181,7 +183,7 @@ PRIVATE_APPOINTMENT_FIELDS = (
     "student_id", "student_name", "reason", "meeting_url", "location",
     "reschedule_reason", "cancellation_reason", "cancellation_observation",
     "proposed_date", "proposed_start_time", "proposed_end_time", "reschedule_requested_by",
-    "cancelled_by", "user_id",
+    "cancelled_by", "user_id", 'attendance_result','closure_notes','closed_by',
 )
 
 

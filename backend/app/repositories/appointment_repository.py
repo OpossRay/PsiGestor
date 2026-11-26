@@ -349,7 +349,14 @@ def get_appointments(date=None):
                     location,
                     meeting_url,
                     reason,
-                    status,
+                    CASE
+                    WHEN closed_at IS NOT NULL THEN 'Closed'
+                    ELSE status
+                    END AS status,
+                    attendance_result,
+                    closure_notes,
+                    closed_at,
+                    closed_by,
                     created_at,
                     reschedule_reason,
                     rescheduled_at,
@@ -358,6 +365,9 @@ def get_appointments(date=None):
                     proposed_end_time,
                     proposed_availability_id,
                     reschedule_requested_by
+         
+                    
+
                 FROM appointments
                 WHERE status <> 'Cancelled'
             """
@@ -650,8 +660,8 @@ def approve_student_reschedule_db(appointment_id):
             cursor.execute(
                 """
                 SELECT id, student_id, student_name, date, start_time, end_time, duration,
-                       modality, location, meeting_url, reason, status,
-                       proposed_date, proposed_start_time, proposed_end_time, proposed_availability_id
+                modality, location, meeting_url, reason, status,
+                proposed_date, proposed_start_time, proposed_end_time, proposed_availability_id
                 FROM appointments
                 WHERE id = %s
                 FOR UPDATE;

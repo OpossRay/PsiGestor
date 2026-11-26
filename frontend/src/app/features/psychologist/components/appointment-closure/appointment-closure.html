@@ -1,0 +1,95 @@
+<div class="closure-overlay" (keydown.escape)="cancel()">
+  <section
+    class="closure-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="closure-title"
+    aria-describedby="closure-description"
+  >
+    <header class="closure-header">
+      <div>
+        <h2 id="closure-title">
+          {{ step === 'form' ? 'Registrar resultado de asistencia' : 'Confirmar cierre de cita' }}
+        </h2>
+        <p id="closure-description">
+          {{ step === 'form'
+            ? 'Selecciona el resultado de la sesión y agrega observaciones si es necesario.'
+            : 'Revisa los datos antes de guardar el cierre definitivo.' }}
+        </p>
+      </div>
+      <button type="button" class="closure-x" aria-label="Cerrar formulario" [disabled]="saving" (click)="cancel()">×</button>
+    </header>
+
+    <div class="closure-summary">
+      <strong>{{ appointment.studentName }}</strong>
+      <span>{{ appointment.date }} · {{ appointment.startTime }} – {{ appointment.endTime }}</span>
+      <span>{{ appointment.modality || 'Modalidad por confirmar' }}
+        @if (appointment.location) { · {{ appointment.location }} }
+      </span>
+    </div>
+
+    @if (step === 'form') {
+      <fieldset class="closure-fieldset" [attr.aria-invalid]="attemptedContinue && !attendance ? true : null">
+        <legend>Resultado de la sesión <span class="required">*</span></legend>
+        <div class="closure-options">
+          <label class="closure-option" [class.is-selected]="attendance === 'Attended'">
+            <input type="radio" name="attendanceResult" value="Attended"
+              [ngModel]="attendance" (ngModelChange)="selectAttendance('Attended')" [disabled]="saving" />
+            <span class="option-icon success">✓</span>
+            <strong>Atendida</strong>
+            <small>El alumno asistió y la sesión se llevó a cabo.</small>
+          </label>
+          <label class="closure-option" [class.is-selected]="attendance === 'NoShow'">
+            <input type="radio" name="attendanceResult" value="NoShow"
+              [ngModel]="attendance" (ngModelChange)="selectAttendance('NoShow')" [disabled]="saving" />
+            <span class="option-icon absent">×</span>
+            <strong>No asistió</strong>
+            <small>El alumno no se presentó a la sesión programada.</small>
+          </label>
+        </div>
+        @if (attemptedContinue && !attendance) {
+          <p class="closure-error" role="alert">Selecciona el resultado de asistencia para continuar.</p>
+        }
+      </fieldset>
+
+      <div class="closure-note-field">
+        <div class="closure-label-row">
+          <label for="closure-notes">Observaciones de cierre <span>(opcional)</span></label>
+          <span class="private-label">Solo uso clínico interno</span>
+        </div>
+        <textarea id="closure-notes" rows="5" [maxLength]="maxNotesLength"
+          [disabled]="saving" [(ngModel)]="notes"
+          placeholder="Escribe una observación relacionada con el cierre de esta cita..."></textarea>
+        <small class="note-count">{{ notes.length }} / {{ maxNotesLength }} caracteres</small>
+      </div>
+    } @else {
+      <div class="closure-confirmation">
+        <p>¿Deseas cerrar definitivamente esta cita? Después no podrá editarse, cancelarse ni reprogramarse.</p>
+        <dl>
+          <div><dt>Alumno</dt><dd>{{ appointment.studentName }}</dd></div>
+          <div><dt>Resultado</dt><dd class="closure-result">{{ attendanceText }}</dd></div>
+          @if (notes.trim()) {
+            <div><dt>Observaciones</dt><dd class="note-preview">{{ notes.trim() }}</dd></div>
+          }
+        </dl>
+      </div>
+    }
+
+    @if (serverError) {
+      <p class="closure-error server-error" role="alert">{{ serverError }}</p>
+    }
+
+    <footer class="closure-footer">
+      @if (step === 'form') {
+        <button type="button" class="btn-secondary" [disabled]="saving" (click)="cancel()">Cancelar</button>
+        <button type="button" class="btn-primary" [disabled]="saving" (click)="continue()">Continuar →</button>
+      } @else {
+        <button type="button" class="btn-secondary" [disabled]="saving" (click)="back()">Volver</button>
+        <button type="button" class="btn-primary" [disabled]="saving" (click)="confirm()">
+          {{ saving ? 'Guardando cierre…' : 'Confirmar cierre' }}
+        </button>
+      }
+    </footer>
+  </section>
+</div>
+<p>appointment-closure works!</p>

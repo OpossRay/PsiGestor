@@ -80,6 +80,22 @@ import {
   RescheduleModal
 } from '../reschedule-modal/reschedule-modal';
 
+/* HU #53 — Asistencia y cierre de citas */
+
+import {
+  AppointmentClosure
+} from '../../../psychologist/components/appointment-closure/appointment-closure';
+
+import {
+  AppointmentClosureService
+} from '../../../psychologist/services/appointment-closure';
+
+import type {
+  CloseAppointmentPayload,
+  ClosureAppointmentSummary
+} from '../../../psychologist/models/appointment-closure.model';
+
+
 interface CalendarSlot extends Availability {
   slotStartTime: string;
   slotEndTime: string;
@@ -104,7 +120,8 @@ export interface PatientScheduleSelection {
     CalendarToolbar,
     ManageScheduleModal,
     PsychologistHeaderComponent,
-    BookAppointmentModal
+    BookAppointmentModal,
+    AppointmentClosure
   ],
 
   styleUrl: './calendar.css',
@@ -248,6 +265,17 @@ private toastTimeout:
   isCancelModalOpen = false;
 
   isManageScheduleOpen = false;
+
+  /* HU #53 — Estados del formulario de cierre */
+
+  isClosureOpen = false;
+
+  isClosingAppointment = false;
+
+  closureError: string | null = null;
+
+  closureSummary: ClosureAppointmentSummary | null = null;
+
 
 
   /*
@@ -760,6 +788,51 @@ private toastTimeout:
      ============================================================ */
 
 
+/* ============================================================
+   HU #53 — ESTADO VISUAL DE LAS CITAS
+   ============================================================ */
+
+private getAppointmentVisualStatus(
+  appointment: Appointment
+): Availability['status'] {
+
+  // Identificar citas que ya fueron cerradas.
+  if (
+    appointment.closed_at ||
+    appointment.status === 'Closed'
+  ) {
+
+    // El alumno solo debe ver su horario ocupado.
+    if (this.mode === 'patient') {
+      return 'Reservado';
+    }
+
+    if (appointment.attendance_result === 'Attended') {
+      return 'Atendida';
+    }
+
+    if (appointment.attendance_result === 'NoShow') {
+      return 'No asistio';
+    }
+
+    // Compatibilidad con registros antiguos.
+    return 'Reservado';
+  }
+
+  if (appointment.status === 'Cancelled') {
+    return 'Cancelado';
+  }
+
+  if (
+    appointment.status === 'Pending Reschedule' ||
+    appointment.status === 'Reprogramacion pendiente'
+  ) {
+    return 'Reprogramacion pendiente';
+  }
+
+  return 'Reservado';
+}
+
   private mapAppointmentToAvailability(
     appointment: Appointment
   ): Availability {
@@ -771,7 +844,8 @@ private toastTimeout:
       .join('');
 
     return {
-      id: -appointment.id,
+
+     /* id: -appointment.id,
       date: appointment.date,
       startTime: appointment.start_time,
       endTime: appointment.end_time,
@@ -781,7 +855,34 @@ private toastTimeout:
         ? 'Cancelado'
         : (appointment.status === 'Pending Reschedule' || appointment.status === 'Reprogramacion pendiente'
           ? 'Reprogramacion pendiente'
-          : 'Reservado'),
+          : 'Reservado'),*/
+
+      id: -appointment.id,
+
+      // Identificador real de la cita
+      appointmentId: appointment.id,
+
+      date: appointment.date,
+      startTime: appointment.start_time,
+      endTime: appointment.end_time,
+      duration: appointment.duration,
+      breakTime: 0,
+
+      // Estado visual de la HU #53
+      status: this.getAppointmentVisualStatus(appointment),
+
+      attendanceResult:
+        appointment.attendance_result ?? null,
+
+      closureNotes:
+        this.mode === 'psychologist'
+          ? appointment.closure_notes ?? null
+          : null,
+
+      closedAt:
+        appointment.closed_at ?? null,
+
+
       studentName: appointment.student_name,
       studentInitials: initials || 'AL',
       studentAge: 20,
@@ -811,9 +912,14 @@ private toastTimeout:
   private getMergedAvailabilitiesForDateString(
     dateString: string
   ): Availability[] {
-    const dateAvailabilities = this.availabilities.filter(
-      (availability) => availability.date === dateString
-    );
+    
+    const dateAvailabilities = this.availabilities
+      .filter(
+        (availability) => availability.date === dateString
+      )
+      .map(
+        (availability) => ({ ...availability })
+      );
 
     const dateAppointments = this.appointments.filter(
       (appointment) => appointment.date === dateString
@@ -832,17 +938,42 @@ private toastTimeout:
       );
 
       if (matchingAvail) {
+
+          /* HU #53 — Datos de la cita asociada */
+
+          matchingAvail.appointmentId = appointment.id;
+
+          matchingAvail.attendanceResult =
+            appointment.attendance_result ?? null;
+
+          matchingAvail.closureNotes =
+            this.mode === 'psychologist'
+              ? appointment.closure_notes ?? null
+              : null;
+
+          matchingAvail.closedAt =
+            appointment.closed_at ?? null;
+
         // Enriquecer el bloque existente para que mantenga su ID real positivo
-        if (
+        
+      if (
           matchingAvail.status === 'Disponible' ||
           matchingAvail.status === 'Reservado' ||
-          matchingAvail.status === 'Reprogramacion pendiente'
-        ) {
-          matchingAvail.status = appointment.status === 'Cancelled'
+          matchingAvail.status === 'Reprogramacion pendiente' ||
+          matchingAvail.status === 'Atendida' ||
+          matchingAvail.status === 'No asistio'
+      ) {
+
+         /* matchingAvail.status = appointment.status === 'Cancelled'
             ? 'Cancelado'
             : (appointment.status === 'Pending Reschedule' || appointment.status === 'Reprogramacion pendiente'
               ? 'Reprogramacion pendiente'
               : 'Reservado');
+          */
+
+          matchingAvail.status =
+            this.getAppointmentVisualStatus(appointment);
+
           matchingAvail.studentName = appointment.student_name || matchingAvail.studentName;
           matchingAvail.consultationReason =
             (appointment as any).reschedule_reason ||
@@ -1084,14 +1215,30 @@ private toastTimeout:
      */
     this.selectedAppointmentData = {
 
-      id:
-        availability.id,
 
-      status:
-        availability.status,
+      id: availability.id,
+
+
+      // HU #53 — Identificador de la cita
+      appointmentId: availability.appointmentId,
+
+      status: availability.status,
+
+      attendanceResult:
+        availability.attendanceResult ?? null,
+
+      closureNotes:
+        this.mode === 'psychologist'
+          ? availability.closureNotes ?? null
+          : null,
+
+      closedAt:
+        availability.closedAt ?? null,
 
       cancellationReason:
         availability.cancellationReason,
+
+     
 
       cancellationObservation:
         availability.cancellationObservation,
@@ -1224,6 +1371,26 @@ private toastTimeout:
         (availability as any).reschedule_requested_by ||
         'psicologo'
     };
+
+/* DIAGNÓSTICO TEMPORAL HU #53 */
+
+const selected = this.selectedAppointmentData;
+
+console.table({
+  status: selected?.status,
+  appointmentId: selected?.appointmentId,
+  closedAt: selected?.closedAt,
+  endsAtMs: selected?.endsAtMs,
+  fechaFinalizacion: selected?.endsAtMs
+    ? new Date(selected.endsAtMs).toLocaleString('es-MX')
+    : 'Sin fecha válida',
+  fechaActual: new Date().toLocaleString('es-MX'),
+  citaEncontradaEnBackend: this.appointments.some(
+    item => item.id === selected?.appointmentId
+  ),
+  totalCitasCargadas: this.appointments.length
+});
+
 
     this.sidebarView = 'slot-detail';
     this.isSidebarOpen =
@@ -1995,6 +2162,204 @@ onModalityChange(modality: 'In person' | 'Online'): void {
       });
   }
 
+/* HU #53 — Validar si la cita puede cerrarse */
+
+canCloseSelectedAppointment(): boolean {
+  const selected = this.selectedAppointmentData;
+
+  if (
+    this.mode !== 'psychologist' ||
+    !selected ||
+    selected.status !== 'Reservado' ||
+    !Number.isInteger(selected.appointmentId) ||
+    !Number.isFinite(selected.endsAtMs) ||
+    selected.closedAt ||
+    selected.endsAtMs > Date.now()
+  ) {
+    return false;
+  }
+
+  const appointment = this.appointments.find(
+    item => item.id === selected.appointmentId
+  );
+
+  return Boolean(
+    appointment &&
+    appointment.status === 'Reserved' &&
+    !appointment.closed_at
+  );
+}
+
+
+/* ============================================================
+   HU #53 — ABRIR FORMULARIO DE CIERRE
+   ============================================================ */
+
+    openClosureModal(): void {
+
+      // Obtener el ID real de la cita seleccionada.
+      const appointmentId =
+        this.selectedAppointmentData?.appointmentId;
+
+      // Solo está disponible para la psicóloga.
+      if (this.mode !== 'psychologist') {
+        return;
+      }
+
+      // Validar el identificador de la cita.
+      if (
+        !Number.isInteger(appointmentId) ||
+        appointmentId <= 0
+      ) {
+        this.showToast(
+          'No se pudo identificar la cita.',
+          'error'
+        );
+        return;
+      }
+
+      // Buscar la cita original recibida del backend.
+      const appointment = this.appointments.find(
+        item => item.id === appointmentId
+      );
+
+      if (!appointment) {
+        this.showToast(
+          'No se encontró la cita seleccionada.',
+          'error'
+        );
+        return;
+      }
+
+      // Comprobar que la cita siga reservada.
+      if (
+        appointment.status !== 'Reserved' ||
+        appointment.closed_at
+      ) {
+        this.showToast(
+          'Esta cita no está disponible para cierre.',
+          'warning'
+        );
+        return;
+      }
+
+      // Comprobar que la sesión haya terminado.
+      const endMs = new Date(
+        `${appointment.date}T${appointment.end_time}`
+      ).getTime();
+
+      if (
+        !Number.isFinite(endMs) ||
+        endMs > Date.now()
+      ) {
+        this.showToast(
+          'La sesión todavía no ha finalizado.',
+          'warning'
+        );
+        return;
+      }
+
+      // Construir la información para el modal.
+      this.closureSummary = {
+        id: appointment.id,
+        studentName: appointment.student_name || 'Alumno',
+        date: appointment.date,
+        startTime: appointment.start_time,
+        endTime: appointment.end_time,
+        modality: appointment.modality,
+        location: appointment.location || undefined
+      };
+
+      this.closureError = null;
+
+      // Abrir formulario.
+      this.isClosureOpen = true;
+    }
+
+
+/* HU #53 — CERRAR FORMULARIO SIN GUARDAR */
+
+    closeClosureModal(): void {
+
+      // Evitar cerrar mientras se guarda.
+      if (this.isClosingAppointment) {
+        return;
+      }
+
+      this.isClosureOpen = false;
+
+      this.closureSummary = null;
+
+      this.closureError = null;
+}
+
+
+/* HU #53 — CONFIRMAR Y GUARDAR CIERRE */
+
+    submitAppointmentClosure(
+      payload: CloseAppointmentPayload
+    ): void {
+
+      if (
+        !this.closureSummary ||
+        this.isClosingAppointment
+      ) {
+        return;
+      }
+
+      this.isClosingAppointment = true;
+
+      this.closureError = null;
+
+      this.appointmentClosureService
+        .closeAppointment(
+          this.closureSummary.id,
+          payload
+        )
+        .subscribe({
+
+          next: () => {
+
+            // El backend confirmó el cierre.
+            this.isClosingAppointment = false;
+
+            this.isClosureOpen = false;
+
+            this.closureSummary = null;
+
+            this.closureError = null;
+
+            // Cerrar el panel de detalles.
+            this.closeSidebar();
+
+            // Actualizar datos de la Agenda.
+            this.refreshCalendarData();
+
+            // Notificar el cambio a otros componentes.
+            this.calendarService.notifyScheduleChanged();
+
+            this.showToast(
+              'El resultado se guardó y la cita quedó cerrada.',
+              'success',
+              'Cita cerrada correctamente'
+            );
+          },
+
+          error: (error) => {
+
+            this.isClosingAppointment = false;
+
+            // Mantener el formulario abierto.
+            this.closureError =
+              error?.error?.error ||
+              'No fue posible cerrar esta cita.';
+          }
+
+        });
+    }
+
+
+
   /*
    * Rehabilita un horario cancelado.
    * La cita cancelada permanece en el historial; el backend valida
@@ -2621,9 +2986,10 @@ onModalityChange(modality: 'In person' | 'Online'): void {
 
           const isAdministrativeStatus =
             availability.status === 'Reservado' ||
-            availability.status ===
-            'Reprogramacion pendiente' ||
-            availability.status === 'Cancelado';
+            availability.status === 'Reprogramacion pendiente' ||
+            availability.status === 'Cancelado' ||
+            availability.status === 'Atendida' ||
+            availability.status === 'No asistio';
 
           if (!isAdministrativeStatus) {
             return false;
@@ -4368,6 +4734,9 @@ onModalityChange(modality: 'In person' | 'Online'): void {
     private regularScheduleService:
       RegularScheduleService,
 
+    private appointmentClosureService:
+      AppointmentClosureService,
+
     private changeDetectorRef:
       ChangeDetectorRef,
 
@@ -4416,15 +4785,18 @@ onModalityChange(modality: 'In person' | 'Online'): void {
              * mientras haya un modal abierto para no
              * interferir con la captura de datos.
              */
+            
             if (
               this.isCancelModalOpen ||
               this.isRescheduleModalOpen ||
               this.isManageScheduleOpen ||
+              this.isClosureOpen ||
               this.confirmModalConfig !== null ||
               this.sidebarView === 'patient-booking-form'
             ) {
               return;
             }
+
                 this.refreshCalendarData();
             });
 
@@ -4457,6 +4829,8 @@ onModalityChange(modality: 'In person' | 'Online'): void {
                   this.isCancelModalOpen ||
                   this.isRescheduleModalOpen ||
                   this.isManageScheduleOpen ||
+                  this.isClosureOpen ||
+                  this.confirmModalConfig !== null ||
                   this.sidebarView === 'patient-booking-form'
                 ) {
                   return;
